@@ -26,9 +26,6 @@ class Settings(BaseSettings):
     # Google Sheets
     GOOGLE_SHEETS_ID: str
     
-    # Apollo.io
-    APOLLO_API_KEY: str
-    
     # AI Configuration
     OPENAI_API_KEY: str = ""
     GOOGLE_AI_API_KEY: str = ""
@@ -43,7 +40,7 @@ class Settings(BaseSettings):
     SMTP_USE_TLS: bool = True
     
     # CORS
-    CORS_ORIGINS: str = "http://localhost:5000"
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5000"
     
     # Environment
     ENVIRONMENT: str = "development"
@@ -52,17 +49,35 @@ class Settings(BaseSettings):
     FEATURE_ROLES: bool = False
     FEATURE_ROLES_ENFORCE: bool = False
     
+    # Stripe Configuration
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_PUBLISHABLE_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_PRICE_IDS: str = "{}"  # JSON string with price IDs per plan
+    
+    # Exchange Rate API Configuration
+    EXCHANGE_RATE_API_KEY: str = ""  # API key for exchangerate-api.com (free tier available)
+    EXCHANGE_RATE_API_URL: str = "https://api.exchangerate-api.com/v4/latest"  # Free tier endpoint
+    
     @property
     def cors_origins_list(self) -> List[str]:
         """Parse CORS origins from comma-separated string"""
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
     
+    @property
+    def stripe_price_ids_dict(self) -> dict:
+        """Parse Stripe price IDs from JSON string"""
+        import json
+        try:
+            return json.loads(self.STRIPE_PRICE_IDS)
+        except (json.JSONDecodeError, TypeError):
+            return {}
+    
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = "ignore"  # Ignore extra fields in environment (e.g., deprecated APOLLO_API_KEY)
 
 
 # Create settings instance
 settings = Settings()
-
-

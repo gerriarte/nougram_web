@@ -1,7 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { useGetCurrencySettings, useUpdateCurrencySettings } from "@/lib/queries"
+import { useGetCurrencySettings, useUpdateCurrencySettings, useGetExchangeRates } from "@/lib/queries"
+import { useGetCurrentUser } from "@/lib/queries"
+import { canManageSubscription } from "@/lib/permissions"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -11,11 +13,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Loader2 } from "lucide-react"
-import { CURRENCIES } from "@/lib/currency"
+import { Loader2, TrendingUp, RefreshCw } from "lucide-react"
+import { CURRENCIES, formatCurrency } from "@/lib/currency"
+import { Badge } from "@/components/ui/badge"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export default function CurrencySettingsPage() {
-  const { data, isLoading, error } = useGetCurrencySettings()
+  const { data: currentUser } = useGetCurrentUser()
+  const canViewRates = canManageSubscription(currentUser) // owner or super_admin
+  const { data, isLoading, error } = useGetCurrencySettings(canViewRates)
+  const { data: exchangeRates, isLoading: ratesLoading, refetch: refetchRates } = useGetExchangeRates()
   const updateCurrency = useUpdateCurrencySettings()
   const [selectedCurrency, setSelectedCurrency] = useState<string>("")
 
@@ -130,6 +137,99 @@ export default function CurrencySettingsPage() {
         </CardContent>
       </Card>
 
+      {/* Exchange Rates Card - Only for owner/super_admin */}
+      {canViewRates && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5" />
+                  Cotizaciones del Día
+                </CardTitle>
+                <CardDescription>
+                  Cotizaciones del día respecto al USD (base). Se actualizan diariamente.
+                </CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refetchRates()}
+                disabled={ratesLoading}
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${ratesLoading ? 'animate-spin' : ''}`} />
+                Actualizar
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {ratesLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : exchangeRates?.rates ? (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {Object.entries(exchangeRates.rates).map(([currencyCode, rateInfo]: [string, any]) => {
+                    const currency = CURRENCIES.find(c => c.code === currencyCode)
+                    if (!currency) return null
+                    
+                    const isPrimary = data?.primary_currency === currencyCode
+                    const rate = rateInfo.rate || rateInfo.rate_to_usd || 1
+                    
+                    return (
+                      <div
+                        key={currencyCode}
+                        className={`rounded-md border p-4 ${isPrimary ? 'border-primary-500 bg-primary-50' : ''}`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="text-2xl font-bold">{currency.symbol}</span>
+                            <div>
+                              <p className="font-semibold">{currency.code}</p>
+                              <p className="text-xs text-muted-foreground">{currency.name}</p>
+                            </div>
+                          </div>
+                          {isPrimary && (
+                            <Badge variant="default">Principal</Badge>
+                          )}
+                        </div>
+                        <div className="mt-3 pt-3 border-t">
+                          <p className="text-sm text-muted-foreground mb-1">Tasa de cambio</p>
+                          <p className="text-lg font-bold">
+                            1 USD = {formatCurrency(rate, currencyCode, false)}
+                          </p>
+                          {rateInfo.last_updated && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Actualizado: {new Date(rateInfo.last_updated).toLocaleString('es-ES')}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+                {exchangeRates.base_currency && (
+                  <Alert>
+                    <AlertDescription className="text-sm">
+                      <strong>Moneda base:</strong> {exchangeRates.base_currency} (USD)
+                      <br />
+                      Las cotizaciones se actualizan automáticamente una vez al día. Puedes actualizarlas manualmente usando el botón de actualizar.
+                    </AlertDescription>
+                  </Alert>
+                )}
+              </div>
+            ) : (
+              <Alert>
+                <AlertDescription>
+                  No se pudieron cargar las cotizaciones. Verifica tu conexión a internet o intenta más tarde.
+                </AlertDescription>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle>Supported Currencies</CardTitle>
@@ -150,6 +250,10 @@ export default function CurrencySettingsPage() {
                     <p className="font-semibold">{currency.code}</p>
                     <p className="text-sm text-muted-foreground">{currency.name}</p>
                   </div>
+                </div>
+                <div className="mt-2 pt-2 border-t text-xs text-muted-foreground">
+                  <p>Formato: {currency.thousandsSeparator} para miles</p>
+                  <p>Decimales: {currency.decimalPlaces}</p>
                 </div>
               </div>
             ))}

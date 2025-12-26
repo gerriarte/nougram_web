@@ -2,7 +2,8 @@
 Currency utilities and constants
 """
 from enum import Enum
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
+import math
 
 
 class Currency(str, Enum):
@@ -13,26 +14,42 @@ class Currency(str, Enum):
     EUR = "EUR"  # Euro
 
 
-CURRENCY_INFO: Dict[str, Dict[str, str]] = {
+CURRENCY_INFO: Dict[str, Dict[str, Any]] = {
     "USD": {
         "symbol": "$",
         "name": "US Dollar",
         "locale": "en-US",
+        "decimal_places": 2,
+        "thousands_separator": ",",  # Thousands separator
+        "decimal_separator": ".",  # Decimal separator
+        "grouping": 3,  # Group digits by 3 (thousands, millions, etc.)
     },
     "COP": {
         "symbol": "$",
         "name": "Colombian Peso",
         "locale": "es-CO",
+        "decimal_places": 0,  # COP typically doesn't use decimals
+        "thousands_separator": ".",  # Thousands separator (period in Spanish)
+        "decimal_separator": ",",  # Decimal separator (comma in Spanish)
+        "grouping": 3,  # Group digits by 3 (thousands, millions, etc.)
     },
     "ARS": {
         "symbol": "$",
         "name": "Argentine Peso",
         "locale": "es-AR",
+        "decimal_places": 2,
+        "thousands_separator": ".",  # Thousands separator
+        "decimal_separator": ",",  # Decimal separator
+        "grouping": 3,  # Group digits by 3 (thousands, millions, etc.)
     },
     "EUR": {
         "symbol": "€",
         "name": "Euro",
         "locale": "en-EU",
+        "decimal_places": 2,
+        "thousands_separator": ".",  # Thousands separator
+        "decimal_separator": ",",  # Decimal separator
+        "grouping": 3,  # Group digits by 3 (thousands, millions, etc.)
     },
 }
 
@@ -47,28 +64,58 @@ EXCHANGE_RATES_TO_USD: Dict[str, float] = {
 }
 
 
-def format_currency(amount: float, currency: str = "USD") -> str:
+def format_currency(amount: float, currency: str = "USD", use_grouping: bool = True) -> str:
     """
-    Format amount as currency string
+    Format amount as currency string with proper thousands/millions grouping
     
     Args:
         amount: Amount to format
         currency: Currency code (USD, COP, ARS, EUR)
+        use_grouping: Whether to use thousands/millions grouping (default: True)
         
     Returns:
-        Formatted currency string
+        Formatted currency string (e.g., "$ 1.000.000" for COP, "$ 1,000,000.00" for USD)
     """
     currency_info = CURRENCY_INFO.get(currency, CURRENCY_INFO["USD"])
-    locale = currency_info.get("locale", "en-US")
     symbol = currency_info.get("symbol", "$")
+    decimal_places = currency_info.get("decimal_places", 2)
+    thousands_sep = currency_info.get("thousands_separator", ",")
+    decimal_sep = currency_info.get("decimal_separator", ".")
+    grouping = currency_info.get("grouping", 3)
     
-    # Use locale-aware formatting
-    try:
-        formatted = f"{symbol} {amount:,.2f}"
-        return formatted
-    except Exception:
-        # Fallback to simple formatting
-        return f"{symbol} {amount:.2f}"
+    # Round to appropriate decimal places
+    rounded_amount = round(amount, decimal_places)
+    
+    # Split into integer and decimal parts
+    integer_part = int(abs(rounded_amount))
+    decimal_part = abs(rounded_amount) - integer_part
+    
+    # Format integer part with grouping
+    if use_grouping and grouping > 0:
+        integer_str = str(integer_part)
+        # Reverse string to group from right to left
+        reversed_str = integer_str[::-1]
+        grouped_parts = []
+        for i in range(0, len(reversed_str), grouping):
+            grouped_parts.append(reversed_str[i:i+grouping])
+        grouped_str = thousands_sep.join(grouped_parts)
+        integer_str = grouped_str[::-1]
+    else:
+        integer_str = str(integer_part)
+    
+    # Format decimal part
+    if decimal_places > 0 and decimal_part > 0:
+        decimal_str = f"{decimal_part:.{decimal_places}f}"[2:]  # Remove "0."
+        formatted_amount = f"{integer_str}{decimal_sep}{decimal_str}"
+    else:
+        formatted_amount = integer_str
+    
+    # Add negative sign if needed
+    if rounded_amount < 0:
+        formatted_amount = f"-{formatted_amount}"
+    
+    # Add currency symbol
+    return f"{symbol} {formatted_amount}"
 
 
 def get_currency_symbol(currency: str = "USD") -> str:
