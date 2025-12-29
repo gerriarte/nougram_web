@@ -69,9 +69,14 @@ class Quote(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
+    # Sprint 16: Revision fields
+    revisions_included = Column(Integer, default=2, nullable=False)  # Number of included revisions
+    revision_cost_per_additional = Column(Float, nullable=True)  # Cost per additional revision
+    
     # Relationships
     project = relationship("Project", back_populates="quotes")
     items = relationship("QuoteItem", back_populates="quote", cascade="all, delete-orphan")
+    expenses = relationship("QuoteExpense", back_populates="quote", cascade="all, delete-orphan")
 
 
 class QuoteItem(Base):
@@ -83,13 +88,40 @@ class QuoteItem(Base):
     id = Column(Integer, primary_key=True, index=True)
     quote_id = Column(Integer, ForeignKey("quotes.id"), nullable=False)
     service_id = Column(Integer, ForeignKey("services.id"), nullable=False)
-    estimated_hours = Column(Float, nullable=False)
+    estimated_hours = Column(Float, nullable=True)  # Nullable for fixed/recurring pricing
     internal_cost = Column(Float, nullable=True)
     client_price = Column(Float, nullable=True)
     margin_percentage = Column(Float, nullable=True)
     
+    # Pricing type fields (Sprint 14) - Can override service pricing_type
+    pricing_type = Column(String, nullable=True)  # Overrides service pricing_type: "hourly", "fixed", "recurring", "project_value"
+    fixed_price = Column(Float, nullable=True)  # If pricing_type = "fixed"
+    quantity = Column(Float, default=1.0)  # For modules/milestones (fixed pricing)
+    
     # Relationships
     quote = relationship("Quote", back_populates="items")
     service = relationship("Service")
+
+
+class QuoteExpense(Base):
+    """
+    Quote expense model (third-party costs, materials, licenses with markup)
+    Sprint 15: Support for third-party expenses with markup for creative sectors
+    """
+    __tablename__ = "quote_expenses"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    quote_id = Column(Integer, ForeignKey("quotes.id"), nullable=False, index=True)
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    cost = Column(Float, nullable=False)  # Real cost
+    markup_percentage = Column(Float, default=0.0, nullable=False)  # Mark-up (0.10 = 10%)
+    client_price = Column(Float, nullable=False)  # cost * quantity * (1 + markup)
+    category = Column(String, nullable=True)  # "Third Party", "Materials", "Licenses"
+    quantity = Column(Float, default=1.0, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    quote = relationship("Quote", back_populates="expenses")
 
 

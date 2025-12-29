@@ -45,8 +45,6 @@ from app.schemas.auth import (
     UserResponse,
 )
 from app.schemas.integration import (
-    ApolloSearchRequest,
-    ApolloSearchResponse,
     GoogleSheetsSyncRequest,
     GoogleSheetsSyncResponse,
 )
@@ -95,8 +93,6 @@ __all__ = [
     "TokenResponse",
     "UserResponse",
     # Integration schemas
-    "ApolloSearchRequest",
-    "ApolloSearchResponse",
     "GoogleSheetsSyncRequest",
     "GoogleSheetsSyncResponse",
     # Insight schemas

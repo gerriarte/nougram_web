@@ -11,7 +11,8 @@ from app.core.security import get_current_user
 from app.core.tenant import get_tenant_context, TenantContext
 from app.core.calculations import calculate_blended_cost_rate
 from app.core.exceptions import ResourceNotFoundError, BusinessLogicError
-from app.core.permissions import can_create, can_edit, can_delete, PermissionError
+from app.core.permissions import can_create, can_edit, can_delete, PermissionError, PERM_VIEW_SENSITIVE_DATA, PERM_MODIFY_COSTS, PERM_DELETE_RESOURCES
+from app.core.permission_middleware import require_view_sensitive_data, require_modify_costs, require_delete_resources
 from app.models.user import User
 from app.models.cost import CostFixed
 from app.models.role import DeleteRequest, DeleteRequestStatus
@@ -30,7 +31,7 @@ router = APIRouter()
 @router.get("/costs/fixed", response_model=CostFixedListResponse)
 async def list_fixed_costs(
     tenant: TenantContext = Depends(get_tenant_context),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_view_sensitive_data),  # Require permission to view sensitive data (costs)
     db: AsyncSession = Depends(get_db),
     include_deleted: bool = False,
     page: int = Query(1, ge=1, description="Page number (1-indexed)"),
@@ -39,6 +40,11 @@ async def list_fixed_costs(
     """
     List all fixed costs with pagination
     By default, excludes soft-deleted items (deleted_at IS NULL)
+    
+    **Permissions:**
+    - Requires `can_view_sensitive_data` permission (costs are sensitive data)
+    - Allowed roles: owner, admin_financiero, super_admin
+    - Denied roles: product_manager, collaborator (data leakage prevention)
     """
     from app.core.logging import get_logger
     logger = get_logger(__name__)
@@ -77,19 +83,17 @@ async def list_fixed_costs(
 async def create_fixed_cost(
     cost_data: CostFixedCreate,
     tenant: TenantContext = Depends(get_tenant_context),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_modify_costs),  # Require permission to modify costs
     db: AsyncSession = Depends(get_db)
 ):
     """
     Create a new fixed cost
     
-    Permissions:
-    - Super Admin: Allowed
-    - Admin Financiero: Allowed
-    - Product Manager: Not allowed
+    **Permissions:**
+    - Requires `can_modify_costs` permission
+    - Allowed roles: owner, admin_financiero, super_admin
+    - Denied roles: product_manager, collaborator
     """
-    if not can_create(current_user, "cost"):
-        raise PermissionError("You don't have permission to create costs")
     try:
         # Ensure all required fields have values
         cost_dict = cost_data.model_dump()
@@ -137,20 +141,18 @@ async def update_fixed_cost(
     cost_id: int,
     cost_data: CostFixedUpdate,
     tenant: TenantContext = Depends(get_tenant_context),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_modify_costs),  # Require permission to modify costs
     db: AsyncSession = Depends(get_db)
 ):
     """
     Update an existing fixed cost
     Cannot update soft-deleted costs
     
-    Permissions:
-    - Super Admin: Allowed
-    - Admin Financiero: Allowed
-    - Product Manager: Not allowed
+    **Permissions:**
+    - Requires `can_modify_costs` permission
+    - Allowed roles: owner, admin_financiero, super_admin
+    - Denied roles: product_manager, collaborator
     """
-    if not can_edit(current_user, "cost"):
-        raise PermissionError("You don't have permission to edit costs")
     try:
         cost_repo = RepositoryFactory.create_cost_repository(db, tenant.organization_id)
         cost = await cost_repo.get_by_id(cost_id, include_deleted=False)
@@ -204,23 +206,32 @@ async def update_fixed_cost(
 async def delete_fixed_cost(
     cost_id: int,
     tenant: TenantContext = Depends(get_tenant_context),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_current_user),  # Permission check inside due to complex logic
     db: AsyncSession = Depends(get_db)
 ):
     """
     Soft delete a fixed cost (move to trash)
     Fixed costs are used in calculations, so deletion will affect the blended cost rate.
     
-    Permissions:
-    - Super Admin: Can delete immediately
-    - Admin Financiero: Creates delete request (requires approval)
-    - Product Manager: Not allowed
+    **Permissions:**
+    - Requires `can_delete_resources` permission
+    - Allowed roles: owner, super_admin (can delete immediately)
+    - Admin Financiero: Not allowed (only owner can delete)
+    - Denied roles: product_manager, collaborator
     """
-    # Check permissions
-    can_delete_resource, requires_approval = can_delete(current_user, "cost")
+    # Check permissions - use require_delete_resources dependency logic
+    from app.core.permissions import check_permission, PERM_DELETE_RESOURCES
+    try:
+        check_permission(current_user, PERM_DELETE_RESOURCES)
+    except PermissionError:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to delete costs"
+        )
     
-    if not can_delete_resource:
-        raise PermissionError("You don't have permission to delete costs")
+    # Check if deletion requires approval (currently only owner and super_admin can delete)
+    # For now, all users with PERM_DELETE_RESOURCES can delete immediately
+    requires_approval = False
     
     # Verify if the cost exists and is not already deleted
     cost_repo = RepositoryFactory.create_cost_repository(db, tenant.organization_id)
@@ -496,6 +507,3 @@ async def calculate_agency_cost_hour(
             currencies_used=[],
             exchange_rates_date=datetime.now().isoformat()
         )
-
-
-

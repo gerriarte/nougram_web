@@ -9,10 +9,23 @@ from datetime import datetime, timedelta
 
 from app.core.database import get_db
 from app.core.security import get_current_user
+from app.core.tenant import get_tenant_context, TenantContext
+from app.core.logging import get_logger
+from app.core.error_codes import ErrorCode
+from app.core.translations import translate_error
 from app.models.user import User
 from app.services.ai_service import ai_service
+from app.schemas.ai import (
+    OnboardingSuggestionRequest,
+    OnboardingSuggestionResponse,
+    DocumentParseRequest,
+    DocumentParseResponse,
+    NaturalLanguageCommandRequest,
+    NaturalLanguageCommandResponse
+)
 from pydantic import BaseModel
 
+logger = get_logger(__name__)
 router = APIRouter()
 
 
@@ -134,6 +147,109 @@ async def demo_analysis(
         "usage": result.get('usage'),
         "note": "Este análisis usa datos de ejemplo para demostración"
     }
+
+
+@router.post("/suggest-config", response_model=OnboardingSuggestionResponse, summary="Get AI-powered onboarding suggestions")
+async def suggest_onboarding_config(
+    request: OnboardingSuggestionRequest,
+    tenant: TenantContext = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Get AI-powered suggestions for onboarding configuration based on industry, region, and currency.
+    
+    This endpoint uses OpenAI's Structured Outputs to generate:
+    - Suggested team roles with realistic salaries for the region
+    - Suggested services typical for the industry
+    - Suggested fixed costs (software, tools, etc.)
+    
+    **Permissions:**
+    - All authenticated users can request suggestions for their organization
+    
+    **Request Body:**
+    - `industry`: Industry type (e.g., 'Marketing Digital', 'Desarrollo Web')
+    - `region`: Region code (e.g., 'US', 'CO', 'MX') - defaults to 'US'
+    - `currency`: Primary currency - defaults to 'USD'
+    - `custom_context`: Optional additional context about the business
+    
+    **Returns:**
+    - `200 OK`: Suggestions generated successfully
+    - `503 Service Unavailable`: AI service not configured
+    - `500 Internal Server Error`: Error processing request
+    
+    **Response includes:**
+    - `suggested_roles`: List of suggested team members with salaries
+    - `suggested_services`: List of suggested services with pricing models
+    - `suggested_fixed_costs`: List of suggested fixed costs
+    - `confidence_scores`: Confidence scores for each category
+    - `reasoning`: AI reasoning for the suggestions
+    """
+    if not ai_service.is_available():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=translate_error(ErrorCode.AI_SERVICE_UNAVAILABLE)
+        )
+    
+    try:
+        # Call AI service
+        result = await ai_service.suggest_onboarding_data(
+            industry=request.industry,
+            region=request.region,
+            currency=request.currency,
+            custom_context=request.custom_context
+        )
+        
+        if not result.get('success'):
+            error_msg = result.get('error', 'Unknown error')
+            logger.error(f"AI service error: {error_msg}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=translate_error(ErrorCode.AI_PROCESSING_ERROR, detail=error_msg)
+            )
+        
+        # Extract data from result
+        data = result.get('data', {})
+        
+        # Validate and convert to Pydantic schema
+        try:
+            suggestion_response = OnboardingSuggestionResponse(
+                suggested_roles=data.get('suggested_roles', []),
+                suggested_services=data.get('suggested_services', []),
+                suggested_fixed_costs=data.get('suggested_fixed_costs', []),
+                confidence_scores=data.get('confidence_scores', {}),
+                reasoning=data.get('reasoning')
+            )
+            
+            logger.info(
+                f"AI suggestions generated for industry={request.industry}, region={request.region}",
+                extra={
+                    "organization_id": tenant.organization_id,
+                    "user_id": current_user.id,
+                    "roles_count": len(suggestion_response.suggested_roles),
+                    "services_count": len(suggestion_response.suggested_services),
+                    "costs_count": len(suggestion_response.suggested_fixed_costs),
+                    "usage": result.get('usage', {})
+                }
+            )
+            
+            return suggestion_response
+            
+        except Exception as validation_error:
+            logger.error(f"Error validating AI response: {validation_error}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=translate_error(ErrorCode.AI_PROCESSING_ERROR, detail="Invalid response format from AI service")
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in suggest_onboarding_config: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=translate_error(ErrorCode.UNKNOWN_ERROR)
+        )
 
 
 def _get_mock_financial_context() -> dict:

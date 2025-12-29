@@ -10,6 +10,9 @@ import logging
 from app.core.config import settings
 from app.core.database import engine, Base
 from app.api.v1.router import api_router
+from app.core.rate_limiting import limiter, rate_limit_exceeded_handler
+from app.core.permissions import PermissionError
+from slowapi.errors import RateLimitExceeded
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -46,6 +49,27 @@ app.add_middleware(
     expose_headers=["*"],
     max_age=3600,
 )
+
+# Configure rate limiting
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+
+# Add PermissionError handler
+@app.exception_handler(PermissionError)
+async def permission_error_handler(request: Request, exc: PermissionError):
+    """Handle PermissionError exceptions"""
+    return JSONResponse(
+        status_code=status.HTTP_403_FORBIDDEN,
+        content={
+            "detail": str(exc)
+        },
+        headers={
+            "Access-Control-Allow-Origin": settings.cors_origins_list[0] if settings.cors_origins_list else "*",
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+        }
+    )
 
 # Include API router
 app.include_router(api_router, prefix="/api/v1")
@@ -90,4 +114,4 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=5000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

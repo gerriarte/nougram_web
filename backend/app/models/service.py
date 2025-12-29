@@ -19,6 +19,14 @@ class Service(Base):
     description = Column(String, nullable=True)
     default_margin_target = Column(Float, default=0.40)  # 40%
     is_active = Column(Boolean, default=True)
+    
+    # Pricing type fields (Sprint 14)
+    pricing_type = Column(String, default="hourly", nullable=False)  # "hourly", "fixed", "recurring", "project_value"
+    fixed_price = Column(Float, nullable=True)  # If pricing_type = "fixed"
+    is_recurring = Column(Boolean, default=False)  # If pricing_type = "recurring"
+    billing_frequency = Column(String, nullable=True)  # "monthly", "annual" (for recurring)
+    recurring_price = Column(Float, nullable=True)  # Recurring price (for recurring services)
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     

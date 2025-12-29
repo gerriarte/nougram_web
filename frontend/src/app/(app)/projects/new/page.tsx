@@ -21,12 +21,13 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Plus, Trash2, Loader2, AlertCircle } from "lucide-react"
-import { useGetServices, useCreateProject, useCalculateQuote, useGetTaxes } from "@/lib/queries"
+import { useGetServices, useCreateProject, useCalculateQuote, useGetTaxes, useGetCurrentUser, useGetOrganizationStats } from "@/lib/queries"
 import { useToast } from "@/hooks/use-toast"
 import { MESSAGES } from "@/lib/messages"
 import { formatCurrency, SUPPORTED_CURRENCIES } from "@/lib/currency"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { logger } from "@/lib/logger"
+import { LimitIndicator, canCreateResource } from "@/components/organization/LimitIndicator"
 
 interface Service {
   id: number
@@ -34,11 +35,22 @@ interface Service {
   description?: string
   default_margin_target: number
   is_active: boolean
+  pricing_type?: string  // "hourly", "fixed", "recurring", "project_value"
+  fixed_price?: number
+  is_recurring?: boolean
+  billing_frequency?: string  // "monthly", "annual"
+  recurring_price?: number
 }
 
 interface QuoteItem {
   service_id: number
-  estimated_hours: number
+  estimated_hours?: number  // Required for hourly pricing
+  pricing_type?: string  // Can override service pricing_type
+  fixed_price?: number  // For fixed pricing
+  quantity?: number  // For fixed/recurring pricing
+  recurring_price?: number  // For recurring pricing
+  billing_frequency?: string  // For recurring pricing
+  project_value?: number  // For project_value pricing
 }
 
 interface CalculatedQuoteItem extends QuoteItem {
@@ -77,6 +89,9 @@ export default function NewQuotePage() {
   const [isCalculating, setIsCalculating] = useState(false)
   const [marginsAlertVisible, setMarginsAlertVisible] = useState(false)
 
+  const { data: currentUser } = useGetCurrentUser()
+  const organizationId = currentUser?.organization_id
+  const { data: orgStats } = useGetOrganizationStats(organizationId ?? 0)
   const { data: servicesData, isLoading: servicesLoading } = useGetServices()
   const { data: taxesData, isLoading: taxesLoading } = useGetTaxes(undefined, true)
   const createProjectMutation = useCreateProject()
@@ -84,6 +99,9 @@ export default function NewQuotePage() {
 
   const services = servicesData?.items || []
   const taxes = taxesData?.items || []
+  const canCreateProject = orgStats 
+    ? canCreateResource(orgStats.current_usage.projects, orgStats.limits.projects)
+    : true
 
   // Auto-calculate quote when items change
   useEffect(() => {
@@ -147,10 +165,27 @@ export default function NewQuotePage() {
       return
     }
     
-    setQuoteItems([...quoteItems, {
+    // Initialize quote item based on service pricing type
+    const pricingType = availableService.pricing_type || "hourly"
+    const newItem: QuoteItem = {
       service_id: availableService.id,
-      estimated_hours: 10
-    }])
+      pricing_type: pricingType,
+      quantity: 1.0
+    }
+    
+    // Set default values based on pricing type
+    if (pricingType === "hourly") {
+      newItem.estimated_hours = 10
+    } else if (pricingType === "fixed") {
+      newItem.fixed_price = availableService.fixed_price || 0
+    } else if (pricingType === "recurring") {
+      newItem.recurring_price = availableService.recurring_price || 0
+      newItem.billing_frequency = availableService.billing_frequency || "monthly"
+    } else if (pricingType === "project_value") {
+      newItem.project_value = availableService.fixed_price || 0
+    }
+    
+    setQuoteItems([...quoteItems, newItem])
   }
 
   const handleRemoveService = (index: number) => {
@@ -165,7 +200,33 @@ export default function NewQuotePage() {
 
   const handleServiceChange = (index: number, serviceId: string) => {
     const newItems = [...quoteItems]
-    newItems[index].service_id = parseInt(serviceId)
+    const service = services.find((s: Service) => s.id === parseInt(serviceId))
+    if (service) {
+      const pricingType = service.pricing_type || "hourly"
+      newItems[index] = {
+        service_id: service.id,
+        pricing_type: pricingType,
+        quantity: 1.0
+      }
+      
+      // Set default values based on pricing type
+      if (pricingType === "hourly") {
+        newItems[index].estimated_hours = 10
+      } else if (pricingType === "fixed") {
+        newItems[index].fixed_price = service.fixed_price || 0
+      } else if (pricingType === "recurring") {
+        newItems[index].recurring_price = service.recurring_price || 0
+        newItems[index].billing_frequency = service.billing_frequency || "monthly"
+      } else if (pricingType === "project_value") {
+        newItems[index].project_value = service.fixed_price || 0
+      }
+    }
+    setQuoteItems(newItems)
+  }
+
+  const handleFieldChange = (index: number, field: string, value: any) => {
+    const newItems = [...quoteItems]
+    ;(newItems[index] as any)[field] = value
     setQuoteItems(newItems)
   }
 
@@ -207,7 +268,13 @@ export default function NewQuotePage() {
         tax_ids: selectedTaxIds,
         quote_items: quoteItems.map(item => ({
           service_id: item.service_id,
-          estimated_hours: item.estimated_hours
+          estimated_hours: item.estimated_hours,
+          pricing_type: item.pricing_type,
+          fixed_price: item.fixed_price,
+          quantity: item.quantity,
+          recurring_price: item.recurring_price,
+          billing_frequency: item.billing_frequency,
+          project_value: item.project_value
         }))
       }
       
@@ -264,6 +331,13 @@ export default function NewQuotePage() {
               <CardDescription>Basic project and client details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {orgStats && (
+                <LimitIndicator
+                  current={orgStats.current_usage.projects}
+                  limit={orgStats.limits.projects}
+                  resourceName="Proyectos"
+                />
+              )}
               <div>
                 <label htmlFor="projectName" className="text-sm font-medium mb-2 block">
                   Project Name *
@@ -386,41 +460,150 @@ export default function NewQuotePage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Service</TableHead>
-                        <TableHead className="text-right">Hours</TableHead>
+                        <TableHead>Pricing Details</TableHead>
+                        <TableHead className="w-12"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {quoteItems.map((item, index) => (
-                        <TableRow key={index}>
-                          <TableCell>
-                            <Select
-                              value={item.service_id.toString()}
-                              onValueChange={(val) => handleServiceChange(index, val)}
-                            >
-                              <SelectTrigger className="w-full">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {services
-                                  .filter((s: Service) => s.is_active)
-                                  .map((service: Service) => (
-                                    <SelectItem key={service.id} value={service.id.toString()}>
-                                      {service.name}
-                                    </SelectItem>
-                                  ))}
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <Input
-                                type="number"
-                                min="1"
-                                step="0.5"
-                                value={item.estimated_hours}
-                                onChange={(e) => handleHoursChange(index, parseFloat(e.target.value) || 0)}
-                                className="w-24"
-                              />
+                      {quoteItems.map((item, index) => {
+                        const service = services.find((s: Service) => s.id === item.service_id)
+                        const pricingType = item.pricing_type || service?.pricing_type || "hourly"
+                        
+                        return (
+                          <TableRow key={index}>
+                            <TableCell>
+                              <Select
+                                value={item.service_id.toString()}
+                                onValueChange={(val) => handleServiceChange(index, val)}
+                              >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {services
+                                    .filter((s: Service) => s.is_active)
+                                    .map((service: Service) => (
+                                      <SelectItem key={service.id} value={service.id.toString()}>
+                                        {service.name}
+                                      </SelectItem>
+                                    ))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell>
+                              <div className="space-y-2">
+                                {pricingType === "hourly" && (
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      type="number"
+                                      min="0.5"
+                                      step="0.5"
+                                      placeholder="Hours"
+                                      value={item.estimated_hours || ""}
+                                      onChange={(e) => handleFieldChange(index, "estimated_hours", parseFloat(e.target.value) || 0)}
+                                      className="w-24"
+                                    />
+                                    <span className="text-xs text-muted-foreground">hours</span>
+                                  </div>
+                                )}
+                                {pricingType === "fixed" && (
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      step="0.01"
+                                      placeholder="Price"
+                                      value={item.fixed_price || ""}
+                                      onChange={(e) => handleFieldChange(index, "fixed_price", parseFloat(e.target.value) || 0)}
+                                      className="w-32"
+                                    />
+                                    <Input
+                                      type="number"
+                                      min="1"
+                                      step="1"
+                                      placeholder="Qty"
+                                      value={item.quantity || 1}
+                                      onChange={(e) => handleFieldChange(index, "quantity", parseFloat(e.target.value) || 1)}
+                                      className="w-20"
+                                    />
+                                    <span className="text-xs text-muted-foreground">× quantity</span>
+                                  </div>
+                                )}
+                                {pricingType === "recurring" && (
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <Input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        placeholder="Price"
+                                        value={item.recurring_price || ""}
+                                        onChange={(e) => handleFieldChange(index, "recurring_price", parseFloat(e.target.value) || 0)}
+                                        className="w-32"
+                                      />
+                                      <Select
+                                        value={item.billing_frequency || "monthly"}
+                                        onValueChange={(val) => handleFieldChange(index, "billing_frequency", val)}
+                                      >
+                                        <SelectTrigger className="w-28">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="monthly">Monthly</SelectItem>
+                                          <SelectItem value="annual">Annual</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    {item.estimated_hours && (
+                                      <div className="flex items-center gap-2">
+                                        <Input
+                                          type="number"
+                                          min="0.5"
+                                          step="0.5"
+                                          placeholder="Hours"
+                                          value={item.estimated_hours}
+                                          onChange={(e) => handleFieldChange(index, "estimated_hours", parseFloat(e.target.value) || 0)}
+                                          className="w-24"
+                                        />
+                                        <span className="text-xs text-muted-foreground">(optional)</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                                {pricingType === "project_value" && (
+                                  <div className="flex items-center gap-2">
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      step="0.01"
+                                      placeholder="Project Value"
+                                      value={item.project_value || item.fixed_price || ""}
+                                      onChange={(e) => {
+                                        const val = parseFloat(e.target.value) || 0
+                                        handleFieldChange(index, "project_value", val)
+                                        handleFieldChange(index, "fixed_price", val)
+                                      }}
+                                      className="w-32"
+                                    />
+                                    {item.estimated_hours && (
+                                      <>
+                                        <Input
+                                          type="number"
+                                          min="0.5"
+                                          step="0.5"
+                                          placeholder="Hours"
+                                          value={item.estimated_hours}
+                                          onChange={(e) => handleFieldChange(index, "estimated_hours", parseFloat(e.target.value) || 0)}
+                                          className="w-24"
+                                        />
+                                        <span className="text-xs text-muted-foreground">(optional)</span>
+                                      </>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
                               <Button
                                 variant="ghost"
                                 size="icon"
@@ -429,10 +612,10 @@ export default function NewQuotePage() {
                               >
                                 <Trash2 className="h-4 w-4 text-destructive" />
                               </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })}
                     </TableBody>
                   </Table>
                 </div>
@@ -558,7 +741,8 @@ export default function NewQuotePage() {
                 createProjectMutation.isPending ||
                 !projectName.trim() ||
                 !clientName.trim() ||
-                quoteItems.length === 0
+                quoteItems.length === 0 ||
+                !canCreateProject
               }
             >
               {createProjectMutation.isPending ? (

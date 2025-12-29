@@ -8,9 +8,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.config import settings
+from app.core.logging import get_logger
 from app.models.cost import CostFixed
 from app.models.team import TeamMember
 from app.models.user import User
+
+logger = get_logger(__name__)
 
 
 def get_sheets_client() -> Optional[gspread.Client]:
@@ -33,13 +36,14 @@ def get_sheets_client() -> Optional[gspread.Client]:
         return client
         
     except Exception as e:
-        print(f"Error getting Google Sheets client: {e}")
+        logger.error(f"Error getting Google Sheets client: {e}", exc_info=True)
         return None
 
 
 async def sync_google_sheets_data(
     sheet_id: Optional[str] = None,
     range_name: Optional[str] = None,
+    organization_id: Optional[int] = None,
     db: AsyncSession = None
 ) -> Dict:
     """
@@ -48,6 +52,7 @@ async def sync_google_sheets_data(
     Args:
         sheet_id: Google Sheets ID (uses default from config if not provided)
         range_name: Range to sync (e.g., 'Sheet1!A1:Z100')
+        organization_id: Organization ID for tenant scoping (required for multi-tenant)
         db: Database session
         
     Returns:
@@ -88,12 +93,11 @@ async def sync_google_sheets_data(
             
             for row in costs_data:
                 try:
-                    # Check if cost already exists
-                    result = await db.execute(
-                        select(CostFixed).where(
-                            CostFixed.name == row.get("name", "")
-                        )
-                    )
+                    # Check if cost already exists (with tenant scoping if organization_id provided)
+                    query = select(CostFixed).where(CostFixed.name == row.get("name", ""))
+                    if organization_id is not None:
+                        query = query.where(CostFixed.organization_id == organization_id)
+                    result = await db.execute(query)
                     existing = result.scalar_one_or_none()
                     
                     if existing:
@@ -101,11 +105,12 @@ async def sync_google_sheets_data(
                         existing.amount_monthly = float(row.get("amount_monthly", 0))
                         existing.category = row.get("category", "")
                     else:
-                        # Create new cost
+                        # Create new cost (with tenant scoping)
                         new_cost = CostFixed(
                             name=row.get("name", ""),
                             amount_monthly=float(row.get("amount_monthly", 0)),
-                            category=row.get("category", "general")
+                            category=row.get("category", "general"),
+                            organization_id=organization_id  # Multi-tenant: assign to organization
                         )
                         db.add(new_cost)
                     
@@ -125,12 +130,11 @@ async def sync_google_sheets_data(
             
             for row in team_data:
                 try:
-                    # Check if team member already exists
-                    result = await db.execute(
-                        select(TeamMember).where(
-                            TeamMember.name == row.get("name", "")
-                        )
-                    )
+                    # Check if team member already exists (with tenant scoping if organization_id provided)
+                    query = select(TeamMember).where(TeamMember.name == row.get("name", ""))
+                    if organization_id is not None:
+                        query = query.where(TeamMember.organization_id == organization_id)
+                    result = await db.execute(query)
                     existing = result.scalar_one_or_none()
                     
                     if existing:
@@ -140,9 +144,18 @@ async def sync_google_sheets_data(
                         existing.role = row.get("role", "")
                         existing.is_active = row.get("is_active", True)
                     else:
-                        # Create new member (would need user_id, but for now skip)
-                        # In production, you'd need to map email to user_id
-                        errors.append(f"New team member '{row.get('name')}' requires user association")
+                        # Create new member (with tenant scoping)
+                        # Note: user_id would need to be mapped from email if available
+                        new_member = TeamMember(
+                            name=row.get("name", ""),
+                            salary_monthly_brute=float(row.get("salary_monthly_brute", 0)),
+                            billable_hours_per_week=float(row.get("billable_hours_per_week", 40)),
+                            role=row.get("role", ""),
+                            is_active=row.get("is_active", True),
+                            organization_id=organization_id,  # Multi-tenant: assign to organization
+                            currency=row.get("currency", "USD")
+                        )
+                        db.add(new_member)
                     
                     records_synced += 1
                 except Exception as e:
@@ -167,4 +180,3 @@ async def sync_google_sheets_data(
             "records_synced": 0,
             "errors": [str(e)]
         }
-

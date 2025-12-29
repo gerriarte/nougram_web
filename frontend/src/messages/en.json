@@ -1,0 +1,59 @@
+{
+  "errors": {
+    "INVALID_CREDENTIALS": "Invalid credentials",
+    "UNAUTHORIZED": "Unauthorized",
+    "PERMISSION_DENIED": "You don't have permission to perform this action",
+    "TOKEN_EXPIRED": "Your session has expired. Please log in again",
+    "TOKEN_INVALID": "Invalid authentication token",
+    
+    "RESOURCE_NOT_FOUND": "The requested resource does not exist or has been deleted",
+    "RESOURCE_ALREADY_EXISTS": "The resource already exists",
+    "RESOURCE_IN_USE": "Cannot delete. It is being used in {count} {resource}",
+    "RESOURCE_DELETED": "The resource has been deleted",
+    
+    "VALIDATION_ERROR": "Validation error",
+    "INVALID_INPUT": "Invalid input data",
+    "MISSING_REQUIRED_FIELD": "Missing required field: {field}",
+    "INVALID_FORMAT": "Invalid format for field: {field}",
+    
+    "OPERATION_NOT_ALLOWED": "This operation is not allowed",
+    "LIMIT_EXCEEDED": "The limit for your plan has been exceeded",
+    "INSUFFICIENT_CREDITS": "Insufficient credits. You have {current} credits, but need {required}",
+    "QUOTE_REQUIRED": "At least one item is required in the quote",
+    
+    "ORG_NOT_FOUND": "The organization does not exist or has been deleted",
+    "USER_NOT_FOUND": "User not found",
+    "USER_ALREADY_EXISTS": "The user already exists",
+    "ORG_SWITCH_DENIED": "You don't have permission to switch to this organization",
+    
+    "PROJECT_NOT_FOUND": "The project does not exist or has been deleted",
+    "QUOTE_NOT_FOUND": "The quote does not exist or has been deleted",
+    "SERVICE_NOT_FOUND": "The service does not exist, is inactive, or has been deleted",
+    "TAX_NOT_FOUND": "The tax does not exist, is inactive, or has been deleted",
+    
+    "EMAIL_SEND_FAILED": "Failed to send email. Please check SMTP configuration",
+    "SMTP_CONFIGURATION_ERROR": "SMTP configuration error",
+    "PAYMENT_PROCESSING_ERROR": "Payment processing error",
+    
+    "INTERNAL_ERROR": "Internal server error",
+    "DATABASE_ERROR": "Database error",
+    "NETWORK_ERROR": "Network connection error",
+    "UNKNOWN_ERROR": "Unknown error"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "update": "Update",
+    "close": "Close",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No"
+  }
+}
+

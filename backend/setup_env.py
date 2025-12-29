@@ -35,9 +35,6 @@ GOOGLE_SERVICE_ACCOUNT_PATH=./config/google-service-account.json
 # Google Sheets Configuration
 GOOGLE_SHEETS_ID=dummy-sheet-id
 
-# Apollo.io Configuration
-APOLLO_API_KEY=dummy-apollo-api-key
-
 # AI Configuration (opcional por ahora)
 OPENAI_API_KEY=
 GOOGLE_AI_API_KEY=

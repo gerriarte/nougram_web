@@ -52,3 +52,13 @@ pytest --cov=app --cov-report=html
 - Las tablas se crean y destruyen automáticamente
 
 
+
+
+
+
+
+
+
+
+
+

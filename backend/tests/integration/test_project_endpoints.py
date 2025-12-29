@@ -127,3 +127,13 @@ class TestProjectEndpoints:
         assert "not found" in data["detail"].lower() or "inactive" in data["detail"].lower()
 
 
+
+
+
+
+
+
+
+
+
+

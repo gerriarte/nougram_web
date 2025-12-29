@@ -47,7 +47,7 @@ class ProjectResponse(ProjectBase):
 
 
 class QuoteResponse(BaseModel):
-    """Schema for quote response (without items)"""
+    """Schema for quote response (without items) - Sprint 16: includes revision fields"""
     id: int
     project_id: int
     version: int
@@ -55,6 +55,8 @@ class QuoteResponse(BaseModel):
     total_client_price: Optional[float] = None
     margin_percentage: Optional[float] = None
     notes: Optional[str] = None
+    revisions_included: int = Field(default=2, description="Number of included revisions")
+    revision_cost_per_additional: Optional[float] = Field(None, description="Cost per additional revision", ge=0)
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -72,9 +74,15 @@ class ProjectListResponse(BaseModel):
 
 
 class QuoteItemCreate(BaseModel):
-    """Schema for creating a quote item"""
+    """Schema for creating a quote item (Sprint 14: supports multiple pricing types)"""
     service_id: int = Field(..., description="Service ID", gt=0)
-    estimated_hours: float = Field(..., description="Estimated hours", gt=0)
+    estimated_hours: Optional[float] = Field(None, description="Estimated hours (required for hourly pricing)", ge=0)
+    pricing_type: Optional[str] = Field(None, description="Pricing type: 'hourly', 'fixed', 'recurring', 'project_value' (overrides service default)")
+    fixed_price: Optional[float] = Field(None, description="Fixed price (required for fixed pricing)", ge=0)
+    quantity: Optional[float] = Field(1.0, description="Quantity for fixed/recurring pricing", ge=0)
+    recurring_price: Optional[float] = Field(None, description="Recurring price (required for recurring pricing)", ge=0)
+    billing_frequency: Optional[str] = Field(None, description="Billing frequency: 'monthly', 'annual' (for recurring pricing)")
+    project_value: Optional[float] = Field(None, description="Project value (for project_value pricing)", ge=0)
 
 
 class QuoteItemResponse(BaseModel):
@@ -92,8 +100,10 @@ class QuoteItemResponse(BaseModel):
 
 
 class ProjectCreateWithQuote(ProjectCreate):
-    """Schema for creating a project with initial quote"""
+    """Schema for creating a project with initial quote - Sprint 16: includes revision fields"""
     quote_items: List[QuoteItemCreate] = Field(..., description="List of quote items", min_items=1)
+    revisions_included: Optional[int] = Field(default=2, description="Number of included revisions", ge=0)
+    revision_cost_per_additional: Optional[float] = Field(None, description="Cost per additional revision", ge=0)
 
 
 class QuoteResponseWithItems(QuoteResponse):
@@ -102,12 +112,16 @@ class QuoteResponseWithItems(QuoteResponse):
 
 
 class QuoteUpdate(BaseModel):
-    """Schema for updating a quote"""
+    """Schema for updating a quote - Sprint 16: includes revision fields"""
     items: List[QuoteItemCreate] = Field(..., description="List of quote items", min_items=1)
     notes: Optional[str] = Field(None, description="Notes for the quote")
+    revisions_included: Optional[int] = Field(None, description="Number of included revisions", ge=0)
+    revision_cost_per_additional: Optional[float] = Field(None, description="Cost per additional revision", ge=0)
 
 
 class QuoteCreateNewVersion(BaseModel):
-    """Schema for creating a new version of a quote"""
+    """Schema for creating a new version of a quote - Sprint 16: includes revision fields"""
     items: List[QuoteItemCreate] = Field(..., description="List of quote items", min_items=1)
     notes: Optional[str] = Field(None, description="Notes for the new version")
+    revisions_included: Optional[int] = Field(None, description="Number of included revisions", ge=0)
+    revision_cost_per_additional: Optional[float] = Field(None, description="Cost per additional revision", ge=0)

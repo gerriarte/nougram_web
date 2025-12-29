@@ -45,7 +45,7 @@ export default function CurrencySettingsPage() {
     return (
       <Card>
         <CardContent className="py-8">
-          <p className="text-sm text-destructive">Error loading currency settings</p>
+          <p className="text-sm text-destructive">Error al cargar la configuración de moneda</p>
         </CardContent>
       </Card>
     )
@@ -56,32 +56,32 @@ export default function CurrencySettingsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Currency Settings</h1>
+        <h1 className="text-3xl font-bold">Configuración de Moneda</h1>
         <p className="text-muted-foreground mt-2">
-          Configure the primary currency for cost calculations and reporting.
+          Configura la moneda principal para cálculos de costos y reportes.
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Primary Currency</CardTitle>
+          <CardTitle>Moneda Principal</CardTitle>
           <CardDescription>
-            All costs will be normalized to this currency for calculations.
-            Individual costs and salaries can be entered in different currencies
-            and will be automatically converted.
+            Todos los costos se normalizarán a esta moneda para los cálculos.
+            Los costos individuales y salarios pueden ingresarse en diferentes monedas
+            y se convertirán automáticamente.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="currency" className="text-sm font-medium">
-              Select Primary Currency
+              Seleccionar Moneda Principal
             </label>
             <Select
               value={currentCurrency}
               onValueChange={(value) => setSelectedCurrency(value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select currency" />
+                <SelectValue placeholder="Seleccionar moneda" />
               </SelectTrigger>
               <SelectContent>
                 {CURRENCIES.map((currency) => (
@@ -96,7 +96,7 @@ export default function CurrencySettingsPage() {
           {data && (
             <div className="rounded-md bg-muted p-4">
               <div className="space-y-2">
-                <p className="text-sm font-medium">Current Configuration</p>
+                <p className="text-sm font-medium">Configuración Actual</p>
                 <div className="flex items-center gap-2">
                   <span className="text-lg font-semibold">
                     {data.currency_symbol} {data.primary_currency}
@@ -118,7 +118,7 @@ export default function CurrencySettingsPage() {
               onClick={() => setSelectedCurrency("")}
               disabled={!selectedCurrency || updateCurrency.isPending}
             >
-              Cancel
+              Cancelar
             </Button>
             <Button
               onClick={handleSave}
@@ -127,10 +127,10 @@ export default function CurrencySettingsPage() {
               {updateCurrency.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
+                  Guardando...
                 </>
               ) : (
-                "Save Changes"
+                "Guardar Cambios"
               )}
             </Button>
           </div>
@@ -232,9 +232,9 @@ export default function CurrencySettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Supported Currencies</CardTitle>
+          <CardTitle>Monedas Soportadas</CardTitle>
           <CardDescription>
-            These currencies are supported for entering costs and salaries.
+            Estas monedas están soportadas para ingresar costos y salarios.
           </CardDescription>
         </CardHeader>
         <CardContent>

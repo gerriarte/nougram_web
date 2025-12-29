@@ -8,13 +8,15 @@ from datetime import datetime
 
 from app.core.database import get_db
 from app.core.security import get_current_user
+from app.core.tenant import get_tenant_context, TenantContext
 from app.core.exceptions import ResourceNotFoundError
 from app.core.permissions import can_create, can_edit, can_delete, PermissionError
+from app.core.permission_middleware import require_modify_costs, require_delete_resources
 from app.core.logging import get_logger
 from app.models.tax import Tax
 from app.models.user import User
 from app.models.role import DeleteRequest, DeleteRequestStatus
-from app.repositories.tax_repository import TaxRepository
+from app.repositories.factory import RepositoryFactory
 from app.schemas.tax import (
     TaxCreate,
     TaxUpdate,
@@ -29,6 +31,7 @@ router = APIRouter()
 
 @router.get("/", response_model=TaxListResponse)
 async def list_taxes(
+    tenant: TenantContext = Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     country: str = None,
@@ -45,7 +48,7 @@ async def list_taxes(
     from fastapi import Query as FastAPIQuery
     from sqlalchemy import desc
     
-            tax_repo = RepositoryFactory.create_tax_repository(db, tenant.organization_id)
+    tax_repo = RepositoryFactory.create_tax_repository(db, tenant.organization_id)
     
     where_clause = None
     if country or active_only:
@@ -88,21 +91,19 @@ async def list_taxes(
 async def create_tax(
     tax_data: TaxCreate,
     tenant: TenantContext = Depends(get_tenant_context),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_modify_costs),  # Taxes affect costs, so require modify_costs permission
     db: AsyncSession = Depends(get_db)
 ):
     """
     Create a new tax
     
-    Permissions:
-    - Super Admin: Allowed
-    - Admin Financiero: Allowed
-    - Product Manager: Not allowed
+    **Permissions:**
+    - Requires `can_modify_costs` permission (taxes affect cost calculations)
+    - Allowed roles: owner, admin_financiero, super_admin
+    - Denied roles: product_manager, collaborator
     """
-    if not can_create(current_user, "tax"):
-        raise PermissionError("You don't have permission to create taxes")
     try:
-            tax_repo = RepositoryFactory.create_tax_repository(db, tenant.organization_id)
+        tax_repo = RepositoryFactory.create_tax_repository(db, tenant.organization_id)
         
         # Check if code already exists
         existing = await tax_repo.get_by_code(tax_data.code)
@@ -142,6 +143,7 @@ async def create_tax(
 @router.get("/{tax_id}", response_model=TaxResponse)
 async def get_tax(
     tax_id: int,
+    tenant: TenantContext = Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
     include_deleted: bool = False
@@ -150,7 +152,7 @@ async def get_tax(
     Get a specific tax by ID
     By default, excludes soft-deleted items
     """
-            tax_repo = RepositoryFactory.create_tax_repository(db, tenant.organization_id)
+    tax_repo = RepositoryFactory.create_tax_repository(db, tenant.organization_id)
     tax = await tax_repo.get_by_id(tax_id, include_deleted=include_deleted)
     
     if not tax:
@@ -164,23 +166,21 @@ async def update_tax(
     tax_id: int,
     tax_data: TaxUpdate,
     tenant: TenantContext = Depends(get_tenant_context),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_modify_costs),  # Taxes affect costs, so require modify_costs permission
     db: AsyncSession = Depends(get_db)
 ):
     """
     Update an existing tax
     Cannot update soft-deleted taxes
     
-    Permissions:
-    - Super Admin: Allowed
-    - Admin Financiero: Allowed
-    - Product Manager: Not allowed
+    **Permissions:**
+    - Requires `can_modify_costs` permission (taxes affect cost calculations)
+    - Allowed roles: owner, admin_financiero, super_admin
+    - Denied roles: product_manager, collaborator
     """
-    if not can_edit(current_user, "tax"):
-        raise PermissionError("You don't have permission to edit taxes")
     
     try:
-            tax_repo = RepositoryFactory.create_tax_repository(db, tenant.organization_id)
+        tax_repo = RepositoryFactory.create_tax_repository(db, tenant.organization_id)
         tax = await tax_repo.get_by_id(tax_id, include_deleted=False)
         
         if not tax:
@@ -225,25 +225,24 @@ async def update_tax(
 @router.delete("/{tax_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_tax(
     tax_id: int,
-    current_user: User = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_tenant_context),
+    current_user: User = Depends(require_delete_resources),  # Require permission to delete resources
     db: AsyncSession = Depends(get_db)
 ):
     """
     Soft delete a tax (move to trash)
     
-    Permissions:
-    - Super Admin: Can delete immediately
-    - Admin Financiero: Creates delete request (requires approval)
-    - Product Manager: Not allowed
+    **Permissions:**
+    - Requires `can_delete_resources` permission
+    - Allowed roles: owner, super_admin
+    - Denied roles: admin_financiero, product_manager, collaborator
     """
-    # Check permissions
-    can_delete_resource, requires_approval = can_delete(current_user, "tax")
-    
-    if not can_delete_resource:
-        raise PermissionError("You don't have permission to delete taxes")
+    # Permission is already checked via dependency
+    # For now, all users with PERM_DELETE_RESOURCES can delete immediately
+    requires_approval = False
     
     # Verify if the tax exists and is not already deleted
-            tax_repo = RepositoryFactory.create_tax_repository(db, tenant.organization_id)
+    tax_repo = RepositoryFactory.create_tax_repository(db, tenant.organization_id)
     tax = await tax_repo.get_by_id(tax_id, include_deleted=False)
     
     if not tax:
@@ -281,13 +280,14 @@ async def delete_tax(
 @router.post("/{tax_id}/restore", response_model=TaxResponse)
 async def restore_tax(
     tax_id: int,
+    tenant: TenantContext = Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
     """
     Restore a soft-deleted tax from trash
     """
-            tax_repo = RepositoryFactory.create_tax_repository(db, tenant.organization_id)
+    tax_repo = RepositoryFactory.create_tax_repository(db, tenant.organization_id)
     tax = await tax_repo.get_by_id(tax_id, include_deleted=True)
     
     if not tax or tax.deleted_at is None:
@@ -347,15 +347,21 @@ async def list_deleted_taxes(
 @router.delete("/{tax_id}/permanent", status_code=status.HTTP_204_NO_CONTENT)
 async def permanently_delete_tax(
     tax_id: int,
-    current_user: User = Depends(get_current_user),
+    tenant: TenantContext = Depends(get_tenant_context),
+    current_user: User = Depends(require_delete_resources),  # Require permission to delete resources
     db: AsyncSession = Depends(get_db)
 ):
     """
     Permanently delete a soft-deleted tax (hard delete)
     This action cannot be undone. Only soft-deleted taxes can be permanently deleted.
+    
+    **Permissions:**
+    - Requires `can_delete_resources` permission
+    - Allowed roles: owner, super_admin
+    - Denied roles: admin_financiero, product_manager, collaborator
     """
     # Verify if the tax exists and is soft-deleted
-            tax_repo = RepositoryFactory.create_tax_repository(db, tenant.organization_id)
+    tax_repo = RepositoryFactory.create_tax_repository(db, tenant.organization_id)
     tax = await tax_repo.get_by_id(tax_id, include_deleted=True)
     
     if not tax or tax.deleted_at is None:
@@ -369,6 +375,7 @@ async def permanently_delete_tax(
     await tax_repo.delete(tax, soft=False)
     
     return None
+
 
 
 

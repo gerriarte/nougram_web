@@ -21,7 +21,13 @@ class User(Base):
     # Roles: non-disruptive string-based role (nullable, defaults handled at DB/migration)
     role = Column(String(32), nullable=True, index=True)
     
+    # Role type: "support" (multi-tenant manager) or "tenant" (client user)
+    # NULL means "tenant" for backward compatibility
+    role_type = Column(String(16), nullable=True, index=True)
+    
     # Multi-tenant: organization relationship
+    # If role_type == "support", organization_id can be NULL
+    # If role_type == "tenant" or NULL, organization_id is REQUIRED
     organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=True, index=True)
     
     # Relationships

@@ -64,8 +64,14 @@ class TestAuthEndpoints:
     
     async def test_get_current_user(self, async_client: AsyncClient, test_user: User):
         """Test getting current user info"""
-        # Create access token
-        token = create_access_token({"sub": str(test_user.id), "email": test_user.email})
+        # Create access token with organization_id (multi-tenant)
+        token_data = {
+            "sub": str(test_user.id),
+            "email": test_user.email,
+        }
+        if test_user.organization_id:
+            token_data["organization_id"] = test_user.organization_id
+        token = create_access_token(token_data)
         
         response = await async_client.get(
             "/api/v1/auth/me",
@@ -91,5 +97,6 @@ class TestAuthEndpoints:
         )
         
         assert response.status_code == 401
+
 
 

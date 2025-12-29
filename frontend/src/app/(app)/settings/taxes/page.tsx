@@ -69,12 +69,12 @@ export default function TaxesSettingsPage() {
       try {
         await deleteMutation.mutateAsync(taxToDelete.id)
         toast({
-          title: "Success",
-          description: "Tax deleted successfully",
+          title: "Éxito",
+          description: "Impuesto eliminado exitosamente",
         })
         setTaxToDelete(null)
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "Failed to delete tax"
+        const errorMessage = error instanceof Error ? error.message : "Error al eliminar el impuesto"
         toast({
           title: "Error",
           description: errorMessage,
@@ -89,20 +89,20 @@ export default function TaxesSettingsPage() {
       if (editingTax) {
         await updateMutation.mutateAsync({ id: editingTax.id, data })
         toast({
-          title: "Success",
-          description: "Tax updated successfully",
+          title: "Éxito",
+          description: "Impuesto actualizado exitosamente",
         })
       } else {
         await createMutation.mutateAsync(data)
         toast({
-          title: "Success",
-          description: "Tax created successfully",
+          title: "Éxito",
+          description: "Impuesto creado exitosamente",
         })
       }
       setFormOpen(false)
       setEditingTax(null)
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to save tax"
+        const errorMessage = error instanceof Error ? error.message : "Error al guardar el impuesto"
       toast({
         title: "Error",
         description: errorMessage,
@@ -115,8 +115,8 @@ export default function TaxesSettingsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Taxes</h1>
-          <p className="text-muted-foreground">Manage taxes that can be applied to projects</p>
+          <h1 className="text-3xl font-bold">Impuestos</h1>
+          <p className="text-muted-foreground">Gestiona los impuestos que se pueden aplicar a los proyectos</p>
         </div>
         <div className="flex gap-2">
           <Button 
@@ -128,16 +128,16 @@ export default function TaxesSettingsPage() {
           </Button>
           <Button onClick={handleCreateClick}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Tax
+            Agregar Impuesto
           </Button>
         </div>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Taxes List</CardTitle>
+          <CardTitle>Lista de Impuestos</CardTitle>
           <CardDescription>
-            {taxes.length} tax{taxes.length !== 1 ? "es" : ""} configured
+            {taxes.length} impuesto{taxes.length !== 1 ? "s" : ""} configurado{taxes.length !== 1 ? "s" : ""}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -153,11 +153,11 @@ export default function TaxesSettingsPage() {
             <div className="flex flex-col items-center justify-center py-12">
               <Receipt className="h-12 w-12 text-muted-foreground mb-4" />
               <p className="text-sm text-muted-foreground text-center mb-4">
-                No taxes configured yet. Create your first tax to get started.
+                Aún no hay impuestos configurados. Crea tu primer impuesto para comenzar.
               </p>
               <Button onClick={handleCreateClick}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add First Tax
+                Agregar Primer Impuesto
               </Button>
             </div>
           ) : (
@@ -165,12 +165,12 @@ export default function TaxesSettingsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Code</TableHead>
-                    <TableHead>Percentage</TableHead>
-                    <TableHead>Country</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>Nombre</TableHead>
+                    <TableHead>Código</TableHead>
+                    <TableHead>Porcentaje</TableHead>
+                    <TableHead>País</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -184,7 +184,7 @@ export default function TaxesSettingsPage() {
                       <TableCell>{tax.country || "-"}</TableCell>
                       <TableCell>
                         <Badge variant={tax.is_active ? "default" : "secondary"}>
-                          {tax.is_active ? "Active" : "Inactive"}
+                          {tax.is_active ? "Activo" : "Inactivo"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">

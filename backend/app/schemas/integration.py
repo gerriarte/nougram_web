@@ -1,23 +1,8 @@
 """
 Pydantic schemas for Integrations
 """
-from typing import Optional, List, Dict
+from typing import Optional, List
 from pydantic import BaseModel, Field
-
-
-class ApolloSearchRequest(BaseModel):
-    """Schema for Apollo.io search request"""
-    query: str = Field(..., description="Search query")
-    search_type: str = Field(default="people", description="Type of search: 'people' or 'companies'")
-    limit: int = Field(default=10, ge=1, le=50, description="Maximum number of results")
-
-
-class ApolloSearchResponse(BaseModel):
-    """Schema for Apollo.io search response"""
-    results: List[Dict] = Field(default_factory=list, description="Search results")
-    total: int = Field(default=0, description="Total number of results")
-    query: str = Field(..., description="Search query used")
-    error: Optional[str] = Field(None, description="Error message if any")
 
 
 class GoogleSheetsSyncRequest(BaseModel):

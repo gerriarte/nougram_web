@@ -1,24 +1,56 @@
-import { Sidebar } from "@/components/layout/sidebar"
-import { Header } from "@/components/layout/header"
-import { AuthGuard } from "@/components/auth/auth-guard"
+"use client";
+
+import { usePathname } from 'next/navigation';
+import { AppSidebar } from "@/components/layout/AppSidebar";
+import { AppHeader } from "@/components/layout/AppHeader";
+import { AuthGuard } from "@/components/auth/auth-guard";
+import { ErrorBoundary } from "@/components/common/ErrorBoundary";
+import { useGetCurrentUser } from '@/lib/queries';
 
 export default function AppLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const { data: currentUser } = useGetCurrentUser();
+  const isOnboarding = pathname === '/onboarding';
+
+  // Get page title based on pathname
+  const getPageTitle = () => {
+    if (pathname?.startsWith('/dashboard')) return 'Panel';
+    if (pathname?.startsWith('/projects')) return 'Proyectos';
+    if (pathname?.startsWith('/settings')) return 'Configuración';
+    return 'AgenciaOps';
+  };
+
   return (
     <AuthGuard>
-      <div className="flex h-screen overflow-hidden">
-        <Sidebar />
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <Header />
-          <main className="flex-1 overflow-y-auto bg-background p-6">
+      <ErrorBoundary>
+        {!isOnboarding && (
+          <div className="flex h-screen overflow-hidden bg-grey-50">
+            <AppSidebar currentOrgId={currentUser?.organization_id} />
+            <div className="flex-1 flex flex-col ml-64">
+              <AppHeader
+                title={getPageTitle()}
+                currentOrgId={currentUser?.organization_id}
+                onOrgChange={(orgId) => {
+                  // Handle org change if needed
+                  console.log('Org change:', orgId);
+                }}
+              />
+              <main className="flex-1 overflow-y-auto pt-16 p-6" role="main">
+                {children}
+              </main>
+            </div>
+          </div>
+        )}
+        {isOnboarding && (
+          <div className="min-h-screen bg-grey-50">
             {children}
-          </main>
-        </div>
-      </div>
+          </div>
+        )}
+      </ErrorBoundary>
     </AuthGuard>
   );
 }
-

@@ -31,8 +31,8 @@ const AIAdvisor = dynamic(
     loading: () => (
       <Card>
         <CardHeader>
-          <CardTitle>AI Advisor</CardTitle>
-          <CardDescription>Loading AI insights...</CardDescription>
+          <CardTitle>Asesor IA</CardTitle>
+          <CardDescription>Cargando insights de IA...</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-center h-[200px]">
@@ -116,7 +116,7 @@ export default function DashboardPage() {
 
   const kpis = [
     {
-      title: "Total Projects",
+      title: "Total de Proyectos",
       value: dashboardData?.total_projects || 0,
       icon: Briefcase,
       description: "Total proyectos creados",
@@ -124,7 +124,7 @@ export default function DashboardPage() {
       previousValue: previousPeriod?.total_projects
     },
     {
-      title: "Total Revenue",
+      title: "Ingresos Totales",
       value: formatCurrency(dashboardData?.total_revenue || 0, activeFilters.currency || "USD"),
       icon: DollarSign,
       description: "Ingresos totales estimados",
@@ -132,25 +132,25 @@ export default function DashboardPage() {
       previousValue: previousPeriod?.total_revenue
     },
     {
-      title: "Average Margin",
+      title: "Margen Promedio",
       value: `${((dashboardData?.average_margin || 0) * 100).toFixed(1)}%`,
       icon: Target,
       description: "Margen promedio"
     },
     {
-      title: "Conversion Rate",
+      title: "Tasa de Conversión",
       value: `${(dashboardData?.conversion_rate || 0).toFixed(1)}%`,
       icon: TrendingUp,
       description: "Tasa de conversión (Sent → Won)"
     },
     {
-      title: "Avg Revenue/Project",
+      title: "Ingreso Promedio/Proyecto",
       value: formatCurrency(dashboardData?.average_revenue_per_project || 0, activeFilters.currency || "USD"),
       icon: DollarSign,
       description: "Ingreso promedio por proyecto"
     },
     {
-      title: "Team Utilization",
+      title: "Utilización del Equipo",
       value: `${(dashboardData?.utilization_rate || 0).toFixed(1)}%`,
       icon: Users,
       description: "Tasa de utilización del equipo"
@@ -189,21 +189,21 @@ export default function DashboardPage() {
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">Overview of your agency's performance</p>
+          <h1 className="text-3xl font-bold">Panel</h1>
+          <p className="text-muted-foreground">Resumen del rendimiento de tu agencia</p>
         </div>
       </div>
 
       {/* Advanced Filters */}
       <Card>
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
-          <CardDescription>Filter dashboard data by date, currency, status, or client</CardDescription>
+          <CardTitle>Filtros</CardTitle>
+          <CardDescription>Filtra los datos del panel por fecha, moneda, estado o cliente</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-2">
-              <Label htmlFor="start-date">Start Date</Label>
+              <Label htmlFor="start-date">Fecha de Inicio</Label>
               <Input
                 id="start-date"
                 type="date"
@@ -212,7 +212,7 @@ export default function DashboardPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="end-date">End Date</Label>
+              <Label htmlFor="end-date">Fecha de Fin</Label>
               <Input
                 id="end-date"
                 type="date"
@@ -221,13 +221,13 @@ export default function DashboardPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="currency">Currency</Label>
+              <Label htmlFor="currency">Moneda</Label>
               <Select value={currency || "all"} onValueChange={(value) => setCurrency(value === "all" ? "" : value)}>
                 <SelectTrigger id="currency">
-                  <SelectValue placeholder="All currencies" />
+                  <SelectValue placeholder="Todas las monedas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All currencies</SelectItem>
+                  <SelectItem value="all">Todas las monedas</SelectItem>
                   {SUPPORTED_CURRENCIES.map((curr) => (
                     <SelectItem key={curr.code} value={curr.code}>
                       {curr.code} - {curr.name}
@@ -237,33 +237,41 @@ export default function DashboardPage() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="status">Status</Label>
+              <Label htmlFor="status">Estado</Label>
               <Select value={status || "all"} onValueChange={(value) => setStatus(value === "all" ? "" : value)}>
                 <SelectTrigger id="status">
-                  <SelectValue placeholder="All statuses" />
+                  <SelectValue placeholder="Todos los estados" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All statuses</SelectItem>
-                  {PROJECT_STATUSES.map((stat) => (
-                    <SelectItem key={stat} value={stat}>
-                      {stat}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="all">Todos los estados</SelectItem>
+                  {PROJECT_STATUSES.map((stat) => {
+                    const statusLabels: Record<string, string> = {
+                      "Draft": "Borrador",
+                      "Sent": "Enviado",
+                      "Won": "Ganado",
+                      "Lost": "Perdido"
+                    }
+                    return (
+                      <SelectItem key={stat} value={stat}>
+                        {statusLabels[stat] || stat}
+                      </SelectItem>
+                    )
+                  })}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="client-name">Client Name</Label>
+              <Label htmlFor="client-name">Nombre del Cliente</Label>
               <Input
                 id="client-name"
                 type="text"
-                placeholder="Filter by client name..."
+                placeholder="Filtrar por nombre del cliente..."
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="compare-previous">Compare Previous Period</Label>
+              <Label htmlFor="compare-previous">Comparar Período Anterior</Label>
               <div className="flex items-center space-x-2 pt-2">
                 <input
                   id="compare-previous"
@@ -273,7 +281,7 @@ export default function DashboardPage() {
                   className="h-4 w-4 rounded border-gray-300"
                 />
                 <Label htmlFor="compare-previous" className="text-sm font-normal">
-                  Enable comparison
+                  Habilitar comparación
                 </Label>
               </div>
             </div>
@@ -281,12 +289,12 @@ export default function DashboardPage() {
           <div className="flex gap-2 mt-4">
             <Button onClick={handleApplyFilters} size="sm">
               <Filter className="h-4 w-4 mr-2" />
-              Apply Filters
+              Aplicar Filtros
             </Button>
             {hasActiveFilters && (
               <Button onClick={handleClearFilters} variant="outline" size="sm">
                 <X className="h-4 w-4 mr-2" />
-                Clear Filters
+                Limpiar Filtros
               </Button>
             )}
           </div>
@@ -295,12 +303,12 @@ export default function DashboardPage() {
       
       {hasActiveFilters && (
         <div className="text-sm text-muted-foreground">
-          Showing filtered data
-          {activeFilters.start && ` from ${activeFilters.start}`}
-          {activeFilters.end && ` to ${activeFilters.end}`}
-          {activeFilters.currency && ` in ${activeFilters.currency}`}
-          {activeFilters.status && ` with status ${activeFilters.status}`}
-          {activeFilters.clientName && ` for client "${activeFilters.clientName}"`}
+          Mostrando datos filtrados
+          {activeFilters.start && ` desde ${activeFilters.start}`}
+          {activeFilters.end && ` hasta ${activeFilters.end}`}
+          {activeFilters.currency && ` en ${activeFilters.currency}`}
+          {activeFilters.status && ` con estado ${activeFilters.status}`}
+          {activeFilters.clientName && ` para cliente "${activeFilters.clientName}"`}
         </div>
       )}
 
@@ -323,7 +331,7 @@ export default function DashboardPage() {
                 {hasChange && (
                   <div className={`flex items-center text-xs mt-2 ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
                     {isPositive ? <ArrowUpRight className="h-3 w-3 mr-1" /> : <ArrowDownRight className="h-3 w-3 mr-1" />}
-                    {Math.abs(kpi.change!).toFixed(1)}% vs previous period
+                    {Math.abs(kpi.change!).toFixed(1)}% vs período anterior
                   </div>
                 )}
               </CardContent>
@@ -337,8 +345,8 @@ export default function DashboardPage() {
         {/* Projects by Status Pie Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Projects by Status</CardTitle>
-            <CardDescription>Distribution of projects by current status</CardDescription>
+            <CardTitle>Proyectos por Estado</CardTitle>
+            <CardDescription>Distribución de proyectos por estado actual</CardDescription>
           </CardHeader>
           <CardContent>
             <PieChart data={statusData} colors={CHART_COLORS} />
@@ -348,8 +356,8 @@ export default function DashboardPage() {
         {/* Revenue by Service Bar Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Revenue by Service</CardTitle>
-            <CardDescription>Top services by estimated revenue</CardDescription>
+            <CardTitle>Ingresos por Servicio</CardTitle>
+            <CardDescription>Principales servicios por ingresos estimados</CardDescription>
           </CardHeader>
           <CardContent>
             <BarChart data={revenueData} currency={activeFilters.currency || "USD"} />
@@ -361,8 +369,8 @@ export default function DashboardPage() {
       {monthlyTrendsData.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Monthly Trends</CardTitle>
-            <CardDescription>Revenue and projects over the last 12 months</CardDescription>
+            <CardTitle>Tendencias Mensuales</CardTitle>
+            <CardDescription>Ingresos y proyectos en los últimos 12 meses</CardDescription>
           </CardHeader>
           <CardContent>
             <LineChart 

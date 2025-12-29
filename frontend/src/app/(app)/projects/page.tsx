@@ -58,8 +58,8 @@ export default function ProjectsPage() {
       try {
         await deleteMutation.mutateAsync(projectToDelete.id)
         toast({
-          title: "Success",
-          description: MESSAGES.success.projectDeleted,
+        title: "Éxito",
+        description: MESSAGES.success.projectDeleted,
         })
         setProjectToDelete(null)
       } catch (error) {
@@ -77,7 +77,7 @@ export default function ProjectsPage() {
     try {
       await updateMutation.mutateAsync({ id: projectId, data: { status: newStatus } })
       toast({
-        title: "Success",
+        title: "Éxito",
         description: MESSAGES.success.projectUpdated,
       })
     } catch (error) {
@@ -115,8 +115,8 @@ export default function ProjectsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Projects & Quotes</h1>
-          <p className="text-muted-foreground">Manage your agency's projects and quotes</p>
+          <h1 className="text-3xl font-bold">Proyectos y Cotizaciones</h1>
+          <p className="text-muted-foreground">Gestiona los proyectos y cotizaciones de tu agencia</p>
         </div>
         <div className="flex gap-2">
           <Button 
@@ -128,7 +128,7 @@ export default function ProjectsPage() {
           </Button>
           <Button onClick={() => router.push("/projects/new")}>
             <Plus className="h-4 w-4 mr-2" />
-            New Quote
+            Nueva Cotización
           </Button>
         </div>
       </div>
@@ -136,61 +136,61 @@ export default function ProjectsPage() {
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card className="cursor-pointer hover:bg-accent transition-colors" onClick={() => setStatusFilter("")}>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">All Projects</CardTitle>
+            <CardTitle className="text-sm font-medium">Todos los Proyectos</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{statusCounts.all}</div>
-            <p className="text-xs text-muted-foreground mt-1">Total projects</p>
+            <p className="text-xs text-muted-foreground mt-1">Total de proyectos</p>
           </CardContent>
         </Card>
         
         <Card className="cursor-pointer hover:bg-accent transition-colors" onClick={() => setStatusFilter("Draft")}>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Draft</CardTitle>
+            <CardTitle className="text-sm font-medium">Borrador</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-600">{statusCounts.Draft}</div>
-            <p className="text-xs text-muted-foreground mt-1">In progress</p>
+            <p className="text-xs text-muted-foreground mt-1">En progreso</p>
           </CardContent>
         </Card>
         
         <Card className="cursor-pointer hover:bg-accent transition-colors" onClick={() => setStatusFilter("Sent")}>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Sent</CardTitle>
+            <CardTitle className="text-sm font-medium">Enviado</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">{statusCounts.Sent}</div>
-            <p className="text-xs text-muted-foreground mt-1">Awaiting response</p>
+            <p className="text-xs text-muted-foreground mt-1">Esperando respuesta</p>
           </CardContent>
         </Card>
         
         <Card className="cursor-pointer hover:bg-accent transition-colors" onClick={() => setStatusFilter("Won")}>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Won</CardTitle>
+            <CardTitle className="text-sm font-medium">Ganado</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{statusCounts.Won}</div>
-            <p className="text-xs text-muted-foreground mt-1">Successfully closed</p>
+            <p className="text-xs text-muted-foreground mt-1">Cerrado exitosamente</p>
           </CardContent>
         </Card>
         
         <Card className="cursor-pointer hover:bg-accent transition-colors" onClick={() => setStatusFilter("Lost")}>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Lost</CardTitle>
+            <CardTitle className="text-sm font-medium">Perdido</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{statusCounts.Lost}</div>
-            <p className="text-xs text-muted-foreground mt-1">Not accepted</p>
+            <p className="text-xs text-muted-foreground mt-1">No aceptado</p>
           </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Projects List</CardTitle>
+          <CardTitle>Lista de Proyectos</CardTitle>
           <CardDescription>
-            {projects.length} project{projects.length !== 1 ? "s" : ""}
-            {statusFilter && ` (${statusFilter} only)`}
+            {projects.length} proyecto{projects.length !== 1 ? "s" : ""}
+            {statusFilter && ` (solo ${statusFilter})`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -214,12 +214,12 @@ export default function ProjectsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Project Name</TableHead>
-                    <TableHead>Client</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Currency</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead>Nombre del Proyecto</TableHead>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Moneda</TableHead>
+                    <TableHead>Creado</TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -241,10 +241,10 @@ export default function ProjectsPage() {
                           className="text-sm border rounded px-2 py-1 bg-transparent"
                           disabled={updateMutation.isPending}
                         >
-                          <option value="Draft">Draft</option>
-                          <option value="Sent">Sent</option>
-                          <option value="Won">Won</option>
-                          <option value="Lost">Lost</option>
+                          <option value="Draft">Borrador</option>
+                          <option value="Sent">Enviado</option>
+                          <option value="Won">Ganado</option>
+                          <option value="Lost">Perdido</option>
                         </select>
                       </TableCell>
                       <TableCell>{project.currency}</TableCell>
@@ -294,10 +294,10 @@ export default function ProjectsPage() {
         open={deleteConfirmOpen}
         onOpenChange={setDeleteConfirmOpen}
         onConfirm={handleDeleteConfirm}
-        title="Delete Project"
+        title="Eliminar Proyecto"
         description={MESSAGES.confirm.deleteProject}
-        confirmText="Delete"
-        cancelText="Cancel"
+        confirmText="Eliminar"
+        cancelText="Cancelar"
         variant="destructive"
       />
     </div>

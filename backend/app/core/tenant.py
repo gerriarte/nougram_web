@@ -44,7 +44,7 @@ async def get_tenant_context(
     Dependency to get tenant context from current user
     
     Validates that:
-    1. User has an organization_id
+    1. User has an organization_id (if role_type is "tenant")
     2. Organization exists
     3. Organization subscription is active (can be bypassed for super_admin)
     
@@ -52,16 +52,30 @@ async def get_tenant_context(
         TenantContext with organization information
     
     Raises:
-        HTTPException 400: If user has no organization
+        HTTPException 400: If tenant user has no organization
         HTTPException 404: If organization not found
         HTTPException 403: If organization subscription is not active
     """
-    # Get organization_id from user
+    from app.core.permissions import get_user_role_type
+    
+    # Get role_type
+    role_type = get_user_role_type(current_user)
+    
+    # Support users can have NULL organization_id
+    # Tenant users must have organization_id
     organization_id = getattr(current_user, 'organization_id', None)
     
+    if role_type == "tenant" and organization_id is None:
+        logger.error(f"Tenant user {current_user.id} has no organization_id")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Tenant users must belong to an organization"
+        )
+    
     if organization_id is None:
-        # Fallback to default organization for backward compatibility
-        logger.warning(f"User {current_user.id} has no organization_id, using default organization")
+        # Support users without organization_id - cannot create tenant context
+        # For now, use default organization (can be enhanced later for multi-tenant admin views)
+        logger.warning(f"Support user {current_user.id} has no organization_id, using default organization")
         organization_id = 1
     
     # Load organization with all details
@@ -78,10 +92,12 @@ async def get_tenant_context(
             detail=f"Organization not found"
         )
     
-    # Check subscription status (allow super_admin to bypass)
-    is_super_admin = getattr(current_user, 'role', None) == 'super_admin'
+    # Check subscription status (allow support roles to bypass)
+    from app.core.permissions import get_user_role
+    user_role = get_user_role(current_user)
+    is_support_user = role_type == "support" or user_role == "super_admin"
     
-    if not organization.subscription_status == "active" and not is_super_admin:
+    if not organization.subscription_status == "active" and not is_support_user:
         logger.warning(
             f"User {current_user.id} accessing organization {organization_id} with status {organization.subscription_status}"
         )
@@ -102,5 +118,12 @@ async def get_tenant_context(
     )
     
     return tenant_context
+
+
+
+
+
+
+
 
 

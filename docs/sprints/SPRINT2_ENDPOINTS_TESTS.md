@@ -153,3 +153,13 @@ pytest tests/integration/ --cov=app --cov-report=html
 **Última actualización:** 12 de Diciembre, 2025
 
 
+
+
+
+
+
+
+
+
+
+

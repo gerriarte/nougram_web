@@ -17,6 +17,8 @@ import {
   useCreateService,
   useUpdateService,
   useDeleteService,
+  useGetCurrentUser,
+  useGetOrganizationStats,
 } from "@/lib/queries"
 import { ServiceForm } from "@/components/services/service-form"
 import { formatPercentage } from "@/lib/utils"
@@ -24,6 +26,7 @@ import { Badge } from "@/components/ui/badge"
 import { ConfirmDialog } from "@/components/common/confirm-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { MESSAGES } from "@/lib/messages"
+import { LimitIndicator, canCreateResource } from "@/components/organization/LimitIndicator"
 
 interface Service {
   id: number
@@ -42,12 +45,18 @@ export default function ServicesSettingsPage() {
   const [serviceToDelete, setServiceToDelete] = useState<Service | null>(null)
   const { toast } = useToast()
 
+  const { data: currentUser } = useGetCurrentUser()
+  const organizationId = currentUser?.organization_id
+  const { data: orgStats } = useGetOrganizationStats(organizationId ?? 0)
   const { data, isLoading, error } = useGetServices()
   const createMutation = useCreateService()
   const updateMutation = useUpdateService()
   const deleteMutation = useDeleteService()
 
   const services = data?.items || []
+  const canCreateService = orgStats 
+    ? canCreateResource(orgStats.current_usage.services, orgStats.limits.services)
+    : true
 
   const handleCreate = async (formData: {
     name: string
@@ -71,7 +80,7 @@ export default function ServicesSettingsPage() {
       await createMutation.mutateAsync(cleanedData)
       
       toast({
-        title: "Success",
+        title: "Éxito",
         description: MESSAGES.success.serviceCreated,
       })
       
@@ -110,7 +119,7 @@ export default function ServicesSettingsPage() {
         await updateMutation.mutateAsync({ id: editingService.id, data: cleanedData })
         
         toast({
-          title: "Success",
+          title: "Éxito",
           description: MESSAGES.success.serviceUpdated,
         })
         
@@ -138,7 +147,7 @@ export default function ServicesSettingsPage() {
       try {
         await deleteMutation.mutateAsync(serviceToDelete.id)
         toast({
-          title: "Success",
+          title: "Éxito",
           description: MESSAGES.success.serviceDeleted,
         })
         setServiceToDelete(null)
@@ -165,8 +174,8 @@ export default function ServicesSettingsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Services Catalog</h1>
-          <p className="text-muted-foreground">Manage your agency's service offerings</p>
+          <h1 className="text-3xl font-bold">Catálogo de Servicios</h1>
+          <p className="text-muted-foreground">Gestiona las ofertas de servicios de tu agencia</p>
         </div>
         <div className="flex gap-2">
           <Button 
@@ -176,48 +185,56 @@ export default function ServicesSettingsPage() {
             <Trash className="h-4 w-4 mr-2" />
             Papelera
           </Button>
-          <Button onClick={() => setIsFormOpen(true)} disabled={createMutation.isPending || updateMutation.isPending}>
+          <Button onClick={() => setIsFormOpen(true)} disabled={createMutation.isPending || updateMutation.isPending || !canCreateService}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Service
+            Agregar Servicio
           </Button>
         </div>
       </div>
 
+      {orgStats && (
+        <LimitIndicator
+          current={orgStats.current_usage.services}
+          limit={orgStats.limits.services}
+          resourceName="Servicios"
+        />
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Total Services</CardTitle>
+            <CardTitle className="text-sm font-medium">Total de Servicios</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{services.length}</div>
-            <p className="text-xs text-muted-foreground mt-1">Services in catalog</p>
+            <p className="text-xs text-muted-foreground mt-1">Servicios en catálogo</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Active Services</CardTitle>
+            <CardTitle className="text-sm font-medium">Servicios Activos</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{activeServices}</div>
-            <p className="text-xs text-muted-foreground mt-1">Available for quotes</p>
+            <p className="text-xs text-muted-foreground mt-1">Disponibles para cotizaciones</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Inactive Services</CardTitle>
+            <CardTitle className="text-sm font-medium">Servicios Inactivos</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-400">{inactiveServices}</div>
-            <p className="text-xs text-muted-foreground mt-1">Not available for quotes</p>
+            <p className="text-xs text-muted-foreground mt-1">No disponibles para cotizaciones</p>
           </CardContent>
         </Card>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Services List</CardTitle>
+          <CardTitle>Lista de Servicios</CardTitle>
           <CardDescription>
-            {services.length} service{services.length !== 1 ? "s" : ""} configured
+            {services.length} servicio{services.length !== 1 ? "s" : ""} configurado{services.length !== 1 ? "s" : ""}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -240,11 +257,11 @@ export default function ServicesSettingsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Service Name</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="text-right">Margin Target</TableHead>
-                  <TableHead className="text-center">Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Nombre del Servicio</TableHead>
+                  <TableHead>Descripción</TableHead>
+                  <TableHead className="text-right">Margen Objetivo</TableHead>
+                  <TableHead className="text-center">Estado</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -252,16 +269,16 @@ export default function ServicesSettingsPage() {
                   <TableRow key={service.id}>
                     <TableCell className="font-medium">{service.name}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {service.description || <span className="italic">No description</span>}
+                      {service.description || <span className="italic">Sin descripción</span>}
                     </TableCell>
                     <TableCell className="text-right font-medium">
                       {formatPercentage(service.default_margin_target)}
                     </TableCell>
                     <TableCell className="text-center">
                       {service.is_active ? (
-                        <Badge variant="default" className="bg-green-600">Active</Badge>
+                        <Badge variant="default" className="bg-green-600">Activo</Badge>
                       ) : (
-                        <Badge variant="secondary">Inactive</Badge>
+                        <Badge variant="secondary">Inactivo</Badge>
                       )}
                     </TableCell>
                     <TableCell className="text-right">

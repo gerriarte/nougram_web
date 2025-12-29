@@ -26,6 +26,16 @@ const config = {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          50: "var(--primary-50)",
+          100: "var(--primary-100)",
+          200: "var(--primary-200)",
+          300: "var(--primary-300)",
+          400: "var(--primary-400)",
+          500: "var(--primary-500)",
+          600: "var(--primary-600)",
+          700: "var(--primary-700)",
+          800: "var(--primary-800)",
+          900: "var(--primary-900)",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -50,6 +60,38 @@ const config = {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
+        },
+        grey: {
+          50: "var(--grey-50)",
+          100: "var(--grey-100)",
+          200: "var(--grey-200)",
+          300: "var(--grey-300)",
+          400: "var(--grey-400)",
+          500: "var(--grey-500)",
+          600: "var(--grey-600)",
+          700: "var(--grey-700)",
+          800: "var(--grey-800)",
+          900: "var(--grey-900)",
+        },
+        error: {
+          50: "var(--error-50)",
+          500: "var(--error-500)",
+          700: "var(--error-700)",
+        },
+        success: {
+          50: "var(--success-50)",
+          500: "var(--success-500)",
+          700: "var(--success-700)",
+        },
+        warning: {
+          50: "var(--warning-50)",
+          500: "var(--warning-500)",
+          700: "var(--warning-700)",
+        },
+        info: {
+          50: "var(--info-50)",
+          500: "var(--info-500)",
+          700: "var(--info-700)",
         },
       },
       borderRadius: {

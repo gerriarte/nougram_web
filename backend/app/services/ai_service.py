@@ -1,10 +1,11 @@
 """
-AI Service for financial analysis using OpenAI GPT-4
+AI Service for financial analysis and configuration assistance using OpenAI GPT-4
 """
 from typing import Dict, List, Optional
 from openai import AsyncOpenAI
 from app.core.config import settings
 import logging
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -179,6 +180,560 @@ Por favor proporciona:
         input_cost = (usage.prompt_tokens / 1000) * 0.01
         output_cost = (usage.completion_tokens / 1000) * 0.03
         return round(input_cost + output_cost, 4)
+    
+    async def suggest_onboarding_data(
+        self,
+        industry: str,
+        region: str = "US",
+        currency: str = "USD",
+        custom_context: Optional[str] = None
+    ) -> Dict:
+        """
+        Suggest onboarding data (team members, services, fixed costs) based on industry
+        
+        Args:
+            industry: Industry type (e.g., 'Marketing Digital', 'Desarrollo Web')
+            region: Region code (e.g., 'US', 'CO', 'MX')
+            currency: Primary currency
+            custom_context: Additional context about the business
+            
+        Returns:
+            Dictionary with suggested roles, services, fixed costs, and confidence scores
+        """
+        if not self.is_available():
+            return {
+                "error": "AI service not configured. Please set OPENAI_API_KEY.",
+                "success": False
+            }
+        
+        try:
+            # Build prompt for onboarding suggestions
+            prompt = self._build_onboarding_prompt(industry, region, currency, custom_context)
+            
+            # Define JSON schema for structured output
+            json_schema = {
+                "type": "object",
+                "properties": {
+                    "suggested_roles": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "role": {"type": "string"},
+                                "salary_monthly_brute": {"type": "number"},
+                                "currency": {"type": "string"},
+                                "billable_hours_per_week": {"type": "integer", "minimum": 0, "maximum": 80},
+                                "is_active": {"type": "boolean"}
+                            },
+                            "required": ["name", "role", "salary_monthly_brute", "currency", "billable_hours_per_week"]
+                        }
+                    },
+                    "suggested_services": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "description": {"type": "string"},
+                                "default_margin_target": {"type": "number", "minimum": 0, "maximum": 1},
+                                "pricing_type": {"type": "string", "enum": ["hourly", "fixed", "recurring", "project_value"]},
+                                "is_active": {"type": "boolean"}
+                            },
+                            "required": ["name", "default_margin_target", "pricing_type"]
+                        }
+                    },
+                    "suggested_fixed_costs": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "amount_monthly": {"type": "number"},
+                                "currency": {"type": "string"},
+                                "category": {"type": "string"},
+                                "description": {"type": "string"}
+                            },
+                            "required": ["name", "amount_monthly", "currency", "category"]
+                        }
+                    },
+                    "confidence_scores": {
+                        "type": "object",
+                        "properties": {
+                            "roles": {"type": "number", "minimum": 0, "maximum": 1},
+                            "services": {"type": "number", "minimum": 0, "maximum": 1},
+                            "costs": {"type": "number", "minimum": 0, "maximum": 1}
+                        }
+                    },
+                    "reasoning": {"type": "string"}
+                },
+                "required": ["suggested_roles", "suggested_services", "suggested_fixed_costs", "confidence_scores"]
+            }
+            
+            # Call GPT-4 with structured output
+            response = await self.client.chat.completions.create(
+                model="gpt-4-turbo-preview",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": """Eres un experto en configuración de agencias digitales y consultoría de operaciones.
+                        
+Tu objetivo es sugerir una configuración inicial completa basada en la industria y región:
+1. Roles típicos del equipo con salarios realistas para la región
+2. Servicios comunes ofrecidos en esa industria
+3. Costos fijos típicos (software, herramientas, etc.)
+
+IMPORTANTE:
+- Usa salarios realistas para la región especificada
+- Incluye solo roles y servicios relevantes para la industria
+- Los costos fijos deben ser típicos de la industria
+- Proporciona confidence scores realistas (0.0 a 1.0)
+- Responde SIEMPRE en formato JSON válido"""
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                response_format={"type": "json_object"},
+                temperature=0.7,
+                max_tokens=4000
+            )
+            
+            # Parse JSON response
+            content = response.choices[0].message.content
+            result = json.loads(content)
+            
+            return {
+                "success": True,
+                "data": result,
+                "usage": {
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens,
+                    "total_tokens": response.usage.total_tokens,
+                    "estimated_cost": self._estimate_cost(response.usage)
+                }
+            }
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"Error parsing JSON response: {e}")
+            return {
+                "error": "Error al parsear respuesta de IA",
+                "success": False
+            }
+        except Exception as e:
+            logger.error(f"Error in AI onboarding suggestion: {e}")
+            return {
+                "error": f"Error al generar sugerencias: {str(e)}",
+                "success": False
+            }
+    
+    async def parse_unstructured_data(
+        self,
+        text: str,
+        document_type: Optional[str] = None
+    ) -> Dict:
+        """
+        Parse unstructured document data (payroll, expenses, etc.) into structured format
+        
+        Args:
+            text: Text content from document (PDF, CSV, etc.)
+            document_type: Type of document ('payroll', 'expenses', 'mixed')
+            
+        Returns:
+            Dictionary with extracted team members, fixed costs, subscriptions, and confidence scores
+        """
+        if not self.is_available():
+            return {
+                "error": "AI service not configured. Please set OPENAI_API_KEY.",
+                "success": False
+            }
+        
+        try:
+            # Build prompt for document parsing
+            prompt = self._build_document_parse_prompt(text, document_type)
+            
+            # Define JSON schema for structured output
+            json_schema = {
+                "type": "object",
+                "properties": {
+                    "team_members": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "role": {"type": "string"},
+                                "salary_monthly_brute": {"type": "number"},
+                                "currency": {"type": "string"},
+                                "billable_hours_per_week": {"type": "integer", "minimum": 0, "maximum": 80}
+                            },
+                            "required": ["name", "role", "salary_monthly_brute", "currency"]
+                        }
+                    },
+                    "fixed_costs": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "amount_monthly": {"type": "number"},
+                                "currency": {"type": "string"},
+                                "category": {"type": "string"},
+                                "description": {"type": "string"}
+                            },
+                            "required": ["name", "amount_monthly", "currency", "category"]
+                        }
+                    },
+                    "subscriptions": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {"type": "string"},
+                                "amount_monthly": {"type": "number"},
+                                "currency": {"type": "string"}
+                            }
+                        }
+                    },
+                    "confidence_scores": {
+                        "type": "object",
+                        "properties": {
+                            "team_members": {"type": "number", "minimum": 0, "maximum": 1},
+                            "fixed_costs": {"type": "number", "minimum": 0, "maximum": 1},
+                            "subscriptions": {"type": "number", "minimum": 0, "maximum": 1}
+                        }
+                    },
+                    "warnings": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    }
+                },
+                "required": ["team_members", "fixed_costs", "subscriptions", "confidence_scores", "warnings"]
+            }
+            
+            # Call GPT-4 with structured output
+            response = await self.client.chat.completions.create(
+                model="gpt-4-turbo-preview",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": """Eres un experto en extracción de datos financieros de documentos.
+                        
+Tu objetivo es extraer información estructurada de documentos desordenados:
+1. Identificar miembros del equipo y sus salarios
+2. Identificar costos fijos recurrentes
+3. Identificar suscripciones y servicios
+
+IMPORTANTE:
+- Extrae solo información clara y confiable
+- Si hay ambigüedad, inclúyela en warnings
+- Proporciona confidence scores realistas
+- Normaliza montos a mensuales cuando sea necesario
+- Responde SIEMPRE en formato JSON válido"""
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                response_format={"type": "json_object"},
+                temperature=0.3,  # Lower temperature for more accurate extraction
+                max_tokens=4000
+            )
+            
+            # Parse JSON response
+            content = response.choices[0].message.content
+            result = json.loads(content)
+            
+            return {
+                "success": True,
+                "data": result,
+                "usage": {
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens,
+                    "total_tokens": response.usage.total_tokens,
+                    "estimated_cost": self._estimate_cost(response.usage)
+                }
+            }
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"Error parsing JSON response: {e}")
+            return {
+                "error": "Error al parsear respuesta de IA",
+                "success": False
+            }
+        except Exception as e:
+            logger.error(f"Error in AI document parsing: {e}")
+            return {
+                "error": f"Error al parsear documento: {str(e)}",
+                "success": False
+            }
+    
+    async def process_natural_language_command(
+        self,
+        command: str,
+        context: Optional[Dict] = None
+    ) -> Dict:
+        """
+        Process natural language configuration commands
+        
+        Args:
+            command: Natural language command (e.g., 'Añade un Senior Designer que gana 45k anuales')
+            context: Current configuration context
+            
+        Returns:
+            Dictionary with structured action data
+        """
+        if not self.is_available():
+            return {
+                "error": "AI service not configured. Please set OPENAI_API_KEY.",
+                "success": False
+            }
+        
+        try:
+            # Build prompt for command processing
+            prompt = self._build_command_prompt(command, context)
+            
+            # Define JSON schema for structured output
+            json_schema = {
+                "type": "object",
+                "properties": {
+                    "action_type": {
+                        "type": "string",
+                        "enum": ["add_team_member", "add_service", "add_fixed_cost", "update_team_member", "delete_team_member", "unknown"]
+                    },
+                    "action_data": {
+                        "type": "object",
+                        "properties": {
+                            # Team member fields
+                            "name": {"type": "string"},
+                            "role": {"type": "string"},
+                            "salary_monthly_brute": {"type": "number"},
+                            "salary_annual": {"type": "number"},
+                            "currency": {"type": "string"},
+                            "billable_hours_per_week": {"type": "integer"},
+                            # Service fields
+                            "service_name": {"type": "string"},
+                            "description": {"type": "string"},
+                            "default_margin_target": {"type": "number"},
+                            "pricing_type": {"type": "string"},
+                            # Fixed cost fields
+                            "cost_name": {"type": "string"},
+                            "amount_monthly": {"type": "number"},
+                            "category": {"type": "string"}
+                        }
+                    },
+                    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+                    "requires_confirmation": {"type": "boolean"},
+                    "reasoning": {"type": "string"}
+                },
+                "required": ["action_type", "action_data", "confidence", "requires_confirmation"]
+            }
+            
+            # Call GPT-4 with structured output
+            response = await self.client.chat.completions.create(
+                model="gpt-4-turbo-preview",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": """Eres un asistente experto en configuración de agencias digitales.
+                        
+Tu objetivo es interpretar comandos en lenguaje natural y convertirlos en acciones estructuradas:
+- add_team_member: Agregar miembro del equipo
+- add_service: Agregar servicio
+- add_fixed_cost: Agregar costo fijo
+- update_team_member: Actualizar miembro del equipo
+- delete_team_member: Eliminar miembro del equipo
+
+IMPORTANTE:
+- Interpreta el comando lo mejor posible
+- Si hay ambigüedad, marca requires_confirmation como true
+- Convierte salarios anuales a mensuales (dividir por 12)
+- Proporciona confidence score realista
+- Responde SIEMPRE en formato JSON válido"""
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                response_format={"type": "json_object"},
+                temperature=0.5,
+                max_tokens=2000
+            )
+            
+            # Parse JSON response
+            content = response.choices[0].message.content
+            result = json.loads(content)
+            
+            # Convert annual salary to monthly if provided
+            if result.get("action_data", {}).get("salary_annual"):
+                annual = result["action_data"]["salary_annual"]
+                result["action_data"]["salary_monthly_brute"] = annual / 12
+                result["action_data"].pop("salary_annual", None)
+            
+            return {
+                "success": True,
+                "data": result,
+                "usage": {
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens,
+                    "total_tokens": response.usage.total_tokens,
+                    "estimated_cost": self._estimate_cost(response.usage)
+                }
+            }
+            
+        except json.JSONDecodeError as e:
+            logger.error(f"Error parsing JSON response: {e}")
+            return {
+                "error": "Error al parsear respuesta de IA",
+                "success": False
+            }
+        except Exception as e:
+            logger.error(f"Error in AI command processing: {e}")
+            return {
+                "error": f"Error al procesar comando: {str(e)}",
+                "success": False
+            }
+    
+    def _build_onboarding_prompt(
+        self,
+        industry: str,
+        region: str,
+        currency: str,
+        custom_context: Optional[str]
+    ) -> str:
+        """Build prompt for onboarding suggestions"""
+        prompt = f"""Genera una configuración inicial completa para una agencia de {industry} en la región {region} con moneda {currency}.
+
+INSTRUCCIONES:
+1. Sugiere 3-8 roles típicos del equipo con salarios realistas para {region}
+2. Sugiere 5-15 servicios comunes ofrecidos en {industry}
+3. Sugiere 3-10 costos fijos típicos (software, herramientas, etc.)
+
+CONTEXTO ADICIONAL:
+"""
+        if custom_context:
+            prompt += f"{custom_context}\n"
+        else:
+            prompt += "Ninguno\n"
+        
+        prompt += """
+FORMATO DE RESPUESTA (JSON):
+{
+  "suggested_roles": [
+    {
+      "name": "Nombre del miembro",
+      "role": "Rol (ej: 'Senior Designer', 'SEO Specialist')",
+      "salary_monthly_brute": 5000,
+      "currency": "USD",
+      "billable_hours_per_week": 32,
+      "is_active": true
+    }
+  ],
+  "suggested_services": [
+    {
+      "name": "Nombre del servicio",
+      "description": "Descripción",
+      "default_margin_target": 0.40,
+      "pricing_type": "hourly",
+      "is_active": true
+    }
+  ],
+  "suggested_fixed_costs": [
+    {
+      "name": "Nombre del costo",
+      "amount_monthly": 100,
+      "currency": "USD",
+      "category": "Software",
+      "description": "Descripción"
+    }
+  ],
+  "confidence_scores": {
+    "roles": 0.85,
+    "services": 0.90,
+    "costs": 0.80
+  },
+  "reasoning": "Breve explicación de las sugerencias"
+}
+"""
+        return prompt
+    
+    def _build_document_parse_prompt(
+        self,
+        text: str,
+        document_type: Optional[str]
+    ) -> str:
+        """Build prompt for document parsing"""
+        doc_type_context = ""
+        if document_type:
+            doc_type_context = f"\nTIPO DE DOCUMENTO: {document_type}\n"
+        
+        prompt = f"""Extrae información estructurada del siguiente documento:{doc_type_context}
+
+DOCUMENTO:
+{text}
+
+INSTRUCCIONES:
+1. Identifica miembros del equipo y sus salarios (convierte a mensual si es necesario)
+2. Identifica costos fijos recurrentes
+3. Identifica suscripciones y servicios
+4. Si hay ambigüedad o datos incompletos, inclúyelos en warnings
+5. Proporciona confidence scores realistas
+
+FORMATO DE RESPUESTA (JSON):
+{{
+  "team_members": [...],
+  "fixed_costs": [...],
+  "subscriptions": [...],
+  "confidence_scores": {{
+    "team_members": 0.85,
+    "fixed_costs": 0.80,
+    "subscriptions": 0.75
+  }},
+  "warnings": ["Advertencias sobre datos ambiguos o incompletos"]
+}}
+"""
+        return prompt
+    
+    def _build_command_prompt(
+        self,
+        command: str,
+        context: Optional[Dict]
+    ) -> str:
+        """Build prompt for natural language command processing"""
+        context_str = ""
+        if context:
+            context_str = f"\nCONTEXTO ACTUAL:\n{json.dumps(context, indent=2)}\n"
+        
+        prompt = f"""Interpreta el siguiente comando en lenguaje natural y conviértelo en una acción estructurada:{context_str}
+
+COMANDO: {command}
+
+INSTRUCCIONES:
+1. Identifica el tipo de acción (add_team_member, add_service, add_fixed_cost, etc.)
+2. Extrae los datos relevantes del comando
+3. Si hay ambigüedad, marca requires_confirmation como true
+4. Convierte salarios anuales a mensuales (dividir por 12)
+5. Proporciona confidence score realista
+
+FORMATO DE RESPUESTA (JSON):
+{{
+  "action_type": "add_team_member",
+  "action_data": {{
+    "name": "Nombre (si se menciona)",
+    "role": "Rol",
+    "salary_monthly_brute": 3750,
+    "currency": "USD",
+    "billable_hours_per_week": 32
+  }},
+  "confidence": 0.90,
+  "requires_confirmation": false,
+  "reasoning": "Explicación de cómo se interpretó el comando"
+}}
+"""
+        return prompt
 
 
 # Singleton instance

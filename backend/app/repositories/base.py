@@ -160,7 +160,8 @@ class BaseRepository(Generic[T]):
     async def delete(
         self, 
         entity: T, 
-        soft: bool = True
+        soft: bool = True,
+        deleted_by_id: Optional[int] = None
     ) -> None:
         """
         Delete entity (soft delete by default)
@@ -168,9 +169,12 @@ class BaseRepository(Generic[T]):
         Args:
             entity: Entity instance to delete
             soft: Whether to perform soft delete (if supported)
+            deleted_by_id: Optional user ID who performed the deletion (for audit)
         """
         if soft and hasattr(entity, 'deleted_at'):
             entity.deleted_at = datetime.utcnow()
+            if deleted_by_id is not None and hasattr(entity, 'deleted_by_id'):
+                entity.deleted_by_id = deleted_by_id
             await self.db.commit()
         else:
             await self.db.delete(entity)
@@ -207,4 +211,5 @@ class BaseRepository(Generic[T]):
         
         result = await self.db.execute(query)
         return result.scalar() or 0
+
 

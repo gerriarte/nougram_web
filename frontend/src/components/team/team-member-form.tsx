@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import {
   Select,
   SelectContent,
@@ -21,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { CURRENCIES } from "@/lib/currency"
+import { Users } from "lucide-react"
 
 const teamMemberSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -75,70 +77,83 @@ export function TeamMemberForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-white">
         <DialogHeader>
-          <DialogTitle>{mode === "create" ? "Add Team Member" : "Edit Team Member"}</DialogTitle>
-          <DialogDescription>
-            {mode === "create"
-              ? "Add a new team member to the agency."
-              : "Update the team member details."}
-          </DialogDescription>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-primary-100 rounded-lg">
+              <Users className="w-5 h-5 text-primary-600" />
+            </div>
+            <div className="flex-1">
+              <DialogTitle className="text-xl font-semibold text-grey-900">
+                {mode === "create" ? "Add Team Member" : "Edit Team Member"}
+              </DialogTitle>
+              <DialogDescription className="text-grey-600 text-sm mt-1">
+                {mode === "create"
+                  ? "Add a new team member to the agency."
+                  : "Update the team member details."}
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
-          <div>
-            <label htmlFor="name" className="text-sm font-medium">
-              Name
-            </label>
+        
+        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6 mt-4">
+          <div className="space-y-2">
+            <Label htmlFor="name" className="text-grey-700 font-medium">
+              Name <span className="text-error-500">*</span>
+            </Label>
             <Input
               id="name"
               {...register("name")}
               placeholder="e.g., John Doe"
-              className="mt-1"
+              className="h-10 bg-white border-grey-300 focus:border-primary-500 focus:ring-primary-500"
             />
             {errors.name && (
-              <p className="text-sm text-destructive mt-1">{errors.name.message}</p>
+              <p className="text-sm text-error-500 mt-1">{errors.name.message}</p>
             )}
           </div>
-          <div>
-            <label htmlFor="role" className="text-sm font-medium">
-              Role
-            </label>
+
+          <div className="space-y-2">
+            <Label htmlFor="role" className="text-grey-700 font-medium">
+              Role <span className="text-error-500">*</span>
+            </Label>
             <Input
               id="role"
               {...register("role")}
               placeholder="e.g., Senior Developer, Designer"
-              className="mt-1"
+              className="h-10 bg-white border-grey-300 focus:border-primary-500 focus:ring-primary-500"
             />
             {errors.role && (
-              <p className="text-sm text-destructive mt-1">{errors.role.message}</p>
+              <p className="text-sm text-error-500 mt-1">{errors.role.message}</p>
             )}
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="salary_monthly_brute" className="text-sm font-medium">
-                Monthly Salary (Gross)
-              </label>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="salary_monthly_brute" className="text-grey-700 font-medium">
+                Monthly Salary (Gross) <span className="text-error-500">*</span>
+              </Label>
               <Input
                 id="salary_monthly_brute"
                 type="number"
                 step="0.01"
                 {...register("salary_monthly_brute", { valueAsNumber: true })}
                 placeholder="0.00"
-                className="mt-1"
+                className="h-10 bg-white border-grey-300 focus:border-primary-500 focus:ring-primary-500"
               />
               {errors.salary_monthly_brute && (
-                <p className="text-sm text-destructive mt-1">{errors.salary_monthly_brute.message}</p>
+                <p className="text-sm text-error-500 mt-1">{errors.salary_monthly_brute.message}</p>
               )}
             </div>
-            <div>
-              <label htmlFor="currency" className="text-sm font-medium">
-                Currency
-              </label>
+
+            <div className="space-y-2">
+              <Label htmlFor="currency" className="text-grey-700 font-medium">
+                Currency <span className="text-error-500">*</span>
+              </Label>
               <Select
                 value={watch("currency")}
                 onValueChange={(value) => setValue("currency", value as "USD" | "COP" | "ARS" | "EUR")}
               >
-                <SelectTrigger className="mt-1">
+                <SelectTrigger className="h-10 bg-white border-grey-300 focus:border-primary-500 focus:ring-primary-500">
                   <SelectValue placeholder="Select currency" />
                 </SelectTrigger>
                 <SelectContent>
@@ -150,29 +165,36 @@ export function TeamMemberForm({
                 </SelectContent>
               </Select>
               {errors.currency && (
-                <p className="text-sm text-destructive mt-1">{errors.currency.message}</p>
+                <p className="text-sm text-error-500 mt-1">{errors.currency.message}</p>
               )}
             </div>
           </div>
-          <div>
-            <label htmlFor="billable_hours_per_week" className="text-sm font-medium">
-              Billable Hours per Week
-            </label>
+
+          <div className="space-y-2">
+            <Label htmlFor="billable_hours_per_week" className="text-grey-700 font-medium">
+              Billable Hours per Week <span className="text-error-500">*</span>
+            </Label>
             <Input
               id="billable_hours_per_week"
               type="number"
               step="0.1"
+              min="1"
+              max="80"
               {...register("billable_hours_per_week", { valueAsNumber: true })}
               placeholder="40"
-              className="mt-1"
+              className="h-10 bg-white border-grey-300 focus:border-primary-500 focus:ring-primary-500"
             />
+            <p className="text-xs text-grey-500 mt-1">
+              Typical range: 32-40 hours per week
+            </p>
             {errors.billable_hours_per_week && (
-              <p className="text-sm text-destructive mt-1">
+              <p className="text-sm text-error-500 mt-1">
                 {errors.billable_hours_per_week.message}
               </p>
             )}
           </div>
-          <DialogFooter>
+
+          <DialogFooter className="gap-2 pt-4 border-t border-grey-200">
             <Button
               type="button"
               variant="outline"
@@ -180,11 +202,22 @@ export function TeamMemberForm({
                 reset()
                 onOpenChange(false)
               }}
+              className="border-grey-300 text-grey-700 hover:bg-grey-50"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {mode === "create" ? "Add Member" : "Save Changes"}
+            <Button 
+              type="submit" 
+              disabled={isSubmitting}
+              className="bg-primary-500 hover:bg-primary-700 text-white"
+            >
+              {isSubmitting ? (
+                <>
+                  <span className="mr-2">Loading...</span>
+                </>
+              ) : (
+                mode === "create" ? "Add Member" : "Save Changes"
+              )}
             </Button>
           </DialogFooter>
         </form>

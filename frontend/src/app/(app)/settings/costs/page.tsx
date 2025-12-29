@@ -54,7 +54,7 @@ export default function CostsSettingsPage() {
     try {
       await createMutation.mutateAsync(formData)
       toast({
-        title: "Success",
+        title: "Éxito",
         description: MESSAGES.success.costCreated,
       })
       setIsFormOpen(false)
@@ -74,7 +74,7 @@ export default function CostsSettingsPage() {
       try {
         await updateMutation.mutateAsync({ id: editingCost.id, data: formData })
         toast({
-          title: "Success",
+          title: "Éxito",
           description: MESSAGES.success.costUpdated,
         })
         setEditingCost(null)
@@ -101,7 +101,7 @@ export default function CostsSettingsPage() {
       try {
         await deleteMutation.mutateAsync(costToDelete.id)
         toast({
-          title: "Success",
+          title: "Éxito",
           description: MESSAGES.success.costDeleted,
         })
         setCostToDelete(null)
@@ -137,8 +137,8 @@ export default function CostsSettingsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Fixed Costs</h1>
-          <p className="text-muted-foreground">Manage your agency's fixed monthly costs</p>
+          <h1 className="text-3xl font-bold">Costos Fijos</h1>
+          <p className="text-muted-foreground">Gestiona los costos fijos mensuales de tu agencia</p>
         </div>
         <div className="flex gap-2">
           <Button 
@@ -150,7 +150,7 @@ export default function CostsSettingsPage() {
           </Button>
           <Button onClick={() => setIsFormOpen(true)} disabled={createMutation.isPending || updateMutation.isPending}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Cost
+            Agregar Costo
           </Button>
         </div>
       </div>
@@ -159,9 +159,9 @@ export default function CostsSettingsPage() {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Fixed Costs List</CardTitle>
+              <CardTitle>Lista de Costos Fijos</CardTitle>
               <CardDescription>
-                {costs.length} cost{costs.length !== 1 ? "s" : ""} configured
+                {costs.length} costo{costs.length !== 1 ? "s" : ""} configurado{costs.length !== 1 ? "s" : ""}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -171,7 +171,7 @@ export default function CostsSettingsPage() {
                 </div>
               ) : error ? (
                 <div className="space-y-2 py-8">
-                  <p className="text-sm text-destructive text-center">Error loading costs: {String(error)}</p>
+                  <p className="text-sm text-destructive text-center">Error al cargar costos: {String(error)}</p>
                 </div>
               ) : costs.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
@@ -181,11 +181,11 @@ export default function CostsSettingsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Currency</TableHead>
-                      <TableHead className="text-right">Monthly Amount</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
+                      <TableHead>Nombre</TableHead>
+                      <TableHead>Categoría</TableHead>
+                      <TableHead>Moneda</TableHead>
+                      <TableHead className="text-right">Monto Mensual</TableHead>
+                      <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>

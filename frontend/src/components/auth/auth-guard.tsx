@@ -24,8 +24,8 @@ export function AuthGuard({ children }: AuthGuardProps) {
       return
     }
 
-    if (pathname !== "/") {
-      router.push("/")
+    if (pathname !== "/login" && pathname !== "/") {
+      router.push("/login")
     }
     setIsChecking(false)
   }, [router, pathname])

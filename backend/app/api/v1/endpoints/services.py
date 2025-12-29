@@ -11,6 +11,7 @@ from app.core.security import get_current_user
 from app.core.tenant import get_tenant_context, TenantContext
 from app.core.exceptions import ResourceNotFoundError, ResourceInUseError
 from app.core.permissions import can_create, can_edit, can_delete, PermissionError
+from app.core.permission_middleware import require_create_services, require_delete_resources
 from app.core.logging import get_logger
 from app.models.service import Service
 from app.models.project import QuoteItem
@@ -85,19 +86,21 @@ async def list_services(
 async def create_service(
     service_data: ServiceCreate,
     tenant: TenantContext = Depends(get_tenant_context),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_create_services),  # Require permission to create services
     db: AsyncSession = Depends(get_db)
 ):
     """
     Create a new service
     
-    Permissions:
-    - Super Admin: Allowed
-    - Admin Financiero: Allowed
-    - Product Manager: Not allowed
+    **Permissions:**
+    - Requires `can_create_services` permission
+    - Allowed roles: owner, admin_financiero, super_admin
+    - Denied roles: product_manager, collaborator
     """
-    if not can_create(current_user, "service"):
-        raise PermissionError("You don't have permission to create services")
+    
+    # Validate service limit for plan
+    from app.core.plan_limits import validate_service_limit
+    await validate_service_limit(tenant.organization_id, tenant.subscription_plan, db)
     
     logger.info("Creating service", service_data=service_data.model_dump(), user_id=current_user.id)
     service_dict = service_data.model_dump()
@@ -105,6 +108,21 @@ async def create_service(
     new_service = Service(**service_dict)
     service_repo = RepositoryFactory.create_service_repository(db, tenant.organization_id)
     new_service = await service_repo.create(new_service)
+    
+    # Log audit event
+    from app.core.audit import AuditService, AuditAction
+    from fastapi import Request
+    await AuditService.log_action(
+        db=db,
+        action=AuditAction.SERVICE_CREATE,
+        user_id=current_user.id,
+        organization_id=tenant.organization_id,
+        resource_type="service",
+        resource_id=new_service.id,
+        request=None,  # Request not available in this endpoint
+        details={"service_name": new_service.name},
+        status="success"
+    )
     
     logger.info("Service created successfully", service_id=new_service.id, user_id=current_user.id)
     return ServiceResponse.model_validate(new_service)
@@ -197,16 +215,22 @@ async def delete_service(
     Soft delete a service (move to trash)
     Validates that the service is not being used in any quotes before deletion
     
-    Permissions:
-    - Super Admin: Can delete immediately
-    - Admin Financiero: Creates delete request (requires approval)
-    - Product Manager: Not allowed
+    **Permissions:**
+    - Requires `can_delete_resources` permission
+    - Allowed roles: owner, super_admin
+    - Denied roles: admin_financiero, product_manager, collaborator
     """
-    # Check permissions
-    can_delete_resource, requires_approval = can_delete(current_user, "service")
-    
-    if not can_delete_resource:
-        raise PermissionError("You don't have permission to delete services")
+    # Permission check
+    from app.core.permissions import check_permission, PERM_DELETE_RESOURCES, PermissionError as PermError
+    try:
+        check_permission(current_user, PERM_DELETE_RESOURCES)
+    except PermError:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to delete services"
+        )
+    # For now, all users with PERM_DELETE_RESOURCES can delete immediately
+    requires_approval = False
     
     # Verify if the service exists and is not already deleted
     service_repo = RepositoryFactory.create_service_repository(db, tenant.organization_id)
@@ -319,6 +343,47 @@ async def list_deleted_services(
             "deleted_by_email": service.deleted_by.email if service.deleted_by else None,
         }
         items.append(ServiceResponse.model_validate(service_dict))
+    
+    return ServiceListResponse(
+        items=items,
+        total=len(services)
+    )
+
+
+@router.delete("/{service_id}/permanent", status_code=status.HTTP_204_NO_CONTENT)
+async def permanently_delete_service(
+    service_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Permanently delete a soft-deleted service (hard delete)
+    This action cannot be undone. Only soft-deleted services can be permanently deleted.
+    """
+    # Verify if the service exists and is soft-deleted
+    result = await db.execute(
+        select(Service).where(
+            Service.id == service_id,
+            Service.deleted_at.isnot(None)
+        )
+    )
+    service = result.scalar_one_or_none()
+    
+    if not service:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Service with id {service_id} not found in trash. Only soft-deleted services can be permanently deleted."
+        )
+    
+    # Hard delete: permanently remove from database
+    await db.delete(service)
+    await db.commit()
+    
+    return None
+
+
+
+
     
     return ServiceListResponse(
         items=items,

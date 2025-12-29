@@ -85,6 +85,20 @@ def generate_quote_docx(
                 'client_price': client_price
             })
     
+    # Extract expenses (Sprint 15)
+    quote_expenses = []
+    if hasattr(quote, 'expenses') and quote.expenses:
+        for expense in quote.expenses:
+            quote_expenses.append({
+                'name': expense.name,
+                'description': expense.description,
+                'cost': expense.cost,
+                'markup_percentage': expense.markup_percentage,
+                'client_price': expense.client_price,
+                'category': expense.category,
+                'quantity': expense.quantity
+            })
+    
     # Create document
     doc = Document()
     
@@ -156,6 +170,40 @@ def generate_quote_docx(
         
         doc.add_paragraph()
     
+    # Expenses table (Sprint 15)
+    if quote_expenses:
+        doc.add_paragraph("Third-Party Expenses", style='Heading 2')
+        
+        expenses_table = doc.add_table(rows=1, cols=6)
+        expenses_table.style = 'Light Grid Accent 1'
+        
+        # Header row
+        exp_header_cells = expenses_table.rows[0].cells
+        exp_header_cells[0].text = "Expense"
+        exp_header_cells[1].text = "Category"
+        exp_header_cells[2].text = "Cost"
+        exp_header_cells[3].text = "Qty"
+        exp_header_cells[4].text = "Markup"
+        exp_header_cells[5].text = "Subtotal"
+        
+        # Make header bold
+        for cell in exp_header_cells:
+            for paragraph in cell.paragraphs:
+                for run in paragraph.runs:
+                    run.font.bold = True
+        
+        # Add expenses
+        for expense in quote_expenses:
+            exp_row_cells = expenses_table.add_row().cells
+            exp_row_cells[0].text = expense.get('name', 'Unknown')
+            exp_row_cells[1].text = expense.get('category', '-') or '-'
+            exp_row_cells[2].text = format_currency(expense.get('cost', 0), currency)
+            exp_row_cells[3].text = f"{expense.get('quantity', 1):.0f}"
+            exp_row_cells[4].text = f"{(expense.get('markup_percentage', 0) * 100):.1f}%"
+            exp_row_cells[5].text = format_currency(expense.get('client_price', 0), currency)
+        
+        doc.add_paragraph()
+    
     # Totals
     doc.add_paragraph("Totals", style='Heading 2')
     
@@ -206,5 +254,13 @@ def generate_quote_docx(
     doc.save(buffer)
     buffer.seek(0)
     return buffer
+
+
+
+
+
+
+
+
 
 

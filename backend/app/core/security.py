@@ -122,6 +122,23 @@ async def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+    # Multi-tenant: Validate organization_id from token matches user's current organization
+    token_org_id = payload.get("organization_id")
+    if token_org_id is not None:
+        try:
+            token_org_id_int = int(token_org_id)
+            # Validate that token's organization_id matches user's current organization_id
+            if user.organization_id is None or user.organization_id != token_org_id_int:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Token organization mismatch. Please re-authenticate.",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+        except (ValueError, TypeError):
+            # Invalid organization_id in token, but allow if user has organization_id
+            # This supports backward compatibility with old tokens
+            pass
+    
     # Ensure role is a string (not enum) - use ensure_role_string
     from app.core.permissions import ensure_role_string
     ensure_role_string(user)

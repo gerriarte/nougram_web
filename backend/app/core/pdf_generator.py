@@ -87,6 +87,20 @@ def generate_quote_pdf(
                 'client_price': client_price
             })
     
+    # Extract expenses (Sprint 15)
+    quote_expenses = []
+    if hasattr(quote, 'expenses') and quote.expenses:
+        for expense in quote.expenses:
+            quote_expenses.append({
+                'name': expense.name,
+                'description': expense.description,
+                'cost': expense.cost,
+                'markup_percentage': expense.markup_percentage,
+                'client_price': expense.client_price,
+                'category': expense.category,
+                'quantity': expense.quantity
+            })
+    
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=letter, topMargin=0.5*inch, bottomMargin=0.5*inch)
     
@@ -215,6 +229,47 @@ def generate_quote_pdf(
     ]))
     elements.append(services_table)
     elements.append(Spacer(1, 0.3*inch))
+    
+    # Expenses table (Sprint 15)
+    if quote_expenses:
+        elements.append(Paragraph("Third-Party Expenses", heading_style))
+        
+        expenses_table_data = [
+            ['Expense', 'Category', 'Cost', 'Qty', 'Markup', 'Subtotal']
+        ]
+        
+        for expense in quote_expenses:
+            expenses_table_data.append([
+                expense.get('name', 'Unknown'),
+                expense.get('category', '-') or '-',
+                format_currency(expense.get('cost', 0), currency),
+                f"{expense.get('quantity', 1):.0f}",
+                f"{(expense.get('markup_percentage', 0) * 100):.1f}%",
+                format_currency(expense.get('client_price', 0), currency)
+            ])
+        
+        expenses_table = Table(expenses_table_data, colWidths=[2*inch, 1*inch, 1*inch, 0.75*inch, 0.75*inch, 1.25*inch])
+        expenses_table.setStyle(TableStyle([
+            # Header row
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#34495e')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+            ('ALIGN', (2, 0), (-1, -1), 'RIGHT'),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('FONTSIZE', (0, 0), (-1, 0), 11),
+            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+            ('TOPPADDING', (0, 0), (-1, 0), 12),
+            # Data rows
+            ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+            ('FONTSIZE', (0, 1), (-1, -1), 10),
+            ('BOTTOMPADDING', (0, 1), (-1, -1), 8),
+            ('TOPPADDING', (0, 1), (-1, -1), 8),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#bdc3c7')),
+            # Alternating row colors
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f8f9fa')]),
+        ]))
+        elements.append(expenses_table)
+        elements.append(Spacer(1, 0.3*inch))
     
     # Totals section
     elements.append(Paragraph("Summary", heading_style))

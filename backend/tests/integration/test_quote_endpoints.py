@@ -94,3 +94,13 @@ class TestQuoteEndpoints:
         assert response.status_code == 401
 
 
+
+
+
+
+
+
+
+
+
+

@@ -9,6 +9,8 @@ from app.core.database import get_db
 from app.core.security import get_current_user
 from app.core.exceptions import ResourceNotFoundError, BusinessLogicError
 from app.core.logging import get_logger
+from app.core.permissions import has_permission, PERM_VIEW_SENSITIVE_DATA, PERM_MODIFY_COSTS, PERM_DELETE_RESOURCES
+from app.core.permission_middleware import require_view_sensitive_data, require_modify_costs, require_delete_resources
 from app.models.team import TeamMember
 from app.models.user import User
 from app.repositories.team_repository import TeamRepository
@@ -29,13 +31,18 @@ router = APIRouter()
 @router.get("/team", response_model=TeamMemberListResponse)
 async def list_team_members(
     tenant: TenantContext = Depends(get_tenant_context),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_view_sensitive_data),  # Require permission to view sensitive data (salaries)
     db: AsyncSession = Depends(get_db),
     page: int = Query(1, ge=1, description="Page number (1-indexed)"),
     page_size: int = Query(20, ge=1, le=100, description="Items per page (max 100)")
 ):
     """
     List all team members with pagination
+    
+    **Permissions:**
+    - Requires `can_view_sensitive_data` permission (salaries are sensitive data)
+    - Allowed roles: owner, admin_financiero, super_admin
+    - Denied roles: product_manager, collaborator (data leakage prevention)
     """
     from sqlalchemy import desc
     
@@ -72,12 +79,21 @@ async def list_team_members(
 async def create_team_member(
     member_data: TeamMemberCreate,
     tenant: TenantContext = Depends(get_tenant_context),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_modify_costs),  # Require permission to modify costs (salaries)
     db: AsyncSession = Depends(get_db)
 ):
     """
     Create a new team member
+    
+    **Permissions:**
+    - Requires `can_modify_costs` permission (team members affect costs)
+    - Allowed roles: owner, admin_financiero, super_admin
+    - Denied roles: product_manager, collaborator
     """
+    # Validate team member limit for plan
+    from app.core.plan_limits import validate_team_member_limit
+    await validate_team_member_limit(tenant.organization_id, tenant.subscription_plan, db)
+    
     try:
         # Ensure all required fields have values
         member_dict = member_data.model_dump()
@@ -133,11 +149,16 @@ async def update_team_member(
     member_id: int,
     member_data: TeamMemberUpdate,
     tenant: TenantContext = Depends(get_tenant_context),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_modify_costs),  # Require permission to modify costs (salaries)
     db: AsyncSession = Depends(get_db)
 ):
     """
     Update an existing team member
+    
+    **Permissions:**
+    - Requires `can_modify_costs` permission (team members affect costs)
+    - Allowed roles: owner, admin_financiero, super_admin
+    - Denied roles: product_manager, collaborator
     """
     try:
         team_repo = RepositoryFactory.create_team_repository(db, tenant.organization_id)
@@ -195,11 +216,17 @@ async def update_team_member(
 async def delete_team_member(
     member_id: int,
     tenant: TenantContext = Depends(get_tenant_context),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_delete_resources),  # Require permission to delete resources
     db: AsyncSession = Depends(get_db)
 ):
     """
     Delete a team member
+    
+    **Permissions:**
+    - Requires `can_delete_resources` permission
+    - Allowed roles: owner, super_admin
+    - Denied roles: admin_financiero, product_manager, collaborator
+    
     Validates that the member is not active before deletion.
     Active members are used in calculations, so deletion will affect the blended cost rate.
     """
@@ -232,6 +259,7 @@ async def delete_team_member(
     cache.invalidate_pattern("blended_cost_rate:")
     
     return None
+
 
 
 

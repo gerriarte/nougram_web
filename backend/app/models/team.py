@@ -22,6 +22,7 @@ class TeamMember(Base):
     salary_monthly_brute = Column(Float, nullable=False)
     currency = Column(String, default="USD", nullable=False)  # USD, COP, ARS, EUR
     billable_hours_per_week = Column(Integer, default=32)
+    non_billable_hours_percentage = Column(Float, default=0.0)  # Percentage of time for admin/compliance (e.g., 0.20 = 20%)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

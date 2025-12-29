@@ -183,3 +183,13 @@ Next.js 14+ optimiza automáticamente los imports de paquetes grandes:
 **Última actualización:** 12 de Diciembre, 2025
 
 
+
+
+
+
+
+
+
+
+
+

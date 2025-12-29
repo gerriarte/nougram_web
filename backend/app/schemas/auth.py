@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field, EmailStr
 
 class LoginRequest(BaseModel):
     """Schema for email/password login"""
-    email: EmailStr = Field(..., description="User email address")
+    email: str = Field(..., description="User email address", min_length=1)
     password: str = Field(..., min_length=1, description="User password")
 
 
@@ -41,6 +41,7 @@ class UserResponse(BaseModel):
     full_name: str
     has_calendar_connected: bool = False
     role: str = Field(default="product_manager", description="User role")  # Always str, never enum
+    organization_id: Optional[int] = Field(None, description="Organization ID for multi-tenant support")
 
     class Config:
         from_attributes = False  # Disable to avoid enum issues
@@ -67,3 +68,7 @@ class UserCreate(BaseModel):
     role: str = Field(default="product_manager", description="User role")
     password: str = Field(..., min_length=8, description="Initial password for the user")
 
+
+class SwitchOrganizationRequest(BaseModel):
+    """Schema for switching organization"""
+    organization_id: int = Field(..., description="Organization ID to switch to", gt=0)

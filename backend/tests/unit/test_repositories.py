@@ -174,4 +174,120 @@ class TestServiceRepository:
         active_only = [s for s in active_services if s.is_active is True]
         assert len(active_only) >= 1
         assert any(s.name == "Active Service" for s in active_only)
+    
+    async def test_get_all_with_where(self, db_session):
+        """Test get_all with where clause"""
+        repo = BaseRepository(db_session, Service)
+        
+        # Create multiple services
+        service1 = Service(name="Service 1", is_active=True)
+        service2 = Service(name="Service 2", is_active=False)
+        service3 = Service(name="Service 3", is_active=True)
+        
+        await repo.create(service1)
+        await repo.create(service2)
+        await repo.create(service3)
+        
+        # Get only active services
+        active_services = await repo.get_all(where=Service.is_active == True)
+        
+        assert len(active_services) >= 2
+        assert all(s.is_active is True for s in active_services)
+    
+    async def test_get_all_with_limit_offset(self, db_session):
+        """Test get_all with limit and offset"""
+        repo = BaseRepository(db_session, Service)
+        
+        # Create multiple services
+        for i in range(5):
+            service = Service(name=f"Service {i}", is_active=True)
+            await repo.create(service)
+        
+        # Get first 2
+        first_page = await repo.get_all(limit=2, offset=0)
+        assert len(first_page) == 2
+        
+        # Get next 2
+        second_page = await repo.get_all(limit=2, offset=2)
+        assert len(second_page) == 2
+        
+        # Should be different
+        assert first_page[0].id != second_page[0].id
+    
+    async def test_tenant_filtering(self, db_session, test_organization):
+        """Test tenant filtering in repositories"""
+        # Create another organization
+        from app.models.organization import Organization
+        org2 = Organization(
+            name="Org 2",
+            slug="org-2",
+            subscription_plan="free",
+            subscription_status="active"
+        )
+        db_session.add(org2)
+        await db_session.commit()
+        
+        # Create services for both organizations
+        service1 = Service(
+            name="Service Org 1",
+            is_active=True,
+            organization_id=test_organization.id
+        )
+        service2 = Service(
+            name="Service Org 2",
+            is_active=True,
+            organization_id=org2.id
+        )
+        db_session.add(service1)
+        db_session.add(service2)
+        await db_session.commit()
+        
+        # Create repository with tenant filter
+        repo = BaseRepository(db_session, Service, tenant_id=test_organization.id)
+        
+        # Should only get services for test_organization
+        services = await repo.get_all()
+        assert len(services) >= 1
+        assert all(s.organization_id == test_organization.id for s in services)
+        assert all(s.name == "Service Org 1" for s in services if s.name == "Service Org 1")
+    
+    async def test_delete_hard(self, db_session):
+        """Test hard delete"""
+        repo = BaseRepository(db_session, CostFixed)
+        
+        cost = CostFixed(
+            name="Test Cost",
+            amount_monthly=100.00,
+            currency="USD",
+            category="overhead"
+        )
+        created = await repo.create(cost)
+        cost_id = created.id
+        
+        await repo.delete(created, soft=False)
+        
+        # Should not be found even with include_deleted=True
+        found = await repo.get_by_id(cost_id, include_deleted=True)
+        assert found is None
+    
+    async def test_get_all_with_order_by(self, db_session):
+        """Test get_all with order_by"""
+        repo = BaseRepository(db_session, Service)
+        
+        # Create services with different names
+        service1 = Service(name="A Service", is_active=True)
+        service2 = Service(name="B Service", is_active=True)
+        service3 = Service(name="C Service", is_active=True)
+        
+        await repo.create(service3)
+        await repo.create(service1)
+        await repo.create(service2)
+        
+        # Get all ordered by name
+        services = await repo.get_all(order_by=Service.name)
+        
+        # Should be in alphabetical order
+        names = [s.name for s in services if s.name in ["A Service", "B Service", "C Service"]]
+        if len(names) >= 3:
+            assert names == sorted(names)
 

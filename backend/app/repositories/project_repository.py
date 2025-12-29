@@ -86,16 +86,17 @@ class ProjectRepository(BaseRepository[Project]):
         quote_id: int
     ) -> Optional[Quote]:
         """
-        Get quote by ID with items loaded (with tenant scoping via project)
+        Get quote by ID with items and expenses loaded (with tenant scoping via project)
         
         Args:
             quote_id: Quote ID
             
         Returns:
-            Quote instance with items loaded or None
+            Quote instance with items and expenses loaded or None
         """
         query = select(Quote).options(
             selectinload(Quote.items).selectinload(QuoteItem.service),
+            selectinload(Quote.expenses),  # Sprint 15: Load expenses
             selectinload(Quote.project)
         ).where(Quote.id == quote_id)
         
@@ -115,7 +116,7 @@ class ProjectRepository(BaseRepository[Project]):
         
         Args:
             project_id: Project ID
-            
+        
         Returns:
             Latest Quote instance or None
         """
@@ -129,4 +130,62 @@ class ProjectRepository(BaseRepository[Project]):
         
         result = await self.db.execute(query)
         return result.scalar_one_or_none()
+    
+    async def get_all_paginated(
+        self,
+        include_deleted: bool = False,
+        status_filter: Optional[str] = None,
+        only_deleted: bool = False,
+        order_by=None,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None
+    ) -> List[Project]:
+        """
+        Get all projects with pagination and eager loading (with tenant scoping)
+        
+        Args:
+            include_deleted: Whether to include soft-deleted projects
+            status_filter: Filter by project status
+            only_deleted: If True, only return deleted projects (requires include_deleted=True)
+            order_by: SQLAlchemy order_by clause (defaults to created_at desc)
+            limit: Maximum number of results
+            offset: Number of results to skip
+            
+        Returns:
+            List of Project instances with taxes relationship loaded
+        """
+        # Load relationships based on needs
+        options = [selectinload(Project.taxes)]
+        # If loading deleted projects, also load deleted_by relationship
+        if only_deleted or include_deleted:
+            options.append(selectinload(Project.deleted_by))
+        
+        query = select(Project).options(*options)
+        
+        # Apply tenant filter first
+        query = self._apply_tenant_filter(query)
+        
+        if only_deleted:
+            # Only deleted projects
+            query = query.where(Project.deleted_at.isnot(None))
+        elif not include_deleted:
+            # Only non-deleted projects
+            query = query.where(Project.deleted_at.is_(None))
+        # If include_deleted=True and only_deleted=False, include both
+        
+        if status_filter:
+            query = query.where(Project.status == status_filter)
+        
+        if order_by is None:
+            order_by = desc(Project.created_at)
+        query = query.order_by(order_by)
+        
+        if limit is not None:
+            query = query.limit(limit)
+        if offset is not None:
+            query = query.offset(offset)
+        
+        result = await self.db.execute(query)
+        return result.scalars().all()
+
 

@@ -59,6 +59,13 @@ class Settings(BaseSettings):
     EXCHANGE_RATE_API_KEY: str = ""  # API key for exchangerate-api.com (free tier available)
     EXCHANGE_RATE_API_URL: str = "https://api.exchangerate-api.com/v4/latest"  # Free tier endpoint
     
+    # Frontend URL for invitation links
+    FRONTEND_URL: str = "http://localhost:3000"  # Frontend URL for invitation links
+    
+    # Celery Configuration
+    CELERY_BROKER_URL: str = "redis://localhost:6379/0"  # Redis broker URL
+    CELERY_RESULT_BACKEND: str = "redis://localhost:6379/0"  # Redis result backend
+    
     @property
     def cors_origins_list(self) -> List[str]:
         """Parse CORS origins from comma-separated string"""

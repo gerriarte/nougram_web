@@ -3,7 +3,7 @@
  */
 import { logger } from './logger';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
 export interface ApiResponse<T> {
   data?: T;
@@ -21,45 +21,14 @@ function getAuthToken(): string | null {
 }
 
 /**
- * Translate error messages to Spanish and make them more user-friendly
+ * Translate error messages using the new i18n system
+ * This function is kept for backward compatibility but now uses the error handler
  */
-function translateError(errorMessage: string): string {
-  // Common error patterns and their Spanish translations
-  const translations: Record<string, string> = {
-    'not found': 'no encontrado',
-    'Cannot delete': 'No se puede eliminar',
-    'is being used': 'está siendo usado',
-    'quote item': 'ítem de cotización',
-    'quote items': 'ítems de cotización',
-    'Unauthorized': 'No autorizado',
-    'Network error': 'Error de conexión',
-    'Request failed': 'La solicitud falló',
-  };
+import { getErrorMessage, fallbackTranslate } from './error-handler';
 
-  let translated = errorMessage;
-
-  // Translate common patterns
-  Object.entries(translations).forEach(([en, es]) => {
-    const regex = new RegExp(en, 'gi');
-    translated = translated.replace(regex, es);
-  });
-
-  // Specific error message improvements
-  if (translated.includes('No se puede eliminar')) {
-    // Extract resource name and usage count for better formatting
-    const match = translated.match(/No se puede eliminar (.+?)\. Está siendo usado en (\d+) (.+?)\./);
-    if (match) {
-      const [, resourceName, count, context] = match;
-      return `No se puede eliminar ${resourceName}. Está siendo usado en ${count} ${context}. Por favor, elimínalo de todas las cotizaciones primero.`;
-    }
-  }
-
-  // Handle "not found" errors
-  if (translated.toLowerCase().includes('no encontrado')) {
-    return 'El recurso solicitado no existe o ha sido eliminado.';
-  }
-
-  return translated;
+function translateError(errorMessage: string | unknown): string {
+  // Use the new error handler with fallback translations
+  return getErrorMessage(errorMessage, fallbackTranslate);
 }
 
 /**
@@ -129,6 +98,21 @@ async function apiRequestInternal<T>(
 
     const url = `${API_URL}${endpoint}`;
     logger.debug(`[API] ${options.method || 'GET'} ${url}`, { headers, body: options.body });
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/dfff7b82-9de7-4929-be91-d40c01fc1897',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        sessionId:'debug-session',
+        runId:'pre-fix',
+        hypothesisId:'H1',
+        location:'src/lib/api-client.ts:142',
+        message:'apiRequestInternal pre-fetch',
+        data:{ endpoint, url, method: options.method || 'GET' },
+        timestamp:Date.now()
+      })
+    }).catch(()=>{});
+    // #endregion agent log
 
     const response = await fetch(url, {
       ...options,
@@ -136,8 +120,38 @@ async function apiRequestInternal<T>(
     });
 
     logger.debug(`[API] Response status: ${response.status}`, response);
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/dfff7b82-9de7-4929-be91-d40c01fc1897',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        sessionId:'debug-session',
+        runId:'pre-fix',
+        hypothesisId:'H1',
+        location:'src/lib/api-client.ts:149',
+        message:'apiRequestInternal response',
+        data:{ endpoint, status: response.status },
+        timestamp:Date.now()
+      })
+    }).catch(()=>{});
+    // #endregion agent log
 
     if (!response.ok) {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/dfff7b82-9de7-4929-be91-d40c01fc1897',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          sessionId:'debug-session',
+          runId:'pre-fix',
+          hypothesisId:'H1',
+          location:'src/lib/api-client.ts:153',
+          message:'apiRequestInternal non-ok response',
+          data:{ endpoint, status: response.status },
+          timestamp:Date.now()
+        })
+      }).catch(()=>{});
+      // #endregion agent log
       if (response.status === 401) {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('auth_token');
@@ -149,6 +163,20 @@ async function apiRequestInternal<T>(
       const error = await response.json().catch(() => ({ 
         detail: `Error ${response.status}: ${response.statusText}` 
       }));
+      
+      // Log full error for 422 validation errors to help debug
+      if (response.status === 422) {
+        logger.error('[API] Validation error (422):', error);
+        // Handle Pydantic validation errors - they have a 'detail' array
+        if (error.detail && Array.isArray(error.detail)) {
+          const validationErrors = error.detail.map((err: any) => {
+            const field = err.loc ? err.loc.join('.') : 'campo';
+            const msg = err.msg || 'Error de validación';
+            return `${field}: ${msg}`;
+          }).join(', ');
+          return { error: `Error de validación: ${validationErrors}` };
+        }
+      }
       
       const errorMessage = error.detail || error.message || `Error ${response.status}`;
       return { error: translateError(errorMessage) };
@@ -163,6 +191,21 @@ async function apiRequestInternal<T>(
     logger.debug(`[API] Response data:`, data);
     return { data };
   } catch (error) {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/dfff7b82-9de7-4929-be91-d40c01fc1897',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        sessionId:'debug-session',
+        runId:'pre-fix',
+        hypothesisId:'H1',
+        location:'src/lib/api-client.ts:192',
+        message:'apiRequestInternal exception',
+        data:{ endpoint, error: error instanceof Error ? error.message : 'unknown' },
+        timestamp:Date.now()
+      })
+    }).catch(()=>{});
+    // #endregion agent log
     if (error instanceof TypeError && error.message === 'Failed to fetch') {
       return { error: 'Error de conexión. Verifica que el servidor esté corriendo.' };
     }
@@ -280,6 +323,3 @@ export async function downloadDOCX(
 }
 
 export default apiRequest;
-
-
-

@@ -117,11 +117,27 @@ async def create_user(
     """
     require_super_admin(current_user)
     
+    # Get tenant context for limit validation
+    from app.core.tenant import get_tenant_context
+    tenant = await get_tenant_context(current_user, db)
+    
+    # Validate user limit for plan
+    from app.core.plan_limits import validate_user_limit
+    await validate_user_limit(tenant.organization_id, tenant.subscription_plan, db)
+    
     # Normalize email to lowercase
     normalized_email = user_data.email.strip().lower()
 
-    # Validate role
-    valid_roles = {"super_admin", "admin_financiero", "product_manager"}
+    # Validate role and super_admin email
+    from app.core.permissions import validate_super_admin_email
+    from app.core.roles import SUPPORT_ROLES, TENANT_ROLES
+    
+    # Only super_admin can create users with support roles
+    if user_data.role in SUPPORT_ROLES:
+        validate_super_admin_email(normalized_email, user_data.role)
+    
+    # Validate role is valid
+    valid_roles = SUPPORT_ROLES | TENANT_ROLES
     if user_data.role not in valid_roles:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -155,6 +171,21 @@ async def create_user(
     if not isinstance(user_role, str):
         user_role = str(user_role) if user_role else "product_manager"
     
+    # Log audit event
+    from app.core.audit import AuditService, AuditAction
+    from fastapi import Request
+    await AuditService.log_action(
+        db=db,
+        action=AuditAction.USER_CREATE,
+        user_id=current_user.id,
+        organization_id=tenant.organization_id,
+        resource_type="user",
+        resource_id=new_user.id,
+        request=None,  # Request not available in this endpoint
+        details={"email": normalized_email, "role": user_data.role},
+        status="success"
+    )
+    
     logger.info("User created successfully", user_id=new_user.id, created_by=current_user.id)
     return UserResponse(
         id=new_user.id,
@@ -178,8 +209,16 @@ async def update_user_role(
     """
     require_super_admin(current_user)
     
-    # Validate role
-    valid_roles = {"super_admin", "admin_financiero", "product_manager"}
+    # Validate role and super_admin email
+    from app.core.permissions import validate_super_admin_email
+    from app.core.roles import SUPPORT_ROLES, TENANT_ROLES
+    
+    # Validate super_admin email if assigning super_admin role
+    if role_data.role == 'super_admin':
+        validate_super_admin_email(user.email, role_data.role)
+    
+    # Validate role is valid
+    valid_roles = SUPPORT_ROLES | TENANT_ROLES
     if role_data.role not in valid_roles:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -224,4 +263,5 @@ async def update_user_role(
         has_calendar_connected=user.google_refresh_token is not None,
         role=user_role
     )
+
 

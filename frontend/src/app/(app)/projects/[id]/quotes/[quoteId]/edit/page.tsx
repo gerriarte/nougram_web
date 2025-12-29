@@ -21,7 +21,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Plus, Trash2, Loader2, AlertCircle, ArrowLeft, Save, Copy, Download, Mail, FileText } from "lucide-react"
-import { useGetServices, useGetQuote, useGetProject, useUpdateQuote, useCreateQuoteVersion, useCalculateQuote } from "@/lib/queries"
+import { useGetServices, useGetQuote, useGetProject, useUpdateQuote, useCreateQuoteVersion, useCalculateQuote, useGetCurrentUser } from "@/lib/queries"
+import { canSendQuotes } from "@/lib/permissions"
 import { useToast } from "@/hooks/use-toast"
 import { formatCurrency } from "@/lib/currency"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -29,6 +30,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { downloadPDF, downloadDOCX } from "@/lib/api-client"
 import { logger } from "@/lib/logger"
 import { SendEmailDialog } from "@/components/quotes/send-email-dialog"
+import { ExpensesSection } from "@/components/quotes/expenses-section"
+import { useGetQuoteExpenses, type QuoteExpense } from "@/lib/queries"
 
 interface QuoteItem {
   service_id: number
@@ -45,9 +48,11 @@ export default function EditQuotePage() {
   const { data: quote, isLoading: quoteLoading } = useGetQuote(projectId, quoteId)
   const { data: project } = useGetProject(projectId)
   const { data: servicesData, isLoading: servicesLoading } = useGetServices()
+  const { data: currentUser } = useGetCurrentUser()
   const updateQuoteMutation = useUpdateQuote()
   const createVersionMutation = useCreateQuoteVersion()
   const calculateQuoteMutation = useCalculateQuote()
+  const canSendQuotesPermission = canSendQuotes(currentUser)
 
   const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([])
   const [notes, setNotes] = useState("")
@@ -56,8 +61,19 @@ export default function EditQuotePage() {
   const [marginsAlertVisible, setMarginsAlertVisible] = useState(false)
   const [createNewVersion, setCreateNewVersion] = useState(false)
   const [sendEmailDialogOpen, setSendEmailDialogOpen] = useState(false)
+  const [expenses, setExpenses] = useState<QuoteExpense[]>([])
+  const [revisionsIncluded, setRevisionsIncluded] = useState<number>(2)
+  const [revisionCostPerAdditional, setRevisionCostPerAdditional] = useState<number | undefined>(undefined)
 
   const services = servicesData?.items || []
+  const { data: expensesData } = useGetQuoteExpenses(projectId, quoteId)
+  
+  // Update expenses when data changes
+  useEffect(() => {
+    if (expensesData) {
+      setExpenses(expensesData)
+    }
+  }, [expensesData])
 
   // Load quote data when available
   useEffect(() => {
@@ -68,13 +84,15 @@ export default function EditQuotePage() {
       }))
       setQuoteItems(items)
       setNotes(quote.notes || "")
+      setRevisionsIncluded(quote.revisions_included ?? 2)
+      setRevisionCostPerAdditional(quote.revision_cost_per_additional ?? undefined)
     }
   }, [quote])
 
-  // Auto-calculate quote when items change
+  // Auto-calculate quote when items, expenses, or revisions change
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (quoteItems.length > 0) {
+      if (quoteItems.length > 0 || expenses.length > 0) {
         calculateQuote()
       } else {
         setCalculatedQuote(null)
@@ -82,21 +100,35 @@ export default function EditQuotePage() {
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [quoteItems])
+  }, [quoteItems, expenses, revisionsIncluded, revisionCostPerAdditional])
 
   const calculateQuote = async () => {
-    if (quoteItems.length === 0) return
+    if (quoteItems.length === 0 && expenses.length === 0) return
 
     setIsCalculating(true)
     try {
       const taxIds = project?.tax_ids || []
+      // Convert expenses to format expected by API
+      const expensesForCalculation = expenses.map(exp => ({
+        name: exp.name,
+        description: exp.description,
+        cost: exp.cost,
+        markup_percentage: exp.markup_percentage,
+        category: exp.category,
+        quantity: exp.quantity,
+      }))
+      
       const result = await calculateQuoteMutation.mutateAsync({
         items: quoteItems,
+        expenses: expensesForCalculation,
         tax_ids: taxIds,
+        revisions_included: revisionsIncluded,
+        revision_cost_per_additional: revisionCostPerAdditional,
+        revisions_count: undefined, // Only used when calculating additional revision costs
       })
       setCalculatedQuote(result)
 
-      const hasLowMargin = result.items.some((item: any) => item.margin_percentage < 0.20)
+      const hasLowMargin = result.items?.some((item: any) => item.margin_percentage < 0.20) || false
       setMarginsAlertVisible(hasLowMargin)
     } catch (error) {
       logger.error("Error calculating quote:", error)
@@ -154,6 +186,8 @@ export default function EditQuotePage() {
           data: {
             items: quoteItems,
             notes: notes || null,
+            revisions_included: revisionsIncluded,
+            revision_cost_per_additional: revisionCostPerAdditional ?? null,
           },
         })
         toast({
@@ -167,6 +201,8 @@ export default function EditQuotePage() {
           data: {
             items: quoteItems,
             notes: notes || null,
+            revisions_included: revisionsIncluded,
+            revision_cost_per_additional: revisionCostPerAdditional ?? null,
           },
         })
         toast({
@@ -269,13 +305,15 @@ export default function EditQuotePage() {
             <FileText className="h-4 w-4 mr-2" />
             Descargar DOCX
           </Button>
-          <Button
-            variant="outline"
-            onClick={() => setSendEmailDialogOpen(true)}
-          >
-            <Mail className="h-4 w-4 mr-2" />
-            Enviar por Email
-          </Button>
+          {canSendQuotesPermission && (
+            <Button
+              variant="outline"
+              onClick={() => setSendEmailDialogOpen(true)}
+            >
+              <Mail className="h-4 w-4 mr-2" />
+              Enviar por Email
+            </Button>
+          )}
         </div>
       </div>
 
@@ -288,12 +326,13 @@ export default function EditQuotePage() {
         </Alert>
       )}
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Quote Items</CardTitle>
-            <CardDescription>Add services and estimated hours</CardDescription>
-          </CardHeader>
+      <div className="space-y-6">
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Quote Items</CardTitle>
+              <CardDescription>Add services and estimated hours</CardDescription>
+            </CardHeader>
           <CardContent className="space-y-4">
             {quoteItems.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
@@ -422,6 +461,14 @@ export default function EditQuotePage() {
                       {formatCurrency(calculatedQuote.total_internal_cost, "USD")}
                     </span>
                   </div>
+                  {calculatedQuote.revisions_cost && calculatedQuote.revisions_cost > 0 && (
+                    <div className="flex justify-between border-b pb-2">
+                      <span className="text-muted-foreground">Additional Revisions Cost:</span>
+                      <span className="font-medium">
+                        {formatCurrency(calculatedQuote.revisions_cost, "USD")}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex justify-between border-b pb-2">
                     <span className="text-muted-foreground">Total Client Price:</span>
                     <span className="text-xl font-bold">
@@ -450,6 +497,49 @@ export default function EditQuotePage() {
                     placeholder="Add notes about this quote..."
                     rows={4}
                   />
+                </div>
+
+                <div className="pt-4 border-t space-y-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Revisions</label>
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <label className="text-xs text-muted-foreground">Revisions Included</label>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={revisionsIncluded}
+                          onChange={(e) => setRevisionsIncluded(parseInt(e.target.value) || 2)}
+                          className="w-full"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Number of revisions included in the base quote price
+                        </p>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs text-muted-foreground">
+                          Cost per Additional Revision (optional)
+                        </label>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={revisionCostPerAdditional ?? ""}
+                          onChange={(e) => 
+                            setRevisionCostPerAdditional(
+                              e.target.value === "" ? undefined : parseFloat(e.target.value) || 0
+                            )
+                          }
+                          placeholder="Leave empty for no additional cost"
+                          className="w-full"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Cost for each revision beyond the included count
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="pt-4 border-t space-y-2">
@@ -500,6 +590,15 @@ export default function EditQuotePage() {
             )}
           </CardContent>
         </Card>
+        </div>
+
+        {/* Expenses Section (Sprint 15) */}
+        <ExpensesSection 
+          projectId={projectId} 
+          quoteId={quoteId} 
+          currency={project?.currency || "USD"}
+          onExpensesChange={setExpenses}
+        />
       </div>
 
       {/* Send Email Dialog */}

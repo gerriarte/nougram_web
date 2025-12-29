@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,13 +12,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { ArrowLeft, Pencil, Plus, Loader2, Package, Download } from "lucide-react"
-import { useGetProject, useGetProjectQuotes } from "@/lib/queries"
+import { ArrowLeft, Pencil, Plus, Loader2, Package, Download, Mail, FileText } from "lucide-react"
+import { useGetProject, useGetProjectQuotes, useGetCurrentUser } from "@/lib/queries"
 import { formatCurrency } from "@/lib/currency"
 import { Badge } from "@/components/ui/badge"
 import { downloadPDF, downloadDOCX } from "@/lib/api-client"
 import { SendEmailDialog } from "@/components/quotes/send-email-dialog"
 import { useToast } from "@/hooks/use-toast"
+import { canSendQuotes } from "@/lib/permissions"
 
 export default function ProjectDetailPage() {
   const params = useParams()
@@ -26,6 +28,11 @@ export default function ProjectDetailPage() {
 
   const { data: project, isLoading: projectLoading } = useGetProject(projectId)
   const { data: quotes, isLoading: quotesLoading } = useGetProjectQuotes(projectId)
+  const { data: currentUser } = useGetCurrentUser()
+  const canSendQuotesPermission = canSendQuotes(currentUser)
+  const { toast } = useToast()
+  const [selectedQuote, setSelectedQuote] = useState<any>(null)
+  const [sendEmailDialogOpen, setSendEmailDialogOpen] = useState(false)
 
   if (projectLoading) {
     return (
@@ -226,17 +233,19 @@ export default function ProjectDetailPage() {
                             <FileText className="h-4 w-4 mr-1" />
                             DOCX
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedQuote(quote)
-                              setSendEmailDialogOpen(true)
-                            }}
-                          >
-                            <Mail className="h-4 w-4 mr-1" />
-                            Email
-                          </Button>
+                          {canSendQuotesPermission && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setSelectedQuote(quote)
+                                setSendEmailDialogOpen(true)
+                              }}
+                            >
+                              <Mail className="h-4 w-4 mr-1" />
+                              Email
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
@@ -274,5 +283,3 @@ export default function ProjectDetailPage() {
     </div>
   )
 }
-
-

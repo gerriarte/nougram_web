@@ -1,11 +1,26 @@
 """
 Organization model for multi-tenant architecture
 """
-from sqlalchemy import Column, Integer, String, DateTime, func
+from sqlalchemy import Column, Integer, String, DateTime, func, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import TypeDecorator
 
 from app.core.database import Base
+
+
+class FlexibleJSON(TypeDecorator):
+    """
+    JSON type that uses JSONB for PostgreSQL and JSON for other databases (like SQLite for tests)
+    """
+    impl = JSON
+    cache_ok = True
+    
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(JSONB())
+        else:
+            return dialect.type_descriptor(JSON())
 
 
 class Organization(Base):
@@ -23,8 +38,8 @@ class Organization(Base):
     subscription_plan = Column(String, default="free", nullable=False)  # free, starter, professional, enterprise
     subscription_status = Column(String, default="active", nullable=False)  # active, cancelled, past_due, trialing
     
-    # Tenant-specific settings stored as JSONB (binary JSON, more efficient)
-    settings = Column(JSONB, nullable=True)
+    # Tenant-specific settings stored as JSONB (PostgreSQL) or JSON (SQLite/other)
+    settings = Column(FlexibleJSON, nullable=True)
     
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -32,4 +47,5 @@ class Organization(Base):
     
     # Relationships
     users = relationship("User", back_populates="organization", lazy="dynamic")
-
+    subscriptions = relationship("Subscription", back_populates="organization", lazy="dynamic")
+    credit_account = relationship("CreditAccount", back_populates="organization", uselist=False, cascade="all, delete-orphan")
