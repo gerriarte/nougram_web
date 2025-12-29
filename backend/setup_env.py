@@ -20,7 +20,7 @@ def create_env_file():
     secret_key = generate_secret_key()
     
     env_content = f"""# Database Configuration
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5435/agenciops_db
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5435/nougram_db
 
 # JWT Configuration
 SECRET_KEY={secret_key}

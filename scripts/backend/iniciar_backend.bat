@@ -1,6 +1,6 @@
 @echo off
 echo ========================================
-echo  Iniciando Backend AgenciaOps
+echo  Iniciando Backend Nougram
 echo ========================================
 cd backend
 

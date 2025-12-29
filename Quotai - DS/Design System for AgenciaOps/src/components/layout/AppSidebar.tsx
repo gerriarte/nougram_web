@@ -24,7 +24,7 @@ export function AppSidebar({ currentPage, onNavigate, currentOrgId }: AppSidebar
           <div className="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center">
             <DollarSign className="w-5 h-5 text-white" />
           </div>
-          <h2 className="text-primary-700">AgenciaOps</h2>
+          <h2 className="text-primary-700">Nougram</h2>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 # Celery Setup Guide
 
-Esta guía explica cómo configurar y usar Celery para tareas programadas en AgenciaOps.
+Esta guía explica cómo configurar y usar Celery para tareas programadas en Nougram.
 
 ## Descripción General
 
@@ -175,7 +175,7 @@ Asegúrate de que el módulo esté incluido en el `include`:
 
 ```python
 celery_app = Celery(
-    "agenciops",
+    "nougram",
     broker=settings.CELERY_BROKER_URL,
     backend=settings.CELERY_RESULT_BACKEND,
     include=["app.core.tasks"]  # Ya incluye tasks.py

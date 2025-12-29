@@ -1,5 +1,5 @@
 """
-Tests package for AgenciaOps Backend
+Tests package for Nougram Backend
 """
 
 

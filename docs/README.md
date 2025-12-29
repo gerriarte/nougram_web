@@ -1,4 +1,4 @@
-# 📚 Documentación del Proyecto - AgenciaOps
+# 📚 Documentación del Proyecto - Nougram
 
 Esta carpeta contiene toda la documentación importante del proyecto organizada por categorías.
 

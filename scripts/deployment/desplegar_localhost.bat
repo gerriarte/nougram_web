@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 echo ========================================
-echo  Despliegue en Localhost - AgenciaOps
+echo  Despliegue en Localhost - Nougram
 echo ========================================
 echo.
 
@@ -157,14 +157,14 @@ echo.
 
 REM Iniciar Backend en nueva ventana
 echo %BLUE% Iniciando Backend en nueva ventana...
-start "AgenciaOps Backend" cmd /k "cd /d %~dp0backend && call venv\Scripts\activate.bat && python main.py"
+start "Nougram Backend" cmd /k "cd /d %~dp0backend && call venv\Scripts\activate.bat && python main.py"
 
 REM Esperar un poco antes de iniciar el frontend
 timeout /t 3 /nobreak >nul
 
 REM Iniciar Frontend en nueva ventana
 echo %BLUE% Iniciando Frontend en nueva ventana...
-start "AgenciaOps Frontend" cmd /k "cd /d %~dp0frontend && npm run dev"
+start "Nougram Frontend" cmd /k "cd /d %~dp0frontend && npm run dev"
 
 echo.
 echo ========================================

@@ -1,4 +1,4 @@
-# AgenciaOps Backend
+# Nougram Backend
 
 FastAPI backend for the Agency Profitability Platform.
 

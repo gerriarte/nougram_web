@@ -1,8 +1,8 @@
-# Prompt para Figma: Diseño UI AgenciaOps
+# Prompt para Figma: Diseño UI Nougram
 
 ## Contexto del Proyecto
 
-**Aplicación:** AgenciaOps - Plataforma SaaS de gestión de cotizaciones para agencias creativas  
+**Aplicación:** Nougram - Plataforma SaaS de gestión de cotizaciones para agencias creativas  
 **Sistema de Diseño:** Material Design 3  
 **Framework:** Next.js 14+ con Tailwind CSS  
 **Objetivo:** Crear un sistema de diseño completo y consistente que mejore la experiencia de usuario

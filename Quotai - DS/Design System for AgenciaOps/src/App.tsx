@@ -206,7 +206,7 @@ export default function App() {
       <AppLayout
         currentPage={currentPage}
         onNavigate={handleNavigate}
-        title={config?.title || 'AgenciaOps'}
+        title={config?.title || 'Nougram'}
         description={config?.description}
         currentOrgId={currentOrgId}
         onOrgChange={handleOrgChange}

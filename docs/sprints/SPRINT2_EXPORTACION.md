@@ -113,7 +113,7 @@ SMTP_PORT=587
 SMTP_USER=your-email@gmail.com
 SMTP_PASSWORD=your-app-password
 SMTP_FROM_EMAIL=your-email@gmail.com
-SMTP_FROM_NAME=AgenciaOps
+SMTP_FROM_NAME=Nougram
 SMTP_USE_TLS=true
 ```
 

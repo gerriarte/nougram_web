@@ -1,6 +1,6 @@
 @echo off
 echo ========================================
-echo  Iniciando AgenciaOps (Backend + Frontend)
+echo  Iniciando Nougram (Backend + Frontend)
 echo ========================================
 echo.
 
@@ -23,14 +23,14 @@ if errorlevel 1 (
 
 REM Iniciar Backend en nueva ventana
 echo [INFO] Iniciando Backend...
-start "AgenciaOps Backend" cmd /k "cd /d %~dp0backend && if exist venv (call venv\Scripts\activate.bat && python main.py) else (echo [ERROR] Ejecuta primero desplegar_local.bat && pause)"
+start "Nougram Backend" cmd /k "cd /d %~dp0backend && if exist venv (call venv\Scripts\activate.bat && python main.py) else (echo [ERROR] Ejecuta primero desplegar_local.bat && pause)"
 
 REM Esperar un poco antes de iniciar el frontend
 timeout /t 2 /nobreak >nul
 
 REM Iniciar Frontend en nueva ventana
 echo [INFO] Iniciando Frontend...
-start "AgenciaOps Frontend" cmd /k "cd /d %~dp0frontend && npm run dev"
+start "Nougram Frontend" cmd /k "cd /d %~dp0frontend && npm run dev"
 
 echo.
 echo [OK] Servicios iniciados en ventanas separadas

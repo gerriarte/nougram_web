@@ -79,7 +79,7 @@ Después del login:
 
 Deberías ver:
 - Logo con icono DollarSign en un círculo azul
-- Título "Welcome to AgenciaOps"
+- Título "Welcome to Nougram"
 - Formulario de login estilizado
 - Colores consistentes con el design system (grey-50 background, primary-500 buttons)
 

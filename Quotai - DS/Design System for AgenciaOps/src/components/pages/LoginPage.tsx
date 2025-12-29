@@ -43,7 +43,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-primary-500 mb-4">
             <DollarSign className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-grey-900 mb-2">Welcome to AgenciaOps</h1>
+          <h1 className="text-grey-900 mb-2">Welcome to Nougram</h1>
           <p className="text-grey-600">Sign in to manage your creative agency quotes</p>
         </div>
 

@@ -1,5 +1,5 @@
 """
-Main application entry point for AgenciaOps Backend API
+Main application entry point for Nougram Backend API
 """
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -32,7 +32,7 @@ async def lifespan(app: FastAPI):
 
 # Create FastAPI application
 app = FastAPI(
-    title="AgenciaOps API",
+    title="Nougram API",
     description="Backend API for Agency Profitability and Operations Platform",
     version="1.0.0",
     lifespan=lifespan
@@ -100,7 +100,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 async def root():
     """Health check endpoint"""
     return {
-        "message": "AgenciaOps API is running",
+        "message": "Nougram API is running",
         "version": "1.0.0",
         "status": "healthy"
     }

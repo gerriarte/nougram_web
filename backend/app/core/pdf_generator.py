@@ -34,7 +34,7 @@ def format_currency(amount: float, currency: str = "USD") -> str:
 def generate_quote_pdf(
     project,
     quote,
-    agency_name: str = "AgenciaOps"
+    agency_name: str = "Nougram"
 ) -> BytesIO:
     """
     Generate a professional PDF quote

@@ -1,4 +1,4 @@
-# AgenciaOps Frontend
+# Nougram Frontend
 
 Next.js frontend for the Agency Profitability Platform.
 

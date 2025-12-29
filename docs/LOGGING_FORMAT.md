@@ -1,10 +1,10 @@
-# Logging Format - AgenciaOps
+# Logging Format - Nougram
 
-Este documento describe el formato de logs utilizado en AgenciaOps y cómo se estructura la información de logging.
+Este documento describe el formato de logs utilizado en Nougram y cómo se estructura la información de logging.
 
 ## Formato de Logs
 
-AgenciaOps utiliza un sistema de logging estructurado que cambia de formato según el entorno:
+Nougram utiliza un sistema de logging estructurado que cambia de formato según el entorno:
 
 - **Desarrollo**: Formato legible para humanos (human-readable)
 - **Producción**: Formato JSON para fácil ingesta en herramientas de observabilidad

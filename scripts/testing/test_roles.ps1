@@ -80,7 +80,7 @@ Write-Host ""
 Write-Host "Para probar con diferentes roles:" -ForegroundColor Cyan
 Write-Host "  1. Activa FEATURE_ROLES=true en .env" -ForegroundColor White
 Write-Host "  2. Cambia el rol del usuario en la base de datos:" -ForegroundColor White
-Write-Host "     UPDATE users SET role = 'product_manager' WHERE email = 'dev@agenciops.com';" -ForegroundColor Gray
+Write-Host "     UPDATE users SET role = 'product_manager' WHERE email = 'dev@nougram.com';" -ForegroundColor Gray
 Write-Host "  3. Reinicia el backend" -ForegroundColor White
 Write-Host "  4. Prueba crear/editar/eliminar recursos" -ForegroundColor White
 Write-Host ""

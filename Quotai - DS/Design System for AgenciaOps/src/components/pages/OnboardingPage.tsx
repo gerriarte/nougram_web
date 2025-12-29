@@ -77,7 +77,7 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
                 {/* Header */}
                 <div className="mb-8 flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-bold text-grey-900">Welcome to AgenciaOps</h1>
+                        <h1 className="text-2xl font-bold text-grey-900">Welcome to Nougram</h1>
                         <p className="text-grey-600">Let's set up your organization workspace</p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -106,7 +106,7 @@ export function OnboardingPage({ onComplete }: OnboardingPageProps) {
                                 <div>
                                     <Label>Organization URL</Label>
                                     <div className="mt-2 p-3 bg-grey-50 rounded-lg border border-grey-200 text-grey-900">
-                                        agenciaops.com/acme-creative
+                                        Nougram.com/acme-creative
                                     </div>
                                 </div>
                             </div>

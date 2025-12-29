@@ -1,8 +1,8 @@
-# AgenciaOps - Project Overview
+# Nougram - Project Overview
 
 ## 🎯 Project Summary
 
-**AgenciaOps** is a complete, production-ready SaaS platform for creative agencies to manage project quotes and track profitability. Built with Material Design 3 principles, it provides an intuitive interface for creating quotes, managing projects, and analyzing business performance.
+**Nougram** is a complete, production-ready SaaS platform for creative agencies to manage project quotes and track profitability. Built with Material Design 3 principles, it provides an intuitive interface for creating quotes, managing projects, and analyzing business performance.
 
 ---
 
@@ -409,7 +409,7 @@ Built as a demonstration of:
 
 ## 🎉 Summary
 
-**AgenciaOps** demonstrates a complete, production-ready implementation of Material Design 3 for a SaaS platform. It combines beautiful design with practical functionality, showing how to build complex forms, data visualizations, and business logic in a modern React application.
+**Nougram** demonstrates a complete, production-ready implementation of Material Design 3 for a SaaS platform. It combines beautiful design with practical functionality, showing how to build complex forms, data visualizations, and business logic in a modern React application.
 
 The codebase serves as both a functional application and a learning resource for implementing design systems, building complex UIs, and creating delightful user experiences.
 

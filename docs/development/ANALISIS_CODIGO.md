@@ -1,4 +1,4 @@
-# Análisis Profundo del Código - AgenciaOps
+# Análisis Profundo del Código - Nougram
 
 **Fecha:** Enero 2025  
 **Estado del Proyecto:** 92% Completado
@@ -7,7 +7,7 @@
 
 ## 📋 Resumen Ejecutivo
 
-El proyecto **AgenciaOps** (Cotizador de Agencia) es una plataforma web full-stack para gestión de rentabilidad en agencias de servicios. Permite:
+El proyecto **Nougram** (Cotizador de Agencia) es una plataforma web full-stack para gestión de rentabilidad en agencias de servicios. Permite:
 
 1. **Gestión de Costos**: Registro de costos fijos y equipo, cálculo del Blended Cost Rate
 2. **Catálogo de Servicios**: Definición de servicios con márgenes y tarifas

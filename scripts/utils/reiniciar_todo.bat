@@ -3,7 +3,7 @@ REM Script para reiniciar completamente el entorno de desarrollo
 REM Detiene todos los procesos y reinicia backend y frontend
 
 echo ========================================
-echo   Reiniciando AgenciaOps
+echo   Reiniciando Nougram
 echo ========================================
 echo.
 
@@ -43,12 +43,12 @@ timeout /t 2 /nobreak >nul
 REM Reiniciar servicios
 echo [4/4] Reiniciando servicios...
 echo.
-start "AgenciaOps Backend" cmd /k "cd /d %~dp0..\.. && scripts\backend\iniciar_backend.bat"
+start "Nougram Backend" cmd /k "cd /d %~dp0..\.. && scripts\backend\iniciar_backend.bat"
 
 REM Esperar un poco para que el backend inicie
 timeout /t 5 /nobreak >nul
 
-start "AgenciaOps Frontend" cmd /k "cd /d %~dp0..\.. && scripts\frontend\iniciar_frontend.bat"
+start "Nougram Frontend" cmd /k "cd /d %~dp0..\.. && scripts\frontend\iniciar_frontend.bat"
 
 echo.
 echo ========================================

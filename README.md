@@ -1,4 +1,4 @@
-# 🚀 AgenciaOps - Plataforma de Rentabilidad y Operaciones
+# 🚀 Nougram - Plataforma de Rentabilidad y Operaciones
 
 > Plataforma SaaS multi-tenant para gestión de rentabilidad, cotizaciones y análisis de agencias de servicios digitales.
 
@@ -25,7 +25,7 @@
 
 ## 🎯 Descripción
 
-**AgenciaOps** (también conocido como **A:BRA Quote**) es una plataforma SaaS diseñada para ayudar a agencias de servicios digitales a:
+**Nougram** es una plataforma SaaS diseñada para ayudar a agencias de servicios digitales a:
 
 - 📊 **Centralizar la parametrización de costos** (overhead, nómina, herramientas)
 - 💰 **Calcular tarifas rentables** basadas en costos reales y márgenes objetivo
@@ -200,7 +200,7 @@ Crea un archivo `.env` en la carpeta `backend/` con las siguientes variables:
 
 ```env
 # Base de Datos
-DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5435/agenciops_db
+DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5435/nougram_db
 
 # JWT
 SECRET_KEY=tu-clave-secreta-super-segura-aqui
@@ -228,7 +228,7 @@ SMTP_PORT=587
 SMTP_USER=tu-email@gmail.com
 SMTP_PASSWORD=tu-password
 SMTP_FROM_EMAIL=tu-email@gmail.com
-SMTP_FROM_NAME=AgenciaOps
+SMTP_FROM_NAME=Nougram
 SMTP_USE_TLS=true
 
 # CORS

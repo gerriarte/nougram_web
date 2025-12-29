@@ -55,7 +55,7 @@ python scripts/test_tenant_isolation.py
 SCRIPT DE VALIDACIÓN DE AISLAMIENTO DE DATOS
 ============================================================
 
-Base de datos: localhost:5435/agenciops_db
+Base de datos: localhost:5435/nougram_db
 
 ============================================================
 CONFIGURANDO DATOS DE PRUEBA

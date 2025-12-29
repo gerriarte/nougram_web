@@ -1,4 +1,4 @@
-# 📊 Evaluación del Estado del Proyecto - AgenciaOps
+# 📊 Evaluación del Estado del Proyecto - Nougram
 
 **Fecha de Evaluación:** Enero 2025  
 **Estado General:** 🟢 **92% Completado** (Backend: ~95% | Frontend: ~85%)
@@ -7,7 +7,7 @@
 
 ## 🎯 RESUMEN EJECUTIVO
 
-El proyecto **AgenciaOps** (A:BRA Quote) es una plataforma SaaS multi-tenant para gestión de rentabilidad y cotizaciones de agencias de servicios digitales. El sistema está en un estado muy avanzado con todos los módulos principales funcionales.
+El proyecto **Nougram** (A:BRA Quote) es una plataforma SaaS multi-tenant para gestión de rentabilidad y cotizaciones de agencias de servicios digitales. El sistema está en un estado muy avanzado con todos los módulos principales funcionales.
 
 ### Estado por Componente
 

@@ -1,8 +1,8 @@
-# AgenciaOps Design System
+# Nougram Design System
 
 ## Overview
 
-AgenciaOps is a complete SaaS platform for managing creative agency quotes, built with **Material Design 3** principles using React, Next.js, and Tailwind CSS.
+Nougram is a complete SaaS platform for managing creative agency quotes, built with **Material Design 3** principles using React, Next.js, and Tailwind CSS.
 
 ---
 

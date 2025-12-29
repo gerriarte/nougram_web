@@ -41,7 +41,7 @@ export function ColorPalette() {
   return (
     <div className="p-8 bg-grey-50 space-y-8">
       <div>
-        <h1 className="mb-2">AgenciaOps Color Palette</h1>
+        <h1 className="mb-2">Nougram Color Palette</h1>
         <p className="text-grey-600">Material Design 3 color system reference</p>
       </div>
 

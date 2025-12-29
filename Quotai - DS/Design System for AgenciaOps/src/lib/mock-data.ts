@@ -161,12 +161,12 @@ export const mockCompanyCosts: CompanyCost[] = [
 
 // Mock Team Members
 export const mockTeamMembers: TeamMember[] = [
-  { id: '1', name: 'Sarah Johnson', role: 'Senior Developer', email: 'sarah@agenciaops.com', costId: '1' },
-  { id: '2', name: 'Michael Chen', role: 'UI/UX Designer', email: 'michael@agenciaops.com', costId: '4' },
-  { id: '3', name: 'Emily Rodriguez', role: 'Project Manager', email: 'emily@agenciaops.com', costId: '6' },
-  { id: '4', name: 'David Kim', role: 'Backend Developer', email: 'david@agenciaops.com', costId: '2' },
-  { id: '5', name: 'Lisa Wang', role: 'Frontend Developer', email: 'lisa@agenciaops.com', costId: '2' },
-  { id: '6', name: 'James Miller', role: 'QA Specialist', email: 'james@agenciaops.com', costId: '7' }
+  { id: '1', name: 'Sarah Johnson', role: 'Senior Developer', email: 'sarah@Nougram.com', costId: '1' },
+  { id: '2', name: 'Michael Chen', role: 'UI/UX Designer', email: 'michael@Nougram.com', costId: '4' },
+  { id: '3', name: 'Emily Rodriguez', role: 'Project Manager', email: 'emily@Nougram.com', costId: '6' },
+  { id: '4', name: 'David Kim', role: 'Backend Developer', email: 'david@Nougram.com', costId: '2' },
+  { id: '5', name: 'Lisa Wang', role: 'Frontend Developer', email: 'lisa@Nougram.com', costId: '2' },
+  { id: '6', name: 'James Miller', role: 'QA Specialist', email: 'james@Nougram.com', costId: '7' }
 ];
 
 // Mock Currencies
@@ -189,11 +189,11 @@ export const mockTaxes: Tax[] = [
 
 // Mock Users
 export const mockUsers: User[] = [
-  { id: '1', name: 'Alex Thompson', email: 'alex@agenciaops.com', role: 'admin' },
-  { id: '2', name: 'Sarah Johnson', email: 'sarah@agenciaops.com', role: 'manager' },
-  { id: '3', name: 'Michael Chen', email: 'michael@agenciaops.com', role: 'member' },
-  { id: '4', name: 'Emily Rodriguez', email: 'emily@agenciaops.com', role: 'manager' },
-  { id: '5', name: 'David Kim', email: 'david@agenciaops.com', role: 'member' }
+  { id: '1', name: 'Alex Thompson', email: 'alex@Nougram.com', role: 'admin' },
+  { id: '2', name: 'Sarah Johnson', email: 'sarah@Nougram.com', role: 'manager' },
+  { id: '3', name: 'Michael Chen', email: 'michael@Nougram.com', role: 'member' },
+  { id: '4', name: 'Emily Rodriguez', email: 'emily@Nougram.com', role: 'manager' },
+  { id: '5', name: 'David Kim', email: 'david@Nougram.com', role: 'member' }
 ];
 
 // Current user
@@ -323,7 +323,7 @@ export interface Organization {
 }
 
 export const mockOrganizations: Organization[] = [
-  { id: '1', name: 'AgenciaOps', slug: 'agenciaops', plan: 'professional' },
+  { id: '1', name: 'Nougram', slug: 'Nougram', plan: 'professional' },
   { id: '2', name: 'Acme Creative', slug: 'acme-creative', plan: 'starter' },
   { id: '3', name: 'Tech Ventures', slug: 'tech-ventures', plan: 'enterprise' }
 ];

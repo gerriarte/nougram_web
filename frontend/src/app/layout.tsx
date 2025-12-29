@@ -7,7 +7,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "AgenciaOps - Agency Profitability Platform",
+  title: "Nougram - Agency Profitability Platform",
   description: "Platform for agency profitability and operations management",
   icons: {
     icon: '/icon.svg',

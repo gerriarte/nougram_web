@@ -3,12 +3,12 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: agenciops-postgres
+    container_name: nougram-postgres
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: agenciops_db
+      POSTGRES_DB: nougram_db
     ports:
       - "5435:5432"
     volumes:

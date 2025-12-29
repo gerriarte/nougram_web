@@ -72,7 +72,7 @@ export function Header() {
   return (
     <header className="flex h-16 items-center justify-between border-b bg-card px-6">
       <div className="flex items-center gap-4">
-        <h2 className="text-lg font-semibold">AgenciaOps</h2>
+        <h2 className="text-lg font-semibold">Nougram</h2>
         {currentUser && (
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">

@@ -87,7 +87,7 @@ async def _send_invitation_email(
             </div>
             <div class="content">
                 <p>Hello,</p>
-                <p>You have been invited to join <strong>{organization.name}</strong> on AgenciaOps.</p>
+                <p>You have been invited to join <strong>{organization.name}</strong> on Nougram.</p>
                 <p>Your role will be: <strong>{invitation.role}</strong></p>
                 <p style="text-align: center;">
                     <a href="{invitation_link}" class="button">Accept Invitation</a>
@@ -98,7 +98,7 @@ async def _send_invitation_email(
                 <p>If you didn't expect this invitation, you can safely ignore this email.</p>
             </div>
             <div class="footer">
-                <p>This is an automated message from AgenciaOps. Please do not reply to this email.</p>
+                <p>This is an automated message from Nougram. Please do not reply to this email.</p>
             </div>
         </div>
     </body>
@@ -110,7 +110,7 @@ async def _send_invitation_email(
     
     Hello,
     
-    You have been invited to join {organization.name} on AgenciaOps.
+    You have been invited to join {organization.name} on Nougram.
     Your role will be: {invitation.role}
     
     Accept your invitation by clicking this link:
@@ -121,7 +121,7 @@ async def _send_invitation_email(
     If you didn't expect this invitation, you can safely ignore this email.
     
     ---
-    This is an automated message from AgenciaOps. Please do not reply to this email.
+    This is an automated message from Nougram. Please do not reply to this email.
     """
     
     return await send_email(

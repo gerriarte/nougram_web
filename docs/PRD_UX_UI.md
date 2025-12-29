@@ -1,4 +1,4 @@
-# PRD: Mejoras de UX/UI - AgenciaOps
+# PRD: Mejoras de UX/UI - Nougram
 
 **Versión:** 1.0  
 **Fecha:** Diciembre 2025  
@@ -10,7 +10,7 @@
 
 ### 1.1 Objetivos
 
-Mejorar la experiencia de usuario (UX) y la interfaz de usuario (UI) de AgenciaOps mediante la implementación de un sistema de diseño consistente basado en Material Design, optimización de flujos de usuario y mejoras en la usabilidad general de la plataforma.
+Mejorar la experiencia de usuario (UX) y la interfaz de usuario (UI) de Nougram mediante la implementación de un sistema de diseño consistente basado en Material Design, optimización de flujos de usuario y mejoras en la usabilidad general de la plataforma.
 
 ### 1.2 Alcance
 
@@ -2051,7 +2051,7 @@ monorepo/
   - Icono de editar para habilitar edición
   - Validación: Solo lowercase, números, guiones
   - Helper text: "URL única para tu organización"
-  - Preview: `agenciops.com/acme-creative-agency`
+  - Preview: `nougram.com/acme-creative-agency`
 
 **Paso 2: Tu Cuenta de Administrador**
 - Full Name (required)
@@ -2248,7 +2248,7 @@ flowchart TD
 **Header Display:**
 ```
 ┌─────────────────────────────────┐
-│ [Logo] AgenciaOps    [Org Name] │
+│ [Logo] Nougram    [Org Name] │
 │                    [Plan Badge]  │
 └─────────────────────────────────┘
 ```
@@ -2570,7 +2570,7 @@ flowchart TD
 **Layout:**
 ```
 ┌─────────────────────────────────────────────┐
-│ [Logo] AgenciaOps    [Org Switcher ▼] [User]│
+│ [Logo] Nougram    [Org Switcher ▼] [User]│
 └─────────────────────────────────────────────┘
 ```
 

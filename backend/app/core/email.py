@@ -112,7 +112,7 @@ def generate_quote_email_html(
     total_with_taxes: float,
     currency: str = "USD",
     notes: Optional[str] = None,
-    agency_name: str = "AgenciaOps"
+    agency_name: str = "Nougram"
 ) -> str:
     """
     Generate HTML email template for quote
@@ -231,7 +231,7 @@ def generate_quote_email_text(
     total_with_taxes: float,
     currency: str = "USD",
     notes: Optional[str] = None,
-    agency_name: str = "AgenciaOps"
+    agency_name: str = "Nougram"
 ) -> str:
     """
     Generate plain text email template for quote

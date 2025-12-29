@@ -3,11 +3,11 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: agenciops-postgres
+    container_name: nougram-postgres
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: agenciops_db
+      POSTGRES_DB: nougram_db
     ports:
       - "5432:5432"
     volumes:
@@ -20,7 +20,7 @@ services:
 
   redis:
     image: redis:7-alpine
-    container_name: agenciops-redis
+    container_name: nougram-redis
     ports:
       - "6379:6379"
     volumes:
@@ -35,7 +35,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: agenciops-celery-worker
+    container_name: nougram-celery-worker
     command: celery -A app.core.celery_app worker --loglevel=info
     volumes:
       - .:/app
@@ -54,7 +54,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: agenciops-celery-beat
+    container_name: nougram-celery-beat
     command: celery -A app.core.celery_app beat --loglevel=info
     volumes:
       - .:/app

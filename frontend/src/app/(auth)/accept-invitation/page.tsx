@@ -233,7 +233,7 @@ export default function AcceptInvitationPage() {
               <p className="text-sm text-info-700">
                 <strong>¿Ya tienes una cuenta?</strong>
                 <br />
-                Si ya tienes una cuenta en AgenciaOps con este email, solo necesitas aceptar la invitación.
+                Si ya tienes una cuenta en Nougram con este email, solo necesitas aceptar la invitación.
                 Si no tienes cuenta, completa el formulario para crear una.
               </p>
             </div>

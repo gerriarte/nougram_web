@@ -91,7 +91,7 @@ export function InviteUserDialog({ open, onOpenChange, onInvite }: InviteUserDia
                         <Label htmlFor="message">Personal Message (Optional)</Label>
                         <Textarea
                             id="message"
-                            placeholder="Hey, join our workspace on AgenciaOps!"
+                            placeholder="Hey, join our workspace on Nougram!"
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
                             className="resize-none"

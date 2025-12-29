@@ -1,4 +1,4 @@
-# Evaluación: Sistema de Tokens/Credits para AgenciaOps
+# Evaluación: Sistema de Tokens/Credits para Nougram
 
 **Fecha:** Diciembre 2025  
 **Versión:** 1.0  
@@ -29,7 +29,7 @@
 
 ### 2.1 Naturaleza del Producto
 
-**AgenciaOps es:**
+**Nougram es:**
 - Plataforma de gestión de cotizaciones
 - Herramienta de trabajo diario para agencias
 - Sistema de cálculo y análisis financiero
@@ -543,7 +543,7 @@ Plan Starter: $29/mes
 
 ### 10.1 Conclusión
 
-**Para AgenciaOps, el sistema de tokens NO es recomendado como modelo principal** debido a:
+**Para Nougram, el sistema de tokens NO es recomendado como modelo principal** debido a:
 
 1. **Naturaleza del producto:** Herramienta de gestión continua
 2. **Fricción de usuario:** Interrumpe flujo de trabajo

@@ -1,15 +1,15 @@
-# AgenciaOps - Usage Guide
+# Nougram - Usage Guide
 
 ## Quick Start
 
-Welcome to **AgenciaOps** - Your creative agency quote management platform!
+Welcome to **Nougram** - Your creative agency quote management platform!
 
 ---
 
 ## 🔐 Login
 
 1. Open the application
-2. You'll see the login screen with the AgenciaOps logo
+2. You'll see the login screen with the Nougram logo
 3. **Demo Access**: Enter any email and password to continue
 4. Click "Sign In" and you'll be redirected to the Dashboard
 
@@ -336,7 +336,7 @@ This is a demo application with mock data:
 
 ## 💬 Support
 
-For questions or feedback about AgenciaOps design system:
+For questions or feedback about Nougram design system:
 - Review the **DESIGN_SYSTEM.md** for technical details
 - Check component specifications
 - Refer to Material Design 3 guidelines

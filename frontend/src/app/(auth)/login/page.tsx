@@ -103,7 +103,7 @@ export default function LoginPage() {
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-primary-500 mb-4">
             <DollarSign className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-2xl font-semibold text-grey-900 mb-2">Bienvenido a AgenciaOps</h1>
+          <h1 className="text-2xl font-semibold text-grey-900 mb-2">Bienvenido a Nougram</h1>
           <p className="text-grey-600">Inicia sesión para gestionar las cotizaciones de tu agencia creativa</p>
         </div>
 

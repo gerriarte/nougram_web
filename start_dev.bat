@@ -3,7 +3,7 @@ REM Script maestro para iniciar el entorno de desarrollo
 REM Este script inicia tanto el backend como el frontend
 
 echo ========================================
-echo   AgenciaOps - Entorno de Desarrollo
+echo   Nougram - Entorno de Desarrollo
 echo ========================================
 echo.
 
@@ -12,14 +12,14 @@ echo.
 
 REM Iniciar backend en una nueva ventana
 echo [1/2] Iniciando backend...
-start "AgenciaOps Backend" cmd /k "scripts\backend\iniciar_backend.bat"
+start "Nougram Backend" cmd /k "scripts\backend\iniciar_backend.bat"
 
 REM Esperar un poco para que el backend inicie
 timeout /t 3 /nobreak >nul
 
 REM Iniciar frontend en una nueva ventana
 echo [2/2] Iniciando frontend...
-start "AgenciaOps Frontend" cmd /k "scripts\frontend\iniciar_frontend.bat"
+start "Nougram Frontend" cmd /k "scripts\frontend\iniciar_frontend.bat"
 
 echo.
 echo ========================================

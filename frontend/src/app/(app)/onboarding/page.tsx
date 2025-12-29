@@ -222,7 +222,7 @@ export default function OnboardingPage() {
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-grey-900">Welcome to AgenciaOps</h1>
+            <h1 className="text-3xl font-bold text-grey-900">Welcome to Nougram</h1>
             <p className="text-grey-600 mt-1">Let's set up your organization workspace</p>
           </div>
           <div className="flex items-center gap-3">

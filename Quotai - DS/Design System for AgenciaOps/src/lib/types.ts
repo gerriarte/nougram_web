@@ -1,4 +1,4 @@
-// Type definitions for AgenciaOps
+// Type definitions for Nougram
 
 export type ProjectStatus = 'draft' | 'sent' | 'won' | 'lost' | 'archived';
 

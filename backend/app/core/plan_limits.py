@@ -226,7 +226,7 @@ async def validate_team_member_limit(
 PLAN_INFO: Dict[str, Dict[str, Any]] = {
     "free": {
         "display_name": "Free",
-        "description": "Perfect for trying out AgenciaOps",
+        "description": "Perfect for trying out Nougram",
         "monthly_price": 0,
         "yearly_price": 0,
         "features": [

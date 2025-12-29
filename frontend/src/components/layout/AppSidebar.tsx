@@ -57,7 +57,7 @@ export function AppSidebar({ currentOrgId }: AppSidebarProps) {
           <div className="w-8 h-8 rounded-lg bg-primary-500 flex items-center justify-center">
             <DollarSign className="w-5 h-5 text-white" />
           </div>
-          <h2 className="text-primary-700 font-semibold">AgenciaOps</h2>
+          <h2 className="text-primary-700 font-semibold">Nougram</h2>
         </div>
       </div>
 

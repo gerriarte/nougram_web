@@ -6,7 +6,7 @@ from app.core.config import settings
 
 # Create Celery app instance
 celery_app = Celery(
-    "agenciops",
+    "nougram",
     broker=settings.CELERY_BROKER_URL,
     backend=settings.CELERY_RESULT_BACKEND,
     include=["app.core.tasks"]

@@ -52,7 +52,7 @@ Verifica que el contenedor está corriendo:
 docker ps
 ```
 
-Deberías ver un contenedor llamado `agenciops-postgres` con estado `Up (healthy)`.
+Deberías ver un contenedor llamado `nougram-postgres` con estado `Up (healthy)`.
 
 ### 3. Frontend (Next.js)
 
@@ -123,7 +123,7 @@ Deberías ver:
 Crea un archivo `backend/.env`:
 
 ```env
-DATABASE_URL=postgresql://user:password@localhost:5435/agenciops
+DATABASE_URL=postgresql://user:password@localhost:5435/nougram
 SECRET_KEY=tu-secret-key-aqui
 ```
 

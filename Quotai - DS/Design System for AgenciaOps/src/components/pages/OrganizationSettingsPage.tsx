@@ -296,7 +296,7 @@ export function OrganizationSettingsPage() {
                                     <Label htmlFor="orgSlug">Organization URL</Label>
                                     <div className="flex rounded-md shadow-sm">
                                         <span className="inline-flex items-center px-3 rounded-l-md border border-r-0 border-grey-300 bg-grey-50 text-grey-500 text-sm">
-                                            agenciaops.com/
+                                            Nougram.com/
                                         </span>
                                         <Input id="orgSlug" defaultValue={currentOrg.slug} className="rounded-l-none" />
                                     </div>

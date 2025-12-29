@@ -1,6 +1,6 @@
 # GitHub Actions Workflows
 
-Este directorio contiene los workflows de CI/CD para el proyecto AgenciaOps.
+Este directorio contiene los workflows de CI/CD para el proyecto Nougram.
 
 ## Workflows Disponibles
 

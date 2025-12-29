@@ -1,6 +1,6 @@
-# Troubleshooting - AgenciaOps
+# Troubleshooting - Nougram
 
-Este documento contiene soluciones a problemas comunes que pueden surgir durante el desarrollo y despliegue de AgenciaOps.
+Este documento contiene soluciones a problemas comunes que pueden surgir durante el desarrollo y despliegue de Nougram.
 
 ## Problemas de Base de Datos
 
