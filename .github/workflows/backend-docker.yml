@@ -30,7 +30,7 @@ jobs:
         context: ./backend
         file: ./backend/Dockerfile
         push: false
-        tags: agenciops-backend:test
+        tags: nougram-backend:test
         cache-from: type=gha
         cache-to: type=gha,mode=max
 
