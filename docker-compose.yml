@@ -1,5 +1,9 @@
 version: '3.8'
 
+# Docker Compose estándar para desarrollo
+# Usa este archivo como configuración principal
+# Puerto: 5435 (para evitar conflictos con instalaciones locales de PostgreSQL)
+
 services:
   postgres:
     image: postgres:15-alpine
@@ -10,7 +14,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: nougram_db
     ports:
-      - "5435:5432"
+      - "5435:5432"  # Puerto externo 5435 -> interno 5432
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

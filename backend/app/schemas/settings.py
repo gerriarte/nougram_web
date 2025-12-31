@@ -1,9 +1,12 @@
 """
 Pydantic schemas for Agency Settings
+ESTÁNDAR NOUGRAM: Campos monetarios y tasas usan Decimal serializado como string
 """
 from typing import Optional, Dict, Any
-from pydantic import BaseModel, Field
+from decimal import Decimal
+from pydantic import BaseModel, Field, field_serializer
 from app.core.currency import Currency
+from app.core.pydantic_config import DECIMAL_CONFIG
 
 
 class AgencySettingsResponse(BaseModel):
@@ -23,10 +26,20 @@ class AgencySettingsUpdate(BaseModel):
 
 
 class ExchangeRateInfo(BaseModel):
-    """Schema for exchange rate information"""
-    rate: float = Field(..., description="Exchange rate to USD")
-    rate_to_usd: float = Field(..., description="Exchange rate to USD (same as rate)")
+    """Schema for exchange rate information
+    ESTÁNDAR NOUGRAM: Tasas de cambio usan Decimal para precisión
+    """
+    rate: Decimal = Field(..., description="Exchange rate to USD")
+    rate_to_usd: Decimal = Field(..., description="Exchange rate to USD (same as rate)")
     last_updated: str = Field(..., description="ISO timestamp of last update")
+    
+    # ESTÁNDAR NOUGRAM: Serializar Decimal como string
+    @field_serializer('rate', 'rate_to_usd')
+    def serialize_decimal(self, value: Decimal) -> str:
+        """Serializa Decimal como string para mantener precisión"""
+        return str(value) if value is not None else None
+    
+    model_config = DECIMAL_CONFIG
 
 
 class ExchangeRatesResponse(BaseModel):

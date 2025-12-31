@@ -62,6 +62,9 @@ export function BlendedCostRate() {
 
   const costRate = data?.blended_cost_rate || 0
   const totalCosts = data?.total_monthly_costs || 0
+  const totalFixedOverhead = data?.total_fixed_overhead || 0
+  const totalToolsCosts = data?.total_tools_costs || 0
+  const totalSalaries = data?.total_salaries || 0
   const totalHours = data?.total_monthly_hours || 0
   const activeMembers = data?.active_team_members || 0
   const currenciesUsed: CurrencyInfo[] = data?.currencies_used || []
@@ -87,7 +90,7 @@ export function BlendedCostRate() {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle>Blended Cost Rate</CardTitle>
-            <CardDescription>Cost per hour for the agency</CardDescription>
+            <CardDescription>Costo por hora de la agencia</CardDescription>
           </div>
           <Dialog open={infoOpen} onOpenChange={setInfoOpen}>
             <DialogTrigger asChild>
@@ -103,50 +106,53 @@ export function BlendedCostRate() {
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 pt-4">
+                <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 p-4 rounded-lg">
+                  <h3 className="font-semibold text-sm text-blue-900 dark:text-blue-100 flex items-center gap-2 mb-2">
+                    <Coins className="h-4 w-4" />
+                    Desglose Legal Colombia (~1.51)
+                  </h3>
+                  <p className="text-xs text-blue-800 dark:text-blue-200 leading-relaxed">
+                    Siguiendo la normativa colombiana, por cada $1 de salario base, la agencia tiene un costo real de ~$1.51.
+                    Este cálculo incluye:
+                  </p>
+                  <ul className="grid grid-cols-2 gap-x-4 gap-y-1 mt-2 text-[10px] text-blue-800 dark:text-blue-200">
+                    <li>• Salud (8.5%) & Pensión (12%)</li>
+                    <li>• ARL (Riesgo I-V) & Caja (4%)</li>
+                    <li>• Prima de Servicios (8.33%)</li>
+                    <li>• Cesantías (8.33%) & Int. (1%)</li>
+                    <li>• Vacaciones (4.17%)</li>
+                  </ul>
+                </div>
+
                 <div>
                   <h3 className="font-semibold text-sm mb-2">Fórmula Principal</h3>
                   <div className="bg-muted p-4 rounded-lg font-mono text-sm">
-                    Blended Cost Rate = Total Monthly Costs / Total Monthly Hours
+                    BCR = (Nómina Real + Overhead) / Total Horas Facturables
                   </div>
                 </div>
 
                 <div>
-                  <h3 className="font-semibold text-sm mb-2">Componentes del Cálculo</h3>
+                  <h3 className="font-semibold text-sm mb-2">Categorías de Costos</h3>
                   <div className="space-y-3">
-                    <div className="border-l-4 border-primary pl-4">
-                      <p className="font-medium text-sm">1. Total Monthly Costs (Costos Mensuales Totales)</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Incluye todos los costos fijos mensuales y los salarios brutos de los miembros activos del equipo.
+                    <div className="border-l-4 border-indigo-500 pl-4">
+                      <p className="font-medium text-sm">1. Recursos (Nómina Real)</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Salarios mensuales de miembros activos del equipo multiplicados por la carga prestacional configurada.
                       </p>
-                      <ul className="list-disc list-inside text-sm text-muted-foreground mt-2 space-y-1">
-                        <li>Costos fijos: Suma de todos los costos fijos configurados (excluyendo eliminados)</li>
-                        <li>Salarios del equipo: Suma de los salarios brutos mensuales de miembros activos</li>
-                        <li>Normalización: Todos los costos se convierten a la moneda primaria usando las tasas de cambio</li>
-                      </ul>
                     </div>
 
-                    <div className="border-l-4 border-primary pl-4">
-                      <p className="font-medium text-sm">2. Total Monthly Hours (Horas Mensuales Totales)</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Calculado a partir de las horas facturables por semana de cada miembro activo del equipo.
+                    <div className="border-l-4 border-emerald-500 pl-4">
+                      <p className="font-medium text-sm">2. Infraestructura (Overhead)</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Costos de "persiana abierta": Arriendo, servicios públicos, contabilidad, marketing y administración.
                       </p>
-                      <ul className="list-disc list-inside text-sm text-muted-foreground mt-2 space-y-1">
-                        <li>Fórmula: Suma de (billable_hours_per_week × 4.33) para cada miembro activo</li>
-                        <li>4.33 semanas = Promedio de semanas por mes (52 semanas / 12 meses)</li>
-                        <li>Solo se consideran miembros del equipo marcados como activos</li>
-                      </ul>
                     </div>
 
-                    <div className="border-l-4 border-primary pl-4">
-                      <p className="font-medium text-sm">3. Normalización de Monedas</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Todos los costos en diferentes monedas se convierten a la moneda primaria antes del cálculo.
+                    <div className="border-l-4 border-amber-500 pl-4">
+                      <p className="font-medium text-sm">3. Herramientas (SaaS/Software)</p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Suscripciones generales (Slack, Office) y de especialidad (Adobe, AWS, Figma).
                       </p>
-                      <ul className="list-disc list-inside text-sm text-muted-foreground mt-2 space-y-1">
-                        <li>Moneda primaria: Configurada en los ajustes de la agencia</li>
-                        <li>Tasas de cambio: Se utilizan las tasas configuradas en el sistema</li>
-                        <li>Fecha de cotización: Se muestra la fecha de las tasas utilizadas</li>
-                      </ul>
                     </div>
                   </div>
                 </div>
@@ -155,51 +161,35 @@ export function BlendedCostRate() {
                   <h3 className="font-semibold text-sm mb-2">Datos Actuales Utilizados</h3>
                   <div className="bg-muted p-4 rounded-lg space-y-2 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Total Monthly Costs:</span>
+                      <span className="text-muted-foreground">Costo Total Operativo:</span>
                       <span className="font-semibold">{formatCurrency(totalCosts, primaryCurrency)}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Total Monthly Hours:</span>
+                    <div className="flex justify-between pl-4 text-xs border-l-2 border-indigo-500">
+                      <span className="text-muted-foreground">Recursos (Nómina Real):</span>
+                      <span>{formatCurrency(totalSalaries, primaryCurrency)}</span>
+                    </div>
+                    <div className="flex justify-between pl-4 text-xs border-l-2 border-emerald-500">
+                      <span className="text-muted-foreground">Infraestructura (Overhead):</span>
+                      <span>{formatCurrency(totalFixedOverhead, primaryCurrency)}</span>
+                    </div>
+                    <div className="flex justify-between pl-4 text-xs border-l-2 border-amber-500">
+                      <span className="text-muted-foreground">Herramientas (SaaS):</span>
+                      <span>{formatCurrency(totalToolsCosts, primaryCurrency)}</span>
+                    </div>
+                    <div className="flex justify-between pt-2 border-t mt-2">
+                      <span className="text-muted-foreground">Capacidad Mensual (Hrs):</span>
                       <span className="font-semibold">{totalHours.toFixed(1)}h</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Active Team Members:</span>
+                      <span className="text-muted-foreground">Equipo Activo:</span>
                       <span className="font-semibold">{activeMembers}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Primary Currency:</span>
-                      <span className="font-semibold">{primaryCurrency}</span>
-                    </div>
-                    {currenciesUsed.length > 0 && (
-                      <div className="pt-2 border-t">
-                        <span className="text-muted-foreground">Monedas utilizadas:</span>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                          {currenciesUsed.map((currency) => (
-                            <Badge key={currency.code} variant="outline" className="font-mono">
-                              {currency.code} ({currency.count} items)
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold text-sm mb-2">Ejemplo de Cálculo</h3>
-                  <div className="bg-muted p-4 rounded-lg text-sm space-y-2">
-                    <p className="text-muted-foreground">
-                      Si tienes costos mensuales de {formatCurrency(totalCosts, primaryCurrency)} y {totalHours.toFixed(1)} horas facturables disponibles:
-                    </p>
-                    <div className="font-mono bg-background p-3 rounded border">
-                      {formatCurrency(totalCosts, primaryCurrency)} ÷ {totalHours.toFixed(1)}h = {formatCurrency(costRate, primaryCurrency)}/hora
                     </div>
                   </div>
                 </div>
 
                 <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 p-4 rounded-lg">
-                  <p className="text-sm text-blue-900 dark:text-blue-100">
-                    <strong>Nota:</strong> Este cálculo se actualiza automáticamente cuando agregas, modificas o eliminas costos fijos o miembros del equipo. Los costos eliminados (en papelera) no se incluyen en el cálculo.
+                  <p className="text-xs text-blue-900 dark:text-blue-100">
+                    <strong>Nota:</strong> Este cálculo se actualiza automáticamente cuando agregas costos con categorías como "Software" o "SaaS", o cuando ajustas la carga prestacional en la configuración de la organización.
                   </p>
                 </div>
               </div>
@@ -211,23 +201,46 @@ export function BlendedCostRate() {
         <div className="space-y-6">
           {/* Main Rate */}
           <div>
-            <div className="text-3xl font-bold">{formatCurrency(costRate, primaryCurrency)}</div>
-            <p className="text-sm text-muted-foreground">per hour</p>
+            <div className="text-4xl font-bold text-primary">{formatCurrency(costRate, primaryCurrency)}</div>
+            <p className="text-sm text-muted-foreground">por hora operativa (BCR)</p>
           </div>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 gap-4 pt-4 border-t">
-            <div className="flex justify-between items-center">
-              <p className="text-sm text-muted-foreground">Total Monthly Costs</p>
-              <p className="text-lg font-semibold">{formatCurrency(totalCosts, primaryCurrency)}</p>
+          {/* Detailed Breakdown Grid */}
+          <div className="space-y-3 pt-4 border-t">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Resumen Mensual</h4>
+
+            <div className="flex justify-between items-center group">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-4 bg-indigo-500 rounded-full" />
+                <p className="text-sm text-muted-foreground">Recursos (Nómina)</p>
+              </div>
+              <p className="text-sm font-medium">{formatCurrency(totalSalaries, primaryCurrency)}</p>
             </div>
-            <div className="flex justify-between items-center">
-              <p className="text-sm text-muted-foreground">Total Monthly Hours</p>
-              <p className="text-lg font-semibold">{totalHours.toFixed(1)}h</p>
+
+            <div className="flex justify-between items-center group">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-4 bg-emerald-500 rounded-full" />
+                <p className="text-sm text-muted-foreground">Infraestructura</p>
+              </div>
+              <p className="text-sm font-medium">{formatCurrency(totalFixedOverhead, primaryCurrency)}</p>
             </div>
-            <div className="flex justify-between items-center">
-              <p className="text-sm text-muted-foreground">Active Team Members</p>
-              <p className="text-lg font-semibold">{activeMembers}</p>
+
+            <div className="flex justify-between items-center group">
+              <div className="flex items-center gap-2">
+                <div className="w-1 h-4 bg-amber-500 rounded-full" />
+                <p className="text-sm text-muted-foreground">Herramientas</p>
+              </div>
+              <p className="text-sm font-medium">{formatCurrency(totalToolsCosts, primaryCurrency)}</p>
+            </div>
+
+            <div className="flex justify-between items-center pt-3 border-t font-bold">
+              <p className="text-sm">Gasto Operativo Total</p>
+              <p className="text-base">{formatCurrency(totalCosts, primaryCurrency)}</p>
+            </div>
+
+            <div className="flex justify-between items-center pt-2 text-xs text-muted-foreground">
+              <p>Capacidad Real</p>
+              <p className="font-medium text-foreground">{totalHours.toFixed(1)}h / mes</p>
             </div>
           </div>
 
@@ -239,7 +252,7 @@ export function BlendedCostRate() {
                 <p className="text-sm font-medium">Monedas Utilizadas</p>
                 <Badge variant="secondary">{currenciesUsed.length}</Badge>
               </div>
-              
+
               <div className="space-y-2">
                 {currenciesUsed.map((currency) => (
                   <div key={currency.code} className="flex justify-between items-center text-sm">

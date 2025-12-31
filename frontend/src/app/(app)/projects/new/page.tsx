@@ -28,6 +28,7 @@ import { formatCurrency, SUPPORTED_CURRENCIES } from "@/lib/currency"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { logger } from "@/lib/logger"
 import { LimitIndicator, canCreateResource } from "@/components/organization/LimitIndicator"
+import { usePrimaryCurrency } from "@/hooks/usePrimaryCurrency"
 
 interface Service {
   id: number
@@ -82,12 +83,23 @@ export default function NewQuotePage() {
   const [projectName, setProjectName] = useState("")
   const [clientName, setClientName] = useState("")
   const [clientEmail, setClientEmail] = useState("")
-  const [currency, setCurrency] = useState("USD")
+  const primaryCurrency = usePrimaryCurrency() // Moneda primaria de la organización
+  const [currency, setCurrency] = useState(primaryCurrency) // Inicializar con moneda primaria
   const [selectedTaxIds, setSelectedTaxIds] = useState<number[]>([])
+  
+  // Actualizar currency cuando cambie la moneda primaria (solo si no se ha modificado manualmente)
+  useEffect(() => {
+    // Solo actualizar si el usuario no ha cambiado la moneda manualmente
+    // Esto permite que el usuario pueda cambiar la moneda del proyecto si lo necesita
+    if (currency === primaryCurrency || !currency) {
+      setCurrency(primaryCurrency)
+    }
+  }, [primaryCurrency, currency])
   const [quoteItems, setQuoteItems] = useState<QuoteItem[]>([])
   const [calculatedQuote, setCalculatedQuote] = useState<CalculatedQuote | null>(null)
   const [isCalculating, setIsCalculating] = useState(false)
   const [marginsAlertVisible, setMarginsAlertVisible] = useState(false)
+  const [targetMargin, setTargetMargin] = useState<number>(0.40) // 40% por defecto
 
   const { data: currentUser } = useGetCurrentUser()
   const organizationId = currentUser?.organization_id
@@ -114,7 +126,7 @@ export default function NewQuotePage() {
     }, 500) // Debounce 500ms
 
     return () => clearTimeout(timer)
-  }, [quoteItems, selectedTaxIds])
+  }, [quoteItems, selectedTaxIds, targetMargin])
 
   const calculateQuote = async () => {
     if (quoteItems.length === 0) return
@@ -124,6 +136,7 @@ export default function NewQuotePage() {
       const result = await calculateQuoteMutation.mutateAsync({
         items: quoteItems,
         tax_ids: selectedTaxIds,
+        target_margin_percentage: targetMargin,  // Include target margin
       })
       setCalculatedQuote(result)
       
@@ -266,6 +279,7 @@ export default function NewQuotePage() {
         client_email: clientEmail.trim() || undefined,
         currency,
         tax_ids: selectedTaxIds,
+        target_margin_percentage: targetMargin,  // Include target margin
         quote_items: quoteItems.map(item => ({
           service_id: item.service_id,
           estimated_hours: item.estimated_hours,
@@ -628,6 +642,39 @@ export default function NewQuotePage() {
         <div className="space-y-6">
           <Card>
             <CardHeader>
+              <CardTitle>Quote Settings</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="target-margin" className="text-sm font-medium mb-2 block">
+                    Target Margin (%)
+                  </label>
+                  <Input
+                    id="target-margin"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    value={(targetMargin * 100).toFixed(1)}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value) / 100
+                      if (!isNaN(value) && value >= 0 && value <= 1) {
+                        setTargetMargin(value)
+                      }
+                    }}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Set the target profit margin for this quote (0-100%)
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader>
               <CardTitle>Quote Summary</CardTitle>
             </CardHeader>
             <CardContent>
@@ -671,7 +718,13 @@ export default function NewQuotePage() {
                       </span>
                     </div>
                     <div className="flex justify-between text-sm pt-2">
-                      <span className="text-muted-foreground">Margin:</span>
+                      <span className="text-muted-foreground">Target Margin:</span>
+                      <span className="font-medium">
+                        {(targetMargin * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm pt-1">
+                      <span className="text-muted-foreground">Actual Margin:</span>
                       <span className={`font-bold ${
                         calculatedQuote.margin_percentage >= 0.2 
                           ? "text-green-600" 

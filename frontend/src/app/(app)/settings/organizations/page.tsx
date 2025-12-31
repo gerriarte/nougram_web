@@ -407,6 +407,14 @@ export default function OrganizationsPage() {
                         <Button
                           variant="outline"
                           size="sm"
+                          onClick={() => router.push(`/settings/organizations/${org.id}`)}
+                          className="text-primary-600 hover:text-primary-700"
+                        >
+                          Ver Detalles
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => router.push(`/admin/organizations/${org.id}/credits`)}
                           className="text-primary-600 hover:text-primary-700"
                         >

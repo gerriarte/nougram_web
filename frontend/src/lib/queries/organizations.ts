@@ -23,6 +23,26 @@ import type {
   InvitationAcceptResponse,
 } from '../types/organizations';
 
+// Re-export types for convenience
+export type {
+  Organization,
+  OrganizationListResponse,
+  OrganizationCreate,
+  OrganizationUpdate,
+  OrganizationUser,
+  OrganizationUsersListResponse,
+  OrganizationInviteRequest,
+  OrganizationInviteResponse,
+  OrganizationUsageStats,
+  AddUserToOrganizationRequest,
+  UpdateUserRoleInOrganizationRequest,
+  Invitation,
+  InvitationListResponse,
+  InvitationCreate,
+  InvitationAcceptRequest,
+  InvitationAcceptResponse,
+} from '../types/organizations';
+
 export function useGetOrganizations(
   page: number = 1,
   pageSize: number = 20,

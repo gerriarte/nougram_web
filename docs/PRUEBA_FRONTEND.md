@@ -166,3 +166,6 @@ SELECT * FROM costs_fixed WHERE organization_id = <tu_org_id> AND is_suggested =
 
 
 
+
+
+

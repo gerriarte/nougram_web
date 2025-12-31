@@ -226,3 +226,6 @@ class CreditService:
 
 **Última actualización:** Diciembre 2025
 
+
+
+

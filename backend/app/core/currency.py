@@ -1,9 +1,12 @@
 """
 Currency utilities and constants
+ESTÁNDAR NOUGRAM: Usa Money para precisión en formateo y conversiones
 """
 from enum import Enum
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Union
+from decimal import Decimal
 import math
+from app.core.money import Money
 
 
 class Currency(str, Enum):
@@ -64,18 +67,38 @@ EXCHANGE_RATES_TO_USD: Dict[str, float] = {
 }
 
 
-def format_currency(amount: float, currency: str = "USD", use_grouping: bool = True) -> str:
+def format_currency(
+    amount: Union[float, Decimal, Money], 
+    currency: str = "USD", 
+    use_grouping: bool = True
+) -> str:
     """
     Format amount as currency string with proper thousands/millions grouping
+    ESTÁNDAR NOUGRAM: Acepta Money, Decimal o float para compatibilidad
     
     Args:
-        amount: Amount to format
-        currency: Currency code (USD, COP, ARS, EUR)
+        amount: Amount to format (Money, Decimal, or float)
+        currency: Currency code (USD, COP, ARS, EUR). Si amount es Money, se usa su currency
         use_grouping: Whether to use thousands/millions grouping (default: True)
         
     Returns:
         Formatted currency string (e.g., "$ 1.000.000" for COP, "$ 1,000,000.00" for USD)
     """
+    # ESTÁNDAR NOUGRAM: Si es Money, usar su currency y quantizar
+    if isinstance(amount, Money):
+        currency = amount.currency
+        # Quantizar según la moneda
+        if currency == "COP":
+            quantized = amount.quantize()
+        else:
+            quantized = amount.quantize()
+        amount_decimal = quantized.amount
+    elif isinstance(amount, Decimal):
+        amount_decimal = amount
+    else:
+        # Compatibilidad hacia atrás: convertir float a Decimal
+        amount_decimal = Decimal(str(amount))
+    
     currency_info = CURRENCY_INFO.get(currency, CURRENCY_INFO["USD"])
     symbol = currency_info.get("symbol", "$")
     decimal_places = currency_info.get("decimal_places", 2)
@@ -83,8 +106,12 @@ def format_currency(amount: float, currency: str = "USD", use_grouping: bool = T
     decimal_sep = currency_info.get("decimal_separator", ".")
     grouping = currency_info.get("grouping", 3)
     
-    # Round to appropriate decimal places
-    rounded_amount = round(amount, decimal_places)
+    # ESTÁNDAR NOUGRAM: Redondear usando Decimal para precisión
+    precision = Decimal('1') if decimal_places == 0 else Decimal('0.1') ** decimal_places
+    rounded_decimal = amount_decimal.quantize(precision)
+    
+    # Convertir a float solo para formateo (ya está redondeado)
+    rounded_amount = float(rounded_decimal)
     
     # Split into integer and decimal parts
     integer_part = int(abs(rounded_amount))
@@ -174,48 +201,77 @@ def get_all_currencies() -> list[Dict[str, str]]:
     ]
 
 
-def convert_currency(amount: float, from_currency: str, to_currency: str) -> float:
+def convert_currency(
+    amount: Union[float, Decimal, Money], 
+    from_currency: str, 
+    to_currency: str
+) -> Union[float, Money]:
     """
     Convert amount from one currency to another
+    ESTÁNDAR NOUGRAM: Usa Money para precisión en conversiones
     
     Args:
-        amount: Amount to convert
-        from_currency: Source currency code
+        amount: Amount to convert (Money, Decimal, or float)
+        from_currency: Source currency code. Si amount es Money, se usa su currency
         to_currency: Target currency code
         
     Returns:
-        Converted amount
+        Converted amount (Money si input es Money, float para compatibilidad)
     """
-    if from_currency == to_currency:
-        return amount
+    # ESTÁNDAR NOUGRAM: Si es Money, usar su currency
+    is_money = isinstance(amount, Money)
+    if is_money:
+        from_currency = amount.currency
+        amount_decimal = amount.amount
+    elif isinstance(amount, Decimal):
+        amount_decimal = amount
+    else:
+        amount_decimal = Decimal(str(amount))
     
+    if from_currency == to_currency:
+        if is_money:
+            return amount
+        return float(amount_decimal)
+    
+    # ESTÁNDAR NOUGRAM: Convertir usando Decimal para precisión
     # Convert to USD first (base currency)
-    from_rate = EXCHANGE_RATES_TO_USD.get(from_currency, 1.0)
-    amount_in_usd = amount / from_rate
+    from_rate = Decimal(str(EXCHANGE_RATES_TO_USD.get(from_currency, 1.0)))
+    amount_in_usd = amount_decimal / from_rate
     
     # Convert from USD to target currency
-    to_rate = EXCHANGE_RATES_TO_USD.get(to_currency, 1.0)
-    return amount_in_usd * to_rate
+    to_rate = Decimal(str(EXCHANGE_RATES_TO_USD.get(to_currency, 1.0)))
+    converted_decimal = amount_in_usd * to_rate
+    
+    # Retornar Money si input era Money, float para compatibilidad
+    if is_money:
+        return Money(converted_decimal, to_currency)
+    return float(converted_decimal)
 
 
 def normalize_to_primary_currency(
-    amount: float,
-    from_currency: str,
+    amount: Union[float, Decimal, Money],
+    from_currency: Optional[str],
     primary_currency: str = "USD"
-) -> float:
+) -> Union[float, Money]:
     """
     Normalize amount to primary currency
+    ESTÁNDAR NOUGRAM: Usa Money para precisión en normalización
     
     This is used for calculations where all costs need to be in the same currency.
     
     Args:
-        amount: Amount to normalize
-        from_currency: Source currency code (can be None, defaults to USD)
+        amount: Amount to normalize (Money, Decimal, or float)
+        from_currency: Source currency code (can be None, defaults to USD). Si amount es Money, se ignora
         primary_currency: Target primary currency code (default: USD)
         
     Returns:
-        Normalized amount in primary currency
+        Normalized amount in primary currency (Money si input es Money, float para compatibilidad)
     """
+    # ESTÁNDAR NOUGRAM: Si es Money, usar su currency
+    is_money = isinstance(amount, Money)
+    if is_money:
+        from_currency = amount.currency
+    
     # Handle None or empty currency
     if not from_currency or from_currency not in CURRENCY_INFO:
         from_currency = "USD"

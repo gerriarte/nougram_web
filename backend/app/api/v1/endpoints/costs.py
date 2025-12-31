@@ -24,8 +24,14 @@ from app.schemas.cost import (
     CostFixedListResponse,
 )
 from app.schemas.quote import BlendedCostRateResponse
+from app.models.team import TeamMember
+from app.models.settings import AgencySettings
+from app.core.currency import normalize_to_primary_currency, EXCHANGE_RATES_TO_USD, CURRENCY_INFO
+from collections import defaultdict
+from app.core.logging import get_logger
 
 router = APIRouter()
+logger = get_logger(__name__)
 
 
 @router.get("/costs/fixed", response_model=CostFixedListResponse)
@@ -389,67 +395,119 @@ async def calculate_agency_cost_hour(
     This is the core calculation for Module 1
     All costs are normalized to the primary currency before calculation
     """
-    from app.models.cost import CostFixed
-    from app.models.team import TeamMember
-    from app.models.settings import AgencySettings
-    from app.core.currency import normalize_to_primary_currency
     
     try:
-        # Get primary currency from settings (default to USD if not found)
-        try:
-            result = await db.execute(select(AgencySettings).where(AgencySettings.id == 1))
-            settings = result.scalar_one_or_none()
-            primary_currency = settings.primary_currency if settings else "USD"
-        except Exception:
-            # If table doesn't exist or query fails, use default
-            primary_currency = "USD"
+        # Get primary currency from organization settings
+        primary_currency = "USD"
+        org_settings = tenant.organization.settings if tenant.organization.settings else {}
+        if org_settings.get('primary_currency'):
+            primary_currency = org_settings.get('primary_currency')
+        else:
+            # Fallback to AgencySettings
+            try:
+                result = await db.execute(select(AgencySettings).where(AgencySettings.id == 1))
+                settings = result.scalar_one_or_none()
+                if settings:
+                    primary_currency = settings.primary_currency
+            except Exception:
+                pass
         
         # Calculate blended cost rate (normalized to primary currency)
-        blended_rate = await calculate_blended_cost_rate(db, primary_currency)
+        social_config = org_settings.get('social_charges_config') if org_settings else None
+        blended_rate = await calculate_blended_cost_rate(
+            db, 
+            primary_currency, 
+            tenant_id=tenant.organization_id,
+            social_charges_config=social_config
+        )
         
         # Get additional details for response (normalized to primary currency)
         # Exclude soft-deleted costs from calculations
         cost_repo = RepositoryFactory.create_cost_repository(db, tenant.organization_id)
         fixed_costs = await cost_repo.get_all_active(include_deleted=False)
-        total_fixed_costs = 0.0
+        total_fixed_overhead = 0.0
+        total_tools_costs = 0.0
+        
         for cost in fixed_costs:
             normalized = normalize_to_primary_currency(
                 cost.amount_monthly,
                 cost.currency or "USD",
                 primary_currency
             )
-            total_fixed_costs += normalized
+            # Categorize: 'Software', 'SaaS', 'Herramientas', 'Tools' go to tools
+            # 'Overhead', 'Infrastructure', 'Office', 'Rent', 'General' go to overhead
+            category_lower = (cost.category or "").lower()
+            tools_keywords = ['software', 'saas', 'herramienta', 'tool', 'licencia', 'license', 'subscription', 'suscripcion']
+            overhead_keywords = ['overhead', 'infrastructure', 'office', 'utilities', 'rent', 'alquiler', 'general', 'otro']
+            
+            is_tool = any(keyword in category_lower for keyword in tools_keywords)
+            is_overhead = any(keyword in category_lower for keyword in overhead_keywords)
+            
+            if is_tool:
+                total_tools_costs += normalized
+            elif is_overhead or not is_tool:  # Por defecto es overhead si no coincide con ninguna
+                total_fixed_overhead += normalized
         
-        from app.repositories.team_repository import TeamRepository
-        team_repo = TeamRepository(db)
+        total_fixed_costs = total_fixed_overhead + total_tools_costs
+        
+        # Get active team members salaries
+        team_repo = RepositoryFactory.create_team_repository(db, tenant.organization_id)
         team_members = await team_repo.get_all_active()
+        
+        # Get organization settings for social charges (Sprint 18)
+        social_charges_multiplier = 1.0
+        if org_settings and org_settings.get('social_charges_config'):
+            social_config = org_settings.get('social_charges_config', {})
+            if social_config.get('enable_social_charges', False):
+                total_percentage = 0
+                total_percentage += social_config.get('health_percentage', 0) or 0
+                total_percentage += social_config.get('pension_percentage', 0) or 0
+                total_percentage += social_config.get('arl_percentage', 0) or 0
+                total_percentage += social_config.get('parafiscales_percentage', 0) or 0
+                total_percentage += social_config.get('prima_services_percentage', 0) or 0
+                total_percentage += social_config.get('cesantias_percentage', 0) or 0
+                total_percentage += social_config.get('int_cesantias_percentage', 0) or 0
+                total_percentage += social_config.get('vacations_percentage', 0) or 0
+                
+                social_charges_multiplier = 1 + (total_percentage / 100)
+        
         total_salaries = 0.0
+        currency_counts = {}
+        for currency in ["USD", "COP", "ARS", "EUR"]:
+            currency_counts[currency] = {"count": 0, "total_amount": 0.0, "exchange_rate_to_primary": 0.0}
+        
         for member in team_members:
+            # Normalize first, then apply social charges multiplier (consistent with calculate_blended_cost_rate)
             normalized = normalize_to_primary_currency(
                 member.salary_monthly_brute,
                 member.currency or "USD",
                 primary_currency
             )
-            total_salaries += normalized
+            # Apply social charges multiplier after normalization
+            real_monthly_cost = normalized * social_charges_multiplier
+            total_salaries += real_monthly_cost
         
-        total_hours = sum(member.billable_hours_per_week * 4.33 for member in team_members)
+        # Calculate total billable hours per month across all members
+        # Consider non_billable_hours_percentage (consistent with calculate_blended_cost_rate)
+        total_hours = sum(
+            member.billable_hours_per_week * 4.33 * (1 - (member.non_billable_hours_percentage or 0.0))
+            for member in team_members
+        )
         
-        # Collect currency information
-        from app.core.currency import EXCHANGE_RATES_TO_USD, CURRENCY_INFO
-        from collections import defaultdict
-        from datetime import datetime
-        
-        currency_counts = defaultdict(lambda: {"count": 0, "total_amount": 0.0})
-        
-        # Count currencies in fixed costs
+        # Collect currency distribution info
+        # Count fixed costs currencies
         for cost in fixed_costs:
             cost_currency = cost.currency or "USD"
+            if cost_currency not in currency_counts:
+                currency_counts[cost_currency] = {"count": 0, "total_amount": 0.0, "exchange_rate_to_primary": 0.0}
             currency_counts[cost_currency]["count"] += 1
             currency_counts[cost_currency]["total_amount"] += cost.amount_monthly
         
         # Count currencies in team member salaries
         for member in team_members:
             member_currency = member.currency or "USD"
+            if member_currency not in currency_counts:
+                currency_counts[member_currency] = {"count": 0, "total_amount": 0.0, "exchange_rate_to_primary": 0.0}
             currency_counts[member_currency]["count"] += 1
             currency_counts[member_currency]["total_amount"] += member.salary_monthly_brute
         
@@ -468,25 +526,22 @@ async def calculate_agency_cost_hour(
                 if currency_code == primary_currency:
                     exchange_rate_to_primary = 1.0
                 else:
-                    # Convert: currency -> USD -> primary
-                    # currency_rate is: 1 USD = X currency (e.g., 1 USD = 4000 COP)
-                    # So: 1 currency = 1/currency_rate USD
-                    # Then: 1 currency = (1/currency_rate) * primary_rate primary_currency
-                    exchange_rate_to_primary = primary_rate / currency_rate
+                    exchange_rate_to_primary = (1.0 / currency_rate) * primary_rate
                 
-                currencies_used.append({
-                    "code": currency_code,
-                    "count": info["count"],
-                    "exchange_rate_to_primary": round(exchange_rate_to_primary, 6),
-                    "total_amount": round(info["total_amount"], 2)
-                })
-        
-        # Sort by count (most used first)
-        currencies_used.sort(key=lambda x: x["count"], reverse=True)
+                if info["count"] > 0:
+                    currencies_used.append({
+                        "code": currency_code,
+                        "count": info["count"],
+                        "exchange_rate_to_primary": round(exchange_rate_to_primary, 4),
+                        "total_amount": round(info["total_amount"], 2)
+                    })
         
         return BlendedCostRateResponse(
-            blended_cost_rate=round(blended_rate, 2),
+            blended_cost_rate=blended_rate,
             total_monthly_costs=round(total_fixed_costs + total_salaries, 2),
+            total_fixed_overhead=round(total_fixed_overhead, 2),
+            total_tools_costs=round(total_tools_costs, 2),
+            total_salaries=round(total_salaries, 2),
             total_monthly_hours=round(total_hours, 2),
             active_team_members=len(team_members),
             primary_currency=primary_currency,
@@ -495,8 +550,6 @@ async def calculate_agency_cost_hour(
         )
     except Exception as e:
         # Log error and return default values
-        from app.core.logging import get_logger
-        logger = get_logger(__name__)
         logger.error("Error calculating blended cost rate", error=str(e), user_id=current_user.id, exc_info=True)
         return BlendedCostRateResponse(
             blended_cost_rate=0.0,

@@ -11,6 +11,7 @@ from app.core.logging import get_logger
 from app.core.permissions import get_user_role
 from app.models.user import User
 from app.models.settings import AgencySettings
+from app.models.organization import Organization
 from app.repositories.settings_repository import SettingsRepository
 from app.schemas.settings import (
     AgencySettingsResponse, 
@@ -37,8 +38,23 @@ async def get_agency_currency_settings(
     If include_rates=true and user is owner or super_admin, also returns today's exchange rates.
     """
     try:
-        settings_repo = SettingsRepository(db)
-        settings = await settings_repo.get_or_create_default()
+        # Prioritize organization settings
+        primary_currency = "USD"
+        if current_user.organization_id:
+            from sqlalchemy import select
+            result = await db.execute(select(Organization).where(Organization.id == current_user.organization_id))
+            org = result.scalar_one_or_none()
+            if org and org.settings and org.settings.get('primary_currency'):
+                primary_currency = org.settings['primary_currency']
+            else:
+                # Fallback to AgencySettings
+                settings_repo = SettingsRepository(db)
+                settings = await settings_repo.get_or_create_default()
+                primary_currency = settings.primary_currency
+        else:
+            settings_repo = SettingsRepository(db)
+            settings = await settings_repo.get_or_create_default()
+            primary_currency = settings.primary_currency
         
         # Check if user can view exchange rates (owner or super_admin)
         user_role = get_user_role(current_user)
@@ -53,8 +69,8 @@ async def get_agency_currency_settings(
                 # Continue without rates if API fails
         
         return AgencySettingsResponse(
-            primary_currency=settings.primary_currency,
-            currency_symbol=get_currency_symbol(settings.primary_currency),
+            primary_currency=primary_currency,
+            currency_symbol=get_currency_symbol(primary_currency),
             available_currencies=get_all_currencies(),
             exchange_rates=exchange_rates
         )
@@ -86,19 +102,29 @@ async def update_agency_currency_settings(
                 detail=f"Invalid currency: {settings_data.primary_currency}. Supported: USD, COP, ARS, EUR"
             )
         
+        # Prioritize updating organization settings
+        if current_user.organization_id:
+            from sqlalchemy import select
+            result = await db.execute(select(Organization).where(Organization.id == current_user.organization_id))
+            org = result.scalar_one_or_none()
+            if org:
+                settings = org.settings or {}
+                settings['primary_currency'] = settings_data.primary_currency
+                org.settings = settings
+                await db.commit()
+                logger.info("Organization currency settings updated", currency=settings_data.primary_currency, org_id=org.id)
+        
+        # Also update global settings as a fallback/sync (optional, but keeps compatibility)
         settings_repo = SettingsRepository(db)
         settings = await settings_repo.get_or_create_default()
-        
-        # Update existing settings
-        logger.info("Updating currency settings", new_currency=settings_data.primary_currency, user_id=current_user.id)
         settings.primary_currency = settings_data.primary_currency
         settings.currency_symbol = get_currency_symbol(settings_data.primary_currency)
-        settings = await settings_repo.update(settings)
+        await settings_repo.update(settings)
         
         logger.info("Currency settings updated successfully", user_id=current_user.id)
         return AgencySettingsResponse(
-            primary_currency=settings.primary_currency,
-            currency_symbol=settings.currency_symbol,
+            primary_currency=settings_data.primary_currency,
+            currency_symbol=get_currency_symbol(settings_data.primary_currency),
             available_currencies=get_all_currencies()
         )
         

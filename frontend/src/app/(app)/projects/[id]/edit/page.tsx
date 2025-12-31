@@ -16,6 +16,7 @@ import { ArrowLeft, Save, Loader2 } from "lucide-react"
 import { useGetProject, useGetTaxes, useUpdateProject } from "@/lib/queries"
 import { useToast } from "@/hooks/use-toast"
 import { SUPPORTED_CURRENCIES } from "@/lib/currency"
+import { usePrimaryCurrency } from "@/hooks/usePrimaryCurrency"
 
 export default function EditProjectPage() {
   const params = useParams()
@@ -26,11 +27,12 @@ export default function EditProjectPage() {
   const { data: project, isLoading: projectLoading } = useGetProject(projectId)
   const updateProjectMutation = useUpdateProject()
 
+  const primaryCurrency = usePrimaryCurrency() // Moneda primaria de la organización
   const [projectName, setProjectName] = useState("")
   const [clientName, setClientName] = useState("")
   const [clientEmail, setClientEmail] = useState("")
   const [status, setStatus] = useState("")
-  const [currency, setCurrency] = useState("USD")
+  const [currency, setCurrency] = useState(primaryCurrency) // Inicializar con moneda primaria
   const [selectedTaxIds, setSelectedTaxIds] = useState<number[]>([])
 
   const { data: taxesData } = useGetTaxes(undefined, true)
@@ -43,10 +45,11 @@ export default function EditProjectPage() {
       setClientName(project.client_name || "")
       setClientEmail(project.client_email || "")
       setStatus(project.status || "Draft")
-      setCurrency(project.currency || "USD")
+      // Usar moneda del proyecto si existe, sino usar moneda primaria
+      setCurrency(project.currency || primaryCurrency)
       setSelectedTaxIds(project.tax_ids || [])
     }
-  }, [project])
+  }, [project, primaryCurrency])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

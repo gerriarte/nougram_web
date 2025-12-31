@@ -15,6 +15,9 @@ import { useOnboardingStore, TeamMember } from '@/stores/onboarding-store';
 import { formatCurrencyForInput, parseCurrencyFromInput } from '@/lib/currency-mask';
 import { formatCurrency } from '@/lib/currency';
 import { CURRENCIES } from '@/lib/currency';
+// ESTÁNDAR NOUGRAM: Usar dinero.js para cálculos precisos
+import { fromAPI, sumMoney, toAPI } from '@/lib/money';
+import type { Dinero } from 'dinero.js';
 
 const teamMemberSchema = z.object({
   name: z.string().min(1, "El nombre es requerido"),
@@ -108,10 +111,28 @@ export function TeamMembersTable({ defaultCurrency }: TeamMembersTableProps) {
     setValue('salary', parsed);
   };
 
-  const totalMonthlySalaries = teamMembers.reduce((sum, member) => {
-    // TODO: Convertir a moneda base si hay múltiples monedas
-    return sum + member.salary;
-  }, 0);
+  // ESTÁNDAR NOUGRAM: Calcular total usando dinero.js para precisión
+  const totalMonthlySalaries = (() => {
+    // Convertir salarios a Dinero (solo los que están en la moneda base)
+    const salariesInBaseCurrency: Dinero<number>[] = teamMembers
+      .filter(member => (member.currency || defaultCurrency) === defaultCurrency)
+      .map(member => fromAPI(member.salary, defaultCurrency));
+    
+    // Si hay miembros con otras monedas, mostrar warning en consola
+    const membersWithOtherCurrency = teamMembers.filter(
+      member => (member.currency || defaultCurrency) !== defaultCurrency
+    );
+    if (membersWithOtherCurrency.length > 0) {
+      console.warn(
+        `TeamMembersTable: ${membersWithOtherCurrency.length} miembros tienen moneda diferente a ${defaultCurrency}. ` +
+        `Solo se suman los salarios en ${defaultCurrency}.`
+      );
+    }
+    
+    // Sumar usando dinero.js
+    const totalMoney = sumMoney(salariesInBaseCurrency);
+    return totalMoney ? toAPI(totalMoney) : 0;
+  })();
 
   const totalBillableHours = teamMembers.reduce((sum, member) => {
     return sum + (member.billableHours * 4.33); // 4.33 semanas por mes
@@ -315,6 +336,9 @@ export function TeamMembersTable({ defaultCurrency }: TeamMembersTableProps) {
     </Card>
   );
 }
+
+
+
 
 
 

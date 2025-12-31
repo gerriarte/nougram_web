@@ -23,6 +23,8 @@ import { Badge } from "@/components/ui/badge"
 import { ConfirmDialog } from "@/components/common/confirm-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { MESSAGES } from "@/lib/messages"
+import { LoadingSkeleton } from "@/components/common/LoadingSkeleton"
+import { ErrorDisplay } from "@/components/common/ErrorDisplay"
 
 interface Project {
   id: number
@@ -133,7 +135,7 @@ export default function ProjectsPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Card className="cursor-pointer hover:bg-accent transition-colors" onClick={() => setStatusFilter("")}>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium">Todos los Proyectos</CardTitle>
@@ -195,13 +197,15 @@ export default function ProjectsPage() {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
+            <LoadingSkeleton type="table" count={5} />
           ) : error ? (
-            <p className="text-sm text-destructive text-center py-8">
-              Error al cargar proyectos: {String(error)}
-            </p>
+            <ErrorDisplay
+              error={error}
+              onRetry={() => window.location.reload()}
+              title="Error al cargar proyectos"
+              autoRetry={true}
+              maxRetries={3}
+            />
           ) : projects.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Package className="h-12 w-12 text-muted-foreground mb-4" />
@@ -210,16 +214,16 @@ export default function ProjectsPage() {
               </p>
             </div>
           ) : (
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nombre del Proyecto</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead>Moneda</TableHead>
-                    <TableHead>Creado</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
+                    <TableHead className="min-w-[200px]">Nombre del Proyecto</TableHead>
+                    <TableHead className="min-w-[150px]">Cliente</TableHead>
+                    <TableHead className="min-w-[120px]">Estado</TableHead>
+                    <TableHead className="min-w-[100px]">Moneda</TableHead>
+                    <TableHead className="min-w-[120px]">Creado</TableHead>
+                    <TableHead className="text-right min-w-[150px]">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

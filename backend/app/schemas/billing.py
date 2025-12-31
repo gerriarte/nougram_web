@@ -1,9 +1,12 @@
 """
 Billing and subscription schemas
+ESTÁNDAR NOUGRAM: Campos monetarios usan Decimal serializado como string
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer
 from typing import Optional, Dict, Any
 from datetime import datetime
+from decimal import Decimal
+from app.core.pydantic_config import DECIMAL_CONFIG
 
 
 class CheckoutSessionCreate(BaseModel):
@@ -60,14 +63,24 @@ class SubscriptionCancel(BaseModel):
 
 
 class PlanInfo(BaseModel):
-    """Plan information"""
+    """Plan information
+    ESTÁNDAR NOUGRAM: Campos monetarios usan Decimal para precisión
+    """
     name: str
     display_name: str
     description: str
-    monthly_price: Optional[float] = None
-    yearly_price: Optional[float] = None
+    monthly_price: Optional[Decimal] = None
+    yearly_price: Optional[Decimal] = None
     features: list[str] = []
     limits: Dict[str, Any] = {}
+    
+    # ESTÁNDAR NOUGRAM: Serializar Decimal como string
+    @field_serializer('monthly_price', 'yearly_price')
+    def serialize_decimal(self, value: Optional[Decimal]) -> Optional[str]:
+        """Serializa Decimal como string para mantener precisión"""
+        return str(value) if value is not None else None
+    
+    model_config = DECIMAL_CONFIG
 
 
 class PlansListResponse(BaseModel):
@@ -78,6 +91,9 @@ class PlansListResponse(BaseModel):
 class BillingPortalResponse(BaseModel):
     """Response with billing portal URL"""
     url: str
+
+
+
 
 
 

@@ -36,3 +36,6 @@ def downgrade() -> None:
     op.drop_column('quotes', 'revisions_included')
 
 
+
+
+

@@ -6,6 +6,8 @@ import { useGetDashboardData, useGetBlendedCostRate } from "@/lib/queries"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatCurrency, SUPPORTED_CURRENCIES } from "@/lib/currency"
 import { Loader2, DollarSign, Target, Briefcase, Users, Filter, X, TrendingUp, TrendingDown, ArrowUpRight, ArrowDownRight } from "lucide-react"
+import { LoadingSkeleton } from "@/components/common/LoadingSkeleton"
+import { ErrorDisplay } from "@/components/common/ErrorDisplay"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -64,7 +66,7 @@ export default function DashboardPage() {
     comparePrevious?: boolean
   }>({})
   
-  const { data: dashboardData, isLoading: dashboardLoading } = useGetDashboardData(
+  const { data: dashboardData, isLoading: dashboardLoading, error: dashboardError, refetch: refetchDashboard } = useGetDashboardData(
     activeFilters.start,
     activeFilters.end,
     activeFilters.currency,
@@ -72,7 +74,7 @@ export default function DashboardPage() {
     activeFilters.clientName,
     activeFilters.comparePrevious
   )
-  const { data: costRateData, isLoading: costRateLoading } = useGetBlendedCostRate()
+  const { data: costRateData, isLoading: costRateLoading, error: costRateError } = useGetBlendedCostRate()
   
   const handleApplyFilters = () => {
     setActiveFilters({
@@ -99,8 +101,31 @@ export default function DashboardPage() {
 
   if (dashboardLoading || costRateLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground">Vista general de tu agencia</p>
+        </div>
+        <LoadingSkeleton type="card" count={5} />
+        <LoadingSkeleton type="chart" />
+      </div>
+    )
+  }
+
+  if (dashboardError) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground">Vista general de tu agencia</p>
+        </div>
+        <ErrorDisplay
+          error={dashboardError}
+          onRetry={() => refetchDashboard()}
+          title="Error al cargar dashboard"
+          autoRetry={true}
+          maxRetries={3}
+        />
       </div>
     )
   }

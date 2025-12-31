@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Check, Palette, Code, Megaphone, Briefcase, Video, ChevronRight, ArrowLeft, Loader2, Users, Package, DollarSign, Info, Sparkles } from 'lucide-react';
-import { useGetTemplates, useApplyTemplate, useGetCurrentUser } from '@/lib/queries';
+import { useGetTemplates, useApplyTemplate, useGetCurrentUser, useUpdateOrganization, useUpdateCurrencySettings } from '@/lib/queries';
 import { IndustryTemplate } from '@/lib/types/templates';
 import { TemplateCard } from '@/components/onboarding/TemplateCard';
 import { useOnboardingStore } from '@/stores/onboarding-store';
@@ -38,12 +38,16 @@ export default function OnboardingPage() {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isAIDialogOpen, setIsAIDialogOpen] = useState(false);
   const [industry, setIndustry] = useState('');
-  
+
   // Zustand store para persistir datos del onboarding
   const {
+    organizationName,
+    organizationDescription,
     country,
     currency,
     enableSocialCharges,
+    setOrganizationName,
+    setOrganizationDescription,
     setCountry,
     setCurrency,
     setEnableSocialCharges,
@@ -53,7 +57,7 @@ export default function OnboardingPage() {
     monthlyIncomeTarget,
     vacationDays,
   } = useOnboardingStore();
-  
+
   // Inicializar región desde store o default
   const region = country || 'US';
 
@@ -62,6 +66,8 @@ export default function OnboardingPage() {
   const templates = templatesData?.items || [];
   const { data: currentUser, isLoading: userLoading } = useGetCurrentUser();
   const applyTemplate = useApplyTemplate();
+  const updateOrganization = useUpdateOrganization();
+  const updateCurrencySettings = useUpdateCurrencySettings();
 
   // Only owners can access onboarding
   useEffect(() => {
@@ -70,8 +76,15 @@ export default function OnboardingPage() {
         // Non-owners should be redirected to dashboard
         router.push('/dashboard');
       }
+      // Initialize organization details if not in store
+      if (!organizationName && currentUser.organization_id) {
+        // We can't easily get the org name here without fetching the org.
+        // But the user might want to change it anyway. 
+        // Typically the register flow sets a name.
+        // We can rely on the user typing it or leave it empty if they want to change it.
+      }
     }
-  }, [currentUser, userLoading, router]);
+  }, [currentUser, userLoading, router, organizationName]);
 
   // Show loading while checking user role
   if (userLoading || (currentUser && currentUser.role !== 'owner')) {
@@ -106,7 +119,11 @@ export default function OnboardingPage() {
   const handleContinue = () => {
     // Validaciones antes de continuar
     if (step === 1) {
-      // Validar que país y moneda estén seleccionados
+      // Validar que nombre, país y moneda estén seleccionados
+      if (!organizationName) {
+        toast.error('Por favor ingresa el nombre de la empresa');
+        return;
+      }
       if (!country || !currency) {
         toast.error('Por favor selecciona país y moneda');
         return;
@@ -155,12 +172,40 @@ export default function OnboardingPage() {
     }
 
     try {
+      // 1. Update Organization Details
+      await updateOrganization.mutateAsync({
+        orgId: currentUser.organization_id,
+        data: {
+          name: organizationName,
+          settings: {
+            description: organizationDescription
+          }
+        }
+      });
+      
+      // 1b. Update primary currency via currency settings endpoint
+      // Esto asegura que la moneda se guarde como primary_currency y esté disponible en todos los formularios
+      await updateCurrencySettings.mutateAsync({
+        primary_currency: currency || 'USD'
+      });
+
+      // 2. Apply Template
       await applyTemplate.mutateAsync({
         organizationId: currentUser.organization_id,
         data: {
           industry_type: selectedTemplate.industry_type,
           region: country || region,
           currency: currency,
+          customize: {
+            roles: teamMembers.map(m => ({
+              name: m.name,
+              role: m.role,
+              monthly_cost: m.salary,
+              billable_hours_per_week: m.billableHours,
+              currency: m.currency || currency
+            })),
+            taxes: taxes
+          }
         },
       });
       toast.success('Workspace configured successfully!');
@@ -174,16 +219,15 @@ export default function OnboardingPage() {
   const handleApplyAISuggestions = (suggestions: OnboardingSuggestionResponse) => {
     // Apply AI suggestions to the onboarding store
     const store = useOnboardingStore.getState();
-    
+
     // Apply team members
     if (suggestions.suggested_roles.length > 0) {
       const aiTeamMembers = suggestions.suggested_roles.map(role => ({
         name: role.name,
         role: role.role,
-        salary_monthly_brute: role.salary_monthly_brute,
+        salary: role.salary_monthly_brute,
+        billableHours: role.billable_hours_per_week || 40,
         currency: role.currency,
-        billable_hours_per_week: role.billable_hours_per_week,
-        is_active: role.is_active ?? true,
       }));
       // Merge with existing team members (avoid duplicates)
       const existingNames = new Set(store.teamMembers.map(m => m.name));
@@ -194,7 +238,7 @@ export default function OnboardingPage() {
     // Note: Services and fixed costs would need to be saved via API calls
     // For now, we'll just show a success message
     toast.success(`Se aplicaron ${suggestions.suggested_roles.length} roles sugeridos por IA`);
-    
+
     // Optionally, move to step 2 to show the applied team members
     if (suggestions.suggested_roles.length > 0) {
       setStep(2);
@@ -248,6 +292,30 @@ export default function OnboardingPage() {
             <CardContent>
               <div className="space-y-6">
                 <div className="space-y-4">
+                  {/* Organization Details */}
+                  <div className="space-y-2">
+                    <Label className="text-grey-700 font-medium">Nombre de la Empresa</Label>
+                    <Input
+                      placeholder="Ej: Agencia Creativa SAS"
+                      value={organizationName}
+                      onChange={(e) => setOrganizationName(e.target.value)}
+                      className="bg-white border-grey-300"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-grey-700 font-medium">Descripción</Label>
+                    <Input
+                      placeholder="Ej: Agencia de marketing digital enfocada en e-commerce..."
+                      value={organizationDescription}
+                      onChange={(e) => setOrganizationDescription(e.target.value)}
+                      className="bg-white border-grey-300"
+                    />
+                    <p className="text-xs text-grey-600">
+                      Una breve descripción de lo que hace tu empresa.
+                    </p>
+                  </div>
+
                   <div className="space-y-2">
                     <Label className="text-grey-700 font-medium">Industria</Label>
                     <Input
@@ -285,7 +353,7 @@ export default function OnboardingPage() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-grey-700 font-medium">Moneda</Label>
+                      <Label className="text-grey-700 font-medium">Moneda Principal</Label>
                       <Select value={currency || 'USD'} onValueChange={setCurrency}>
                         <SelectTrigger className="h-10 bg-white border-grey-300">
                           <SelectValue placeholder="Selecciona tu moneda" />
@@ -384,7 +452,7 @@ export default function OnboardingPage() {
                 )}
 
                 <div className="flex justify-end pt-4 border-t border-grey-200">
-                  <Button 
+                  <Button
                     onClick={handleContinue}
                     className="bg-primary-500 hover:bg-primary-700 text-white"
                     disabled={!country || !currency}
@@ -407,14 +475,14 @@ export default function OnboardingPage() {
                 useOnboardingStore.getState().setProfileType(profile);
               }}
             />
-            
+
             {/* Mostrar formulario condicional según perfil */}
             {useOnboardingStore.getState().profileType === 'freelance' && (
               <div className="mt-6">
                 <FreelanceForm currency={currency || 'USD'} />
               </div>
             )}
-            
+
             {useOnboardingStore.getState().profileType === 'company' && (
               <div className="mt-6">
                 <TeamMembersTable defaultCurrency={currency || 'USD'} />
@@ -422,8 +490,8 @@ export default function OnboardingPage() {
             )}
 
             <div className="mt-8 flex justify-between pt-6 border-t border-grey-200">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setStep(1)}
                 className="border-grey-300 text-grey-700 hover:bg-grey-50"
               >
@@ -471,8 +539,8 @@ export default function OnboardingPage() {
             )}
 
             <div className="mt-8 flex justify-between pt-6 border-t border-grey-200">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setStep(2)}
                 className="border-grey-300 text-grey-700 hover:bg-grey-50"
               >
@@ -494,20 +562,20 @@ export default function OnboardingPage() {
         {/* Step 4: Estructura Tributaria */}
         {step === 4 && (
           <div className="animate-in fade-in slide-in-from-bottom-4">
-            <TaxStructureForm 
-              country={country || 'US'} 
+            <TaxStructureForm
+              country={country || 'US'}
               enableSocialCharges={enableSocialCharges}
             />
             <div className="flex justify-between pt-6 border-t border-grey-200 mt-6">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setStep(3)}
                 className="border-grey-300 text-grey-700 hover:bg-grey-50"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Atrás
               </Button>
-              <Button 
+              <Button
                 onClick={() => setStep(5)}
                 className="bg-primary-500 hover:bg-primary-700 text-white"
               >
@@ -582,15 +650,15 @@ export default function OnboardingPage() {
                 </Card>
 
                 <div className="flex justify-between pt-6 border-t border-grey-200">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => setStep(4)}
                     className="border-grey-300 text-grey-700 hover:bg-grey-50"
                   >
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Atrás
                   </Button>
-                  <Button 
+                  <Button
                     onClick={() => setStep(6)}
                     className="bg-primary-500 hover:bg-primary-700 text-white"
                   >
@@ -620,15 +688,15 @@ export default function OnboardingPage() {
             <CardContent>
               {/* Customization UI can be added here later */}
               <div className="flex justify-between pt-6 border-t border-grey-200">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => setStep(2)}
                   className="border-grey-300 text-grey-700 hover:bg-grey-50"
                 >
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Back
                 </Button>
-                <Button 
+                <Button
                   onClick={() => setStep(4)}
                   className="bg-primary-500 hover:bg-primary-700 text-white"
                 >
@@ -695,38 +763,38 @@ export default function OnboardingPage() {
                 <div className="space-y-4 mb-8">
                   <div className="space-y-2">
                     <Label className="text-grey-700 font-medium">Región</Label>
-                    <Input 
-                      value={country === 'US' ? 'Estados Unidos' : 
-                             country === 'UK' ? 'Reino Unido' :
-                             country === 'COL' ? 'Colombia' :
-                             country === 'ARG' ? 'Argentina' :
-                             country === 'MEX' ? 'México' :
-                             country === 'ESP' ? 'España' :
-                             country === 'BR' ? 'Brasil' : country}
-                      disabled 
-                      className="h-10 bg-grey-50 border-grey-300 text-grey-600" 
+                    <Input
+                      value={country === 'US' ? 'Estados Unidos' :
+                        country === 'UK' ? 'Reino Unido' :
+                          country === 'COL' ? 'Colombia' :
+                            country === 'ARG' ? 'Argentina' :
+                              country === 'MEX' ? 'México' :
+                                country === 'ESP' ? 'España' :
+                                  country === 'BR' ? 'Brasil' : country}
+                      disabled
+                      className="h-10 bg-grey-50 border-grey-300 text-grey-600"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label className="text-grey-700 font-medium">Moneda</Label>
-                    <Input 
+                    <Input
                       value={currency === 'USD' ? 'USD - Dólar Estadounidense' :
-                             currency === 'EUR' ? 'EUR - Euro' :
-                             currency === 'COP' ? 'COP - Peso Colombiano' :
-                             currency === 'ARS' ? 'ARS - Peso Argentino' :
-                             currency === 'MXN' ? 'MXN - Peso Mexicano' :
-                             currency === 'BRL' ? 'BRL - Real Brasileño' : currency}
-                      disabled 
-                      className="h-10 bg-grey-50 border-grey-300 text-grey-600" 
+                        currency === 'EUR' ? 'EUR - Euro' :
+                          currency === 'COP' ? 'COP - Peso Colombiano' :
+                            currency === 'ARS' ? 'ARS - Peso Argentino' :
+                              currency === 'MXN' ? 'MXN - Peso Mexicano' :
+                                currency === 'BRL' ? 'BRL - Real Brasileño' : currency}
+                      disabled
+                      className="h-10 bg-grey-50 border-grey-300 text-grey-600"
                     />
                   </div>
                   {country === 'COL' && enableSocialCharges && (
                     <div className="space-y-2">
                       <Label className="text-grey-700 font-medium">Cargas Prestacionales</Label>
-                      <Input 
-                        value="Ley 100 - Activada" 
-                        disabled 
-                        className="h-10 bg-blue-50 border-blue-300 text-blue-700" 
+                      <Input
+                        value="Ley 100 - Activada"
+                        disabled
+                        className="h-10 bg-blue-50 border-blue-300 text-blue-700"
                       />
                     </div>
                   )}
@@ -747,9 +815,9 @@ export default function OnboardingPage() {
                       'Launch Workspace'
                     )}
                   </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setStep(5)} 
+                  <Button
+                    variant="outline"
+                    onClick={() => setStep(5)}
                     disabled={applyTemplate.isPending}
                     className="border-grey-300 text-grey-700 hover:bg-grey-50"
                   >
@@ -852,15 +920,15 @@ export default function OnboardingPage() {
             </Tabs>
 
             <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-grey-200">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setIsPreviewOpen(false)}
                 className="border-grey-300 text-grey-700 hover:bg-grey-50"
               >
                 Cancel
               </Button>
-              <Button 
-                onClick={handleSelectFromModal} 
+              <Button
+                onClick={handleSelectFromModal}
                 className="bg-primary-500 hover:bg-primary-700 text-white"
               >
                 Select This Template

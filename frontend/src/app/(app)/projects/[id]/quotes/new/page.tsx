@@ -42,6 +42,7 @@ export default function NewQuoteVersionPage() {
   const [calculatedQuote, setCalculatedQuote] = useState<any>(null)
   const [isCalculating, setIsCalculating] = useState(false)
   const [marginsAlertVisible, setMarginsAlertVisible] = useState(false)
+  const [targetMargin, setTargetMargin] = useState<number>(0.40) // 40% por defecto
 
   const services = servicesData?.items || []
   const latestQuote = quotes && quotes.length > 0 ? quotes[0] : null
@@ -61,10 +62,11 @@ export default function NewQuoteVersionPage() {
       }))
       setQuoteItems(items)
       setNotes(latestQuoteDetails.notes || "")
+      setTargetMargin(latestQuoteDetails.target_margin_percentage ?? 0.40) // Load target margin or default to 40%
     }
   }, [latestQuote, latestQuoteDetails, quoteItems.length])
 
-  // Auto-calculate quote when items change
+  // Auto-calculate quote when items or target margin change
   useEffect(() => {
     const timer = setTimeout(() => {
       if (quoteItems.length > 0) {
@@ -75,7 +77,7 @@ export default function NewQuoteVersionPage() {
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [quoteItems])
+  }, [quoteItems, targetMargin])
 
   const calculateQuote = async () => {
     if (quoteItems.length === 0) return
@@ -86,6 +88,7 @@ export default function NewQuoteVersionPage() {
       const result = await calculateQuoteMutation.mutateAsync({
         items: quoteItems,
         tax_ids: taxIds,
+        target_margin_percentage: targetMargin,  // Include target margin
       })
       setCalculatedQuote(result)
 
@@ -158,6 +161,7 @@ export default function NewQuoteVersionPage() {
         data: {
           items: quoteItems,
           notes: notes || null,
+          target_margin_percentage: targetMargin,  // Include target margin
         },
       })
       toast({
@@ -394,7 +398,13 @@ export default function NewQuoteVersionPage() {
                     </span>
                   </div>
                   <div className="flex justify-between pt-2">
-                    <span className="text-muted-foreground">Margin:</span>
+                    <span className="text-muted-foreground">Target Margin:</span>
+                    <span className="font-medium">
+                      {(targetMargin * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="flex justify-between pt-1">
+                    <span className="text-muted-foreground">Actual Margin:</span>
                     <span
                       className={`text-lg font-bold ${
                         calculatedQuote.margin_percentage < 0.20
@@ -404,6 +414,32 @@ export default function NewQuoteVersionPage() {
                     >
                       {(calculatedQuote.margin_percentage * 100).toFixed(1)}%
                     </span>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t space-y-4">
+                  <div>
+                    <label htmlFor="target-margin" className="text-sm font-medium mb-2 block">
+                      Target Margin (%)
+                    </label>
+                    <Input
+                      id="target-margin"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={(targetMargin * 100).toFixed(1)}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value) / 100
+                        if (!isNaN(value) && value >= 0 && value <= 1) {
+                          setTargetMargin(value)
+                        }
+                      }}
+                      className="w-full"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Set the target profit margin for this quote (0-100%)
+                    </p>
                   </div>
                 </div>
 

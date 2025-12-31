@@ -37,7 +37,7 @@ export function useGetProject(projectId: number) {
 
 export function useCreateProject() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (data: unknown) => {
       const response = await apiRequest('/projects/', {
@@ -57,7 +57,7 @@ export function useCreateProject() {
 
 export function useUpdateProject() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ id, data }: { id: number; data: unknown }) => {
       const response = await apiRequest(`/projects/${id}`, {
@@ -77,7 +77,7 @@ export function useUpdateProject() {
 
 export function useDeleteProject() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: number) => {
       const response = await apiRequest(`/projects/${id}`, {
@@ -110,7 +110,7 @@ export function useGetDeletedProjects() {
 
 export function useRestoreProject() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: number) => {
       const response = await apiRequest(`/projects/${id}/restore`, {
@@ -130,7 +130,7 @@ export function useRestoreProject() {
 
 export function usePermanentlyDeleteProject() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (id: number) => {
       return await apiRequest(`/projects/${id}/permanent`, {
@@ -174,7 +174,7 @@ export function useGetQuote(projectId: number, quoteId: number) {
 
 export function useUpdateQuote() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ projectId, quoteId, data }: { projectId: number; quoteId: number; data: unknown }) => {
       const response = await apiRequest(`/projects/${projectId}/quotes/${quoteId}`, {
@@ -196,7 +196,7 @@ export function useUpdateQuote() {
 
 export function useCreateQuoteVersion() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async ({ projectId, quoteId, data }: { projectId: number; quoteId: number; data: unknown }) => {
       const response = await apiRequest(`/projects/${projectId}/quotes/${quoteId}/new-version`, {
@@ -217,11 +217,11 @@ export function useCreateQuoteVersion() {
 
 export function useSendQuoteEmail() {
   return useMutation({
-    mutationFn: async ({ 
-      projectId, 
-      quoteId, 
-      emailData 
-    }: { 
+    mutationFn: async ({
+      projectId,
+      quoteId,
+      emailData
+    }: {
       projectId: number
       quoteId: number
       emailData: {
@@ -246,3 +246,17 @@ export function useSendQuoteEmail() {
   });
 }
 
+
+export function useGetQuoteRentability(quoteId: number) {
+  return useQuery({
+    queryKey: ['quote-rentability', quoteId],
+    queryFn: async () => {
+      const response = await apiRequest(`/quotes/${quoteId}/rentability`);
+      if (response.error) {
+        throw new Error(response.error);
+      }
+      return response.data;
+    },
+    enabled: !!quoteId,
+  });
+}

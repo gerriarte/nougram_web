@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, FolderKanban, Settings, DollarSign, Users, Package, Receipt, ChevronDown, ChevronRight, UserCog, CreditCard, LifeBuoy } from 'lucide-react'
+import { LayoutDashboard, FolderKanban, Settings, DollarSign, Users, Package, Receipt, ChevronDown, ChevronRight, UserCog, CreditCard, LifeBuoy, BarChart3 } from 'lucide-react'
 import { useGetCurrentUser } from '@/lib/queries'
 import { canViewSensitiveData, canManageSubscription, canInviteUsers, isSupportRole } from '@/lib/permissions'
 
@@ -20,14 +20,14 @@ export function AppSidebar({ currentOrgId }: AppSidebarProps) {
     { id: 'dashboard', label: 'Panel', icon: LayoutDashboard, path: '/dashboard' },
     { id: 'projects', label: 'Proyectos', icon: FolderKanban, path: '/projects' },
     { id: 'credits', label: 'Créditos', icon: CreditCard, path: '/credits' },
-    ...(isSupportRole(currentUser) ? [{ id: 'support', label: 'Soporte', icon: LifeBuoy, path: '/support' }] : [])
+    { id: 'general-costs', label: 'Resumen de Costos', icon: BarChart3, path: '/general-costs' },
   ]
 
   // Business Structure Settings (in sidebar)
   // These are core business configuration items
   const businessStructureItems = [
     { id: 'team', label: 'Miembros del Equipo', icon: Users, path: '/settings/team', requiresPermission: () => canViewSensitiveData(currentUser) },
-    { id: 'users', label: 'Usuarios', icon: UserCog, path: '/settings/users', requiresPermission: () => canInviteUsers(currentUser) },
+
     { id: 'services', label: 'Servicios', icon: Package, path: '/settings/services', requiresPermission: null },
     { id: 'costs', label: 'Costos Fijos', icon: DollarSign, path: '/settings/costs', requiresPermission: () => canViewSensitiveData(currentUser) },
     { id: 'taxes', label: 'Impuestos', icon: Receipt, path: '/settings/taxes', requiresPermission: null },

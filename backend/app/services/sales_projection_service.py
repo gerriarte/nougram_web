@@ -1,8 +1,10 @@
 """
 Sales projection service for generating revenue forecasts based on services and team capacity
+ESTÁNDAR NOUGRAM: Usa Money para precisión en cálculos financieros
 """
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
+from decimal import Decimal
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -10,6 +12,7 @@ from app.core.logging import get_logger
 from app.models.service import Service
 from app.models.team import TeamMember
 from app.core.calculations import calculate_blended_cost_rate
+from app.core.money import Money, sum_money
 
 logger = get_logger(__name__)
 
@@ -61,8 +64,9 @@ async def calculate_sales_projection(
     if not services:
         raise ValueError("No valid services found for projection")
     
-    # Get BCR
-    bcr = await calculate_blended_cost_rate(db, currency, use_cache=False, tenant_id=organization_id)
+    # Get BCR (ya retorna Decimal)
+    bcr_decimal = await calculate_blended_cost_rate(db, currency, use_cache=False, tenant_id=organization_id)
+    bcr_money = Money(bcr_decimal, currency)  # ESTÁNDAR NOUGRAM: Convertir a Money
     
     # Get team capacity (total billable hours per month)
     result = await db.execute(
@@ -74,14 +78,14 @@ async def calculate_sales_projection(
     team_members = result.scalars().all()
     
     total_billable_hours_per_month = sum(
-        member.billable_hours_per_week * 4.33 * (1 - (getattr(member, 'non_billable_hours_percentage', 0.0) or 0.0))
+        float(member.billable_hours_per_week or 0) * 4.33 * (1 - float(getattr(member, 'non_billable_hours_percentage', 0.0) or 0.0))
         for member in team_members
     )
     
-    # Calculate per-service projections
+    # ESTÁNDAR NOUGRAM: Calcular proyecciones usando Money
     service_projections = []
-    total_projected_revenue = 0.0
-    total_projected_cost = 0.0
+    total_projected_revenue_money = Money(0, currency)
+    total_projected_cost_money = Money(0, currency)
     
     for service in services:
         service_id = service.id
@@ -90,74 +94,96 @@ async def calculate_sales_projection(
         if estimated_hours <= 0:
             continue
         
-        # Calculate cost
-        cost = bcr * estimated_hours
+        # ESTÁNDAR NOUGRAM: Calcular cost usando Money
+        cost_money = bcr_money.multiply(estimated_hours)
         
-        # Calculate price with margin
-        if service.default_margin_target > 0 and service.default_margin_target < 1:
-            price = cost / (1 - service.default_margin_target)
+        # ESTÁNDAR NOUGRAM: Calcular price con margen usando Money
+        margin_target = float(service.default_margin_target or 0)
+        if margin_target > 0 and margin_target < 1:
+            price_money = cost_money.apply_margin(margin_target * 100)  # apply_margin espera porcentaje
         else:
-            price = cost * 1.4  # Default 40% margin
+            # Default 40% margin
+            price_money = cost_money.apply_margin(40.0)
         
-        # Apply win rate
-        projected_revenue = price * effective_win_rate
-        projected_cost = cost * effective_win_rate  # Only cost for won projects
+        # ESTÁNDAR NOUGRAM: Aplicar win rate usando Money
+        projected_revenue_money = price_money.multiply(effective_win_rate)
+        projected_cost_money = cost_money.multiply(effective_win_rate)  # Only cost for won projects
+        
+        # Calcular profit y margin
+        projected_profit_money = projected_revenue_money.subtract(projected_cost_money)
+        margin_percentage = 0.0
+        if projected_revenue_money.amount > 0:
+            margin_amount = projected_profit_money.amount / projected_revenue_money.amount
+            margin_percentage = float(margin_amount * 100)
         
         service_projections.append({
             "service_id": service_id,
             "service_name": service.name,
             "estimated_hours": estimated_hours,
-            "base_price": price,
-            "cost": cost,
-            "projected_revenue": projected_revenue,
-            "projected_cost": projected_cost,
-            "projected_profit": projected_revenue - projected_cost,
-            "margin": ((projected_revenue - projected_cost) / projected_revenue * 100) if projected_revenue > 0 else 0
+            "base_price": float(price_money.amount),
+            "cost": float(cost_money.amount),
+            "projected_revenue": float(projected_revenue_money.amount),
+            "projected_cost": float(projected_cost_money.amount),
+            "projected_profit": float(projected_profit_money.amount),
+            "margin": margin_percentage
         })
         
-        total_projected_revenue += projected_revenue
-        total_projected_cost += projected_cost
+        total_projected_revenue_money = total_projected_revenue_money.add(projected_revenue_money)
+        total_projected_cost_money = total_projected_cost_money.add(projected_cost_money)
     
-    # Calculate monthly breakdown
+    # ESTÁNDAR NOUGRAM: Calcular breakdown mensual usando Money
     monthly_projections = []
-    revenue_per_month = total_projected_revenue / period_months
-    cost_per_month = total_projected_cost / period_months
+    revenue_per_month_money = total_projected_revenue_money.divide(period_months)
+    cost_per_month_money = total_projected_cost_money.divide(period_months)
     
     for month in range(1, period_months + 1):
+        profit_per_month_money = revenue_per_month_money.subtract(cost_per_month_money)
+        margin_percentage_month = 0.0
+        if revenue_per_month_money.amount > 0:
+            margin_amount_month = profit_per_month_money.amount / revenue_per_month_money.amount
+            margin_percentage_month = float(margin_amount_month * 100)
+        
         monthly_projections.append({
             "month": month,
-            "revenue": revenue_per_month,
-            "costs": cost_per_month,
-            "profit": revenue_per_month - cost_per_month,
-            "margin_percentage": ((revenue_per_month - cost_per_month) / revenue_per_month * 100) if revenue_per_month > 0 else 0
+            "revenue": float(revenue_per_month_money.amount),
+            "costs": float(cost_per_month_money.amount),
+            "profit": float(profit_per_month_money.amount),
+            "margin_percentage": margin_percentage_month
         })
     
-    # Calculate KPIs
-    total_projected_profit = total_projected_revenue - total_projected_cost
-    overall_margin = (total_projected_profit / total_projected_revenue * 100) if total_projected_revenue > 0 else 0
+    # ESTÁNDAR NOUGRAM: Calcular KPIs usando Money
+    total_projected_profit_money = total_projected_revenue_money.subtract(total_projected_cost_money)
+    overall_margin = 0.0
+    if total_projected_revenue_money.amount > 0:
+        margin_amount_total = total_projected_profit_money.amount / total_projected_revenue_money.amount
+        overall_margin = float(margin_amount_total * 100)
     
     # Capacity utilization
     total_estimated_hours = sum(estimated_hours_per_service.values())
     hours_per_month = total_estimated_hours / period_months
     capacity_utilization = (hours_per_month / total_billable_hours_per_month * 100) if total_billable_hours_per_month > 0 else 0
     
+    # ESTÁNDAR NOUGRAM: Convertir Money a float para compatibilidad con endpoint
     return {
         "scenario": scenario,
         "period_months": period_months,
         "win_rate": effective_win_rate,
         "currency": currency,
-        "bcr": bcr,
+        "bcr": float(bcr_decimal),  # Convertir Decimal a float para compatibilidad
         "total_billable_hours_per_month": total_billable_hours_per_month,
         "service_projections": service_projections,
         "monthly_projections": monthly_projections,
         "summary": {
-            "total_revenue": total_projected_revenue,
-            "total_costs": total_projected_cost,
-            "total_profit": total_projected_profit,
+            "total_revenue": float(total_projected_revenue_money.amount),
+            "total_costs": float(total_projected_cost_money.amount),
+            "total_profit": float(total_projected_profit_money.amount),
             "overall_margin_percentage": overall_margin,
             "capacity_utilization_percentage": capacity_utilization,
             "total_estimated_hours": total_estimated_hours,
             "hours_per_month": hours_per_month
         }
     }
+
+
+
 

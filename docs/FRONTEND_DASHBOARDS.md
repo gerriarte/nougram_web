@@ -222,3 +222,6 @@ Todos los dashboards usan hooks de React Query definidos en `frontend/src/lib/qu
 - Puedes forzar actualización con `refetch()`
 - Verifica que no haya errores en la consola
 
+
+
+

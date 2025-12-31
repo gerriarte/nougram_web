@@ -18,24 +18,33 @@ export interface TaxStructure {
   pension?: number;
   arl?: number;
   parafiscales?: number;
+  // Colombia específico - Provisiones (Sprint 18)
+  prima_services?: number;
+  cesantias?: number;
+  int_cesantias?: number;
+  vacations?: number;
 }
 
 interface OnboardingState {
-  // Paso 1: Localización
+  // Paso 1: Localización y Detalles
+  organizationName: string;
+  organizationDescription: string;
   country: string;
   currency: string;
   enableSocialCharges: boolean; // Ley 100 para Colombia
-  
+
   // Paso 2: Perfilamiento
   profileType: 'freelance' | 'professional' | 'company' | null;
   monthlyIncomeTarget?: number; // Para freelance
   vacationDays?: number; // Para freelance
   teamMembers: TeamMember[]; // Para empresa
-  
+
   // Paso 3: Estructura Tributaria
   taxes: TaxStructure;
-  
+
   // Métodos
+  setOrganizationName: (name: string) => void;
+  setOrganizationDescription: (description: string) => void;
   setCountry: (country: string) => void;
   setCurrency: (currency: string) => void;
   setEnableSocialCharges: (enable: boolean) => void;
@@ -45,11 +54,14 @@ interface OnboardingState {
   addTeamMember: (member: TeamMember) => void;
   removeTeamMember: (index: number) => void;
   updateTeamMember: (index: number, member: Partial<TeamMember>) => void;
+  setTeamMembers: (members: TeamMember[]) => void;
   setTaxes: (taxes: Partial<TaxStructure>) => void;
   reset: () => void;
 }
 
 const initialState = {
+  organizationName: '',
+  organizationDescription: '',
   country: '',
   currency: 'USD',
   enableSocialCharges: false,
@@ -73,6 +85,8 @@ export const useOnboardingStore = create<OnboardingState>()(
       },
       setCurrency: (currency) => set({ currency }),
       setEnableSocialCharges: (enable) => set({ enableSocialCharges: enable }),
+      setOrganizationName: (name) => set({ organizationName: name }),
+      setOrganizationDescription: (description) => set({ organizationDescription: description }),
       setProfileType: (type) => set({ profileType: type }),
       setMonthlyIncomeTarget: (amount) => set({ monthlyIncomeTarget: amount }),
       setVacationDays: (days) => set({ vacationDays: days }),
@@ -83,10 +97,11 @@ export const useOnboardingStore = create<OnboardingState>()(
         teamMembers: state.teamMembers.filter((_, i) => i !== index)
       })),
       updateTeamMember: (index, member) => set((state) => ({
-        teamMembers: state.teamMembers.map((m, i) => 
+        teamMembers: state.teamMembers.map((m, i) =>
           i === index ? { ...m, ...member } : m
         )
       })),
+      setTeamMembers: (members) => set({ teamMembers: members }),
       setTaxes: (taxes) => set((state) => ({
         taxes: { ...state.taxes, ...taxes }
       })),

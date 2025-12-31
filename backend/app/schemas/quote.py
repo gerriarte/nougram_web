@@ -1,8 +1,11 @@
 """
 Pydantic schemas for Quotes
+ESTÁNDAR NOUGRAM: Campos monetarios usan Decimal serializado como string
 """
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from decimal import Decimal
+from pydantic import BaseModel, Field, field_serializer
+from app.core.pydantic_config import DECIMAL_CONFIG
 
 
 class QuoteItemBase(BaseModel):
@@ -50,11 +53,21 @@ class QuoteExpenseCreate(QuoteExpenseBase):
 
 
 class QuoteExpenseResponse(QuoteExpenseBase):
-    """Schema for quote expense response"""
+    """Schema for quote expense response
+    ESTÁNDAR NOUGRAM: Campos monetarios usan Decimal serializado como string
+    """
     id: int
     quote_id: int
-    client_price: float = Field(..., description="Client price (cost * quantity * (1 + markup))")
+    client_price: Decimal = Field(..., description="Client price (cost * quantity * (1 + markup))")
     created_at: Optional[str] = None
+    
+    # ESTÁNDAR NOUGRAM: Serializar Decimal como string
+    @field_serializer('client_price', 'cost')
+    def serialize_decimal(self, value: Optional[Decimal]) -> Optional[str]:
+        """Serializa Decimal como string para mantener precisión"""
+        return str(value) if value is not None else None
+    
+    model_config = DECIMAL_CONFIG
 
     class Config:
         from_attributes = True
@@ -65,26 +78,40 @@ class QuoteCalculateRequest(BaseModel):
     items: List[QuoteItemBase] = Field(..., description="List of quote items")
     expenses: Optional[List[QuoteExpenseBase]] = Field(default_factory=list, description="List of quote expenses (third-party costs)")
     tax_ids: Optional[List[int]] = Field(default_factory=list, description="List of tax IDs to apply")
+    target_margin_percentage: Optional[float] = Field(None, ge=0, le=1, description="Target margin for the quote (0-1, e.g., 0.40 = 40%). If not provided, uses service default margins.")
     revisions_included: Optional[int] = Field(default=2, description="Number of included revisions", ge=0)
     revision_cost_per_additional: Optional[float] = Field(None, description="Cost per additional revision", ge=0)
     revisions_count: Optional[int] = Field(None, description="Actual number of revisions requested (for calculation)", ge=0)
 
 
 class QuoteCalculateResponse(BaseModel):
-    """Schema for quote calculation response (Sprint 16: includes expenses and revisions breakdown)"""
-    total_internal_cost: float = Field(..., description="Total internal cost (services + expenses cost)")
-    total_client_price: float = Field(..., description="Total client price (before taxes)")
-    total_expenses_cost: float = Field(default=0.0, description="Total expenses cost (before markup)")
-    total_expenses_client_price: float = Field(default=0.0, description="Total expenses client price (with markup)")
-    total_taxes: float = Field(default=0.0, description="Total taxes amount")
-    total_with_taxes: float = Field(default=0.0, description="Total client price with taxes")
-    margin_percentage: float = Field(..., description="Margin percentage (0-1)")
+    """Schema for quote calculation response (Sprint 16: includes expenses and revisions breakdown)
+    ESTÁNDAR NOUGRAM: Campos monetarios usan Decimal serializado como string
+    """
+    total_internal_cost: Decimal = Field(..., description="Total internal cost (services + expenses cost)")
+    total_client_price: Decimal = Field(..., description="Total client price (before taxes)")
+    total_expenses_cost: Decimal = Field(default=Decimal('0'), description="Total expenses cost (before markup)")
+    total_expenses_client_price: Decimal = Field(default=Decimal('0'), description="Total expenses client price (with markup)")
+    total_taxes: Decimal = Field(default=Decimal('0'), description="Total taxes amount")
+    total_with_taxes: Decimal = Field(default=Decimal('0'), description="Total client price with taxes")
+    margin_percentage: Decimal = Field(..., description="Calculated margin percentage (0-1)")
+    target_margin_percentage: Optional[Decimal] = Field(None, description="Target margin percentage used (0-1)")
     items: List[dict] = Field(default_factory=list, description="Calculated items")
     expenses: List[dict] = Field(default_factory=list, description="Calculated expenses breakdown")
     taxes: List[dict] = Field(default_factory=list, description="Applied taxes breakdown")
-    revisions_cost: float = Field(default=0.0, description="Additional cost for revisions beyond included count")
+    revisions_cost: Decimal = Field(default=Decimal('0'), description="Additional cost for revisions beyond included count")
     revisions_included: int = Field(default=2, description="Number of included revisions")
     revisions_count: Optional[int] = Field(None, description="Actual number of revisions requested")
+    
+    # ESTÁNDAR NOUGRAM: Serializar Decimal como string
+    @field_serializer('total_internal_cost', 'total_client_price', 'total_expenses_cost', 
+                      'total_expenses_client_price', 'total_taxes', 'total_with_taxes',
+                      'margin_percentage', 'target_margin_percentage', 'revisions_cost')
+    def serialize_decimal(self, value: Decimal) -> str:
+        """Serializa Decimal como string para mantener precisión"""
+        return str(value) if value is not None else None
+    
+    model_config = DECIMAL_CONFIG
 
 
 class CurrencyInfo(BaseModel):
@@ -99,6 +126,9 @@ class BlendedCostRateResponse(BaseModel):
     """Schema for blended cost rate response"""
     blended_cost_rate: float = Field(..., description="Blended cost rate per hour")
     total_monthly_costs: float = Field(..., description="Total monthly costs (normalized to primary currency)")
+    total_fixed_overhead: float = Field(0.0, description="Total fixed overhead (Rent, Utilities, etc.)")
+    total_tools_costs: float = Field(0.0, description="Total software and tools costs")
+    total_salaries: float = Field(0.0, description="Total salaries (Resources) with social charges")
     total_monthly_hours: float = Field(..., description="Total monthly billable hours")
     active_team_members: int = Field(..., description="Number of active team members")
     primary_currency: str = Field(..., description="Primary currency code")
@@ -121,4 +151,25 @@ class QuoteEmailResponse(BaseModel):
     """Schema for quote email response"""
     success: bool = Field(..., description="Whether the email was sent successfully")
     message: str = Field(..., description="Response message")
+
+
+class RentabilityCategory(BaseModel):
+    """Schema for a rentability category breakdown"""
+    category: str = Field(..., description="Category name (e.g., 'Operating Costs', 'Net Profit')")
+    concept: str = Field(..., description="Concept/Sub-category (e.g., 'Talent', 'Taxes')")
+    amount: float = Field(..., description="Amount in primary currency")
+    percentage: float = Field(..., description="Percentage relative to total client price")
+    description: Optional[str] = Field(None, description="Optional description or detail")
+
+
+class RentabilitySummaryResponse(BaseModel):
+    """Schema for the full profitability summary response"""
+    quote_id: int
+    total_client_price: float
+    total_internal_cost: float
+    total_taxes: float
+    net_profit_amount: float
+    net_profit_margin: float
+    categories: List[RentabilityCategory] = Field(default_factory=list, description="Detailed breakdown categories")
+    status: str = Field(..., description="Profitability status: healthy (>30%), warning (15-30%), critical (<15%)")
 

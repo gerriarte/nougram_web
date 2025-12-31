@@ -609,7 +609,14 @@ async def update_quote(
             )
         
         # Calculate blended cost rate
-        blended_rate = await calculate_blended_cost_rate(db, project.currency, tenant_id=tenant.organization_id)
+        org_settings = tenant.organization.settings if tenant.organization.settings else {}
+        social_config = org_settings.get('social_charges_config') if org_settings else None
+        blended_rate = await calculate_blended_cost_rate(
+            db, 
+            project.currency, 
+            tenant_id=tenant.organization_id,
+            social_charges_config=social_config
+        )
         
         # Get project taxes (already loaded with get_by_id_with_quotes)
         tax_ids = [tax.id for tax in project.taxes] if project.taxes else []
@@ -631,6 +638,7 @@ async def update_quote(
         
         revisions_included = quote_data.revisions_included if quote_data.revisions_included is not None else (quote.revisions_included if quote.revisions_included else 2)
         revision_cost_per_additional = quote_data.revision_cost_per_additional if hasattr(quote_data, 'revision_cost_per_additional') else quote.revision_cost_per_additional
+        target_margin_percentage = getattr(quote_data, 'target_margin_percentage', None)
         
         totals = await calculate_quote_totals_enhanced(
             db, 
@@ -638,9 +646,11 @@ async def update_quote(
             blended_rate, 
             tax_ids,
             expenses=None,  # Expenses are managed separately
+            target_margin_percentage=target_margin_percentage,  # Pass target margin
             revisions_included=revisions_included,
             revision_cost_per_additional=revision_cost_per_additional,
-            revisions_count=None
+            revisions_count=None,
+            currency=project.currency  # ESTÁNDAR NOUGRAM: Pasar moneda del proyecto para precisión
         )
         
         # Delete old items
@@ -650,15 +660,18 @@ async def update_quote(
             await db.delete(item)
         
         # Update quote totals (Sprint 16: includes revision fields)
-        quote.total_internal_cost = totals["total_internal_cost"]
-        quote.total_client_price = totals["total_client_price"]
-        quote.margin_percentage = totals["margin_percentage"]
+        # ESTÁNDAR NOUGRAM: Convertir float a Decimal para campos Numeric
+        from decimal import Decimal
+        quote.total_internal_cost = Decimal(str(totals["total_internal_cost"]))
+        quote.total_client_price = Decimal(str(totals["total_client_price"]))
+        quote.margin_percentage = Decimal(str(totals["margin_percentage"]))
+        quote.target_margin_percentage = Decimal(str(target_margin_percentage)) if target_margin_percentage is not None else None  # Update target margin
         if quote_data.notes is not None:
             quote.notes = quote_data.notes
         if quote_data.revisions_included is not None:
             quote.revisions_included = quote_data.revisions_included
-        if hasattr(quote_data, 'revision_cost_per_additional'):
-            quote.revision_cost_per_additional = quote_data.revision_cost_per_additional
+        if hasattr(quote_data, 'revision_cost_per_additional') and quote_data.revision_cost_per_additional is not None:
+            quote.revision_cost_per_additional = Decimal(str(quote_data.revision_cost_per_additional))
         
         # Create new items using enhanced calculation results (Sprint 14-16)
         quote_items = []
@@ -670,19 +683,25 @@ async def update_quote(
             breakdown = breakdown_map.get(item_data.service_id, {})
             
             # Get calculated values from enhanced breakdown
-            internal_cost = breakdown.get("internal_cost", 0.0)
-            client_price = breakdown.get("client_price", 0.0)
-            margin_pct = breakdown.get("margin", 0.0) / 100.0 if breakdown.get("margin") else 0.0
+            # ESTÁNDAR NOUGRAM: Convertir a Decimal para campos Numeric
+            internal_cost = Decimal(str(breakdown.get("internal_cost", 0.0)))
+            client_price = Decimal(str(breakdown.get("client_price", 0.0)))
+            margin_pct = Decimal(str(breakdown.get("margin_percentage", 0.0))) if breakdown.get("margin_percentage") else Decimal('0')
             
             # Determine effective pricing type
             effective_pricing_type = getattr(item_data, 'pricing_type', None) or service.pricing_type or "hourly"
+            
+            # ESTÁNDAR NOUGRAM: Convertir fixed_price a Decimal si existe
+            fixed_price_decimal = None
+            if getattr(item_data, 'fixed_price', None) is not None:
+                fixed_price_decimal = Decimal(str(item_data.fixed_price))
             
             quote_item = QuoteItem(
                 quote_id=quote.id,
                 service_id=item_data.service_id,
                 estimated_hours=getattr(item_data, 'estimated_hours', None),
                 pricing_type=effective_pricing_type,
-                fixed_price=getattr(item_data, 'fixed_price', None),
+                fixed_price=fixed_price_decimal,
                 quantity=getattr(item_data, 'quantity', 1.0),
                 internal_cost=internal_cost,
                 client_price=client_price,

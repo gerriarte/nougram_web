@@ -3,7 +3,7 @@
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { useOnboardingStore } from '@/stores/onboarding-store'
+import { useOnboardingStore, TaxStructure } from '@/stores/onboarding-store'
 import { Info } from 'lucide-react'
 
 /**
@@ -13,20 +13,28 @@ import { Info } from 'lucide-react'
 export function ColombiaTaxBreakdown() {
   const { taxes, setTaxes } = useOnboardingStore()
 
-  // Default percentages for Colombia (Ley 100)
+  // Default percentages for Colombia (Ley 100 + Provisiones Legales)
   const defaultHealth = 8.5
   const defaultPension = 12.0
-  const defaultARL = 0.522 // Variable según riesgo, este es un promedio
-  const defaultParafiscales = 8.0 // SENA (2%) + ICBF (3%) + Cajas de Compensación (~3%)
+  const defaultARL = 0.522
+  const defaultParafiscales = 4.0 // Solo Cajas (SENA/ICBF exonerados bajo ciertas condiciones)
+  const defaultPrima = 8.33
+  const defaultCesantias = 8.33
+  const defaultIntCesantias = 1.0
+  const defaultVacations = 4.17
 
   const health = taxes.health ?? defaultHealth
   const pension = taxes.pension ?? defaultPension
   const arl = taxes.arl ?? defaultARL
   const parafiscales = taxes.parafiscales ?? defaultParafiscales
+  const prima_services = taxes.prima_services ?? defaultPrima
+  const cesantias = taxes.cesantias ?? defaultCesantias
+  const int_cesantias = taxes.int_cesantias ?? defaultIntCesantias
+  const vacations = taxes.vacations ?? defaultVacations
 
-  const totalPercentage = health + pension + arl + parafiscales
+  const totalPercentage = health + pension + arl + parafiscales + prima_services + cesantias + int_cesantias + vacations
 
-  const handleChange = (field: 'health' | 'pension' | 'arl' | 'parafiscales', value: number) => {
+  const handleChange = (field: keyof TaxStructure, value: number) => {
     setTaxes({ [field]: value })
   }
 
@@ -35,103 +43,123 @@ export function ColombiaTaxBreakdown() {
       <CardHeader>
         <div className="flex items-center gap-2">
           <CardTitle className="text-lg font-semibold text-grey-900">
-            Desglose de Cargas Prestacionales (Ley 100)
+            Cargas Prestacionales y Provisiones (Colombia)
           </CardTitle>
           <Info className="h-4 w-4 text-blue-600" />
         </div>
         <CardDescription className="text-grey-600">
-          Configura los porcentajes de cargas prestacionales que se aplicarán al salario base
+          Configura los porcentajes que se aplicarán al salario para calcular el costo real (~1.51)
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="health" className="text-grey-700 font-medium">
-              Salud (%)
-            </Label>
+            <Label htmlFor="health" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Salud (%)</Label>
             <Input
               id="health"
               type="number"
-              min="0"
-              max="100"
-              step="0.1"
+              step="0.01"
               value={health}
               onChange={(e) => handleChange('health', parseFloat(e.target.value) || 0)}
-              className="h-10 bg-white border-grey-300"
+              className="h-9 bg-white"
             />
-            <p className="text-xs text-grey-600">
-              Porcentaje de salud (EPS)
-            </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="pension" className="text-grey-700 font-medium">
-              Pensión (%)
-            </Label>
+            <Label htmlFor="pension" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pensión (%)</Label>
             <Input
               id="pension"
               type="number"
-              min="0"
-              max="100"
-              step="0.1"
+              step="0.01"
               value={pension}
               onChange={(e) => handleChange('pension', parseFloat(e.target.value) || 0)}
-              className="h-10 bg-white border-grey-300"
+              className="h-9 bg-white"
             />
-            <p className="text-xs text-grey-600">
-              Porcentaje de pensión
-            </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="arl" className="text-grey-700 font-medium">
-              ARL (%)
-            </Label>
+            <Label htmlFor="arl" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">ARL (%)</Label>
             <Input
               id="arl"
               type="number"
-              min="0"
-              max="100"
-              step="0.1"
+              step="0.001"
               value={arl}
               onChange={(e) => handleChange('arl', parseFloat(e.target.value) || 0)}
-              className="h-10 bg-white border-grey-300"
+              className="h-9 bg-white"
             />
-            <p className="text-xs text-grey-600">
-              Riesgos Laborales (variable según nivel de riesgo)
-            </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="parafiscales" className="text-grey-700 font-medium">
-              Parafiscales (%)
-            </Label>
+            <Label htmlFor="parafiscales" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Parafiscales (%)</Label>
             <Input
               id="parafiscales"
               type="number"
-              min="0"
-              max="100"
-              step="0.1"
+              step="0.01"
               value={parafiscales}
               onChange={(e) => handleChange('parafiscales', parseFloat(e.target.value) || 0)}
-              className="h-10 bg-white border-grey-300"
+              className="h-9 bg-white"
             />
-            <p className="text-xs text-grey-600">
-              SENA (2%) + ICBF (3%) + Cajas de Compensación (~3%)
-            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="prima_services" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Prima (%)</Label>
+            <Input
+              id="prima_services"
+              type="number"
+              step="0.01"
+              value={prima_services}
+              onChange={(e) => handleChange('prima_services', parseFloat(e.target.value) || 0)}
+              className="h-9 bg-white"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="cesantias" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Cesantías (%)</Label>
+            <Input
+              id="cesantias"
+              type="number"
+              step="0.01"
+              value={cesantias}
+              onChange={(e) => handleChange('cesantias', parseFloat(e.target.value) || 0)}
+              className="h-9 bg-white"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="int_cesantias" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Int. Cesantías (%)</Label>
+            <Input
+              id="int_cesantias"
+              type="number"
+              step="0.01"
+              value={int_cesantias}
+              onChange={(e) => handleChange('int_cesantias', parseFloat(e.target.value) || 0)}
+              className="h-9 bg-white"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="vacations" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Vacaciones (%)</Label>
+            <Input
+              id="vacations"
+              type="number"
+              step="0.01"
+              value={vacations}
+              onChange={(e) => handleChange('vacations', parseFloat(e.target.value) || 0)}
+              className="h-9 bg-white"
+            />
           </div>
         </div>
 
-        <div className="mt-6 p-4 bg-white rounded-lg border border-blue-300">
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-grey-900">Total de Cargas Prestacionales:</span>
-            <span className="text-2xl font-bold text-primary-600">
-              {totalPercentage.toFixed(2)}%
-            </span>
+        <div className="mt-6 p-4 bg-white rounded-lg border border-blue-300 flex items-center justify-between">
+          <div>
+            <span className="font-semibold text-grey-900 block">Total de Factor Multiplicador:</span>
+            <p className="text-[10px] text-grey-600">
+              Factor real estimado: <span className="font-bold">{(1 + totalPercentage / 100).toFixed(2)}x</span>
+            </p>
           </div>
-          <p className="text-xs text-grey-600 mt-2">
-            Este porcentaje se aplicará al salario base de cada empleado para calcular el costo real del recurso
-          </p>
+          <span className="text-3xl font-bold text-primary-600">
+            {totalPercentage.toFixed(2)}%
+          </span>
         </div>
       </CardContent>
     </Card>

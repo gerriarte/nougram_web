@@ -70,7 +70,10 @@ def upgrade() -> None:
         branding_result = op.execute(
             sa.text("SELECT suggested_services FROM industry_templates WHERE industry_type = 'branding'")
         )
-        branding_row = branding_result.fetchone()
+        if branding_result:
+            branding_row = branding_result.fetchone()
+        else:
+            branding_row = None
         if branding_row and branding_row[0]:
             current_services = branding_row[0] if isinstance(branding_row[0], list) else json.loads(branding_row[0])
             # Check if services already exist to avoid duplicates
@@ -94,7 +97,10 @@ def upgrade() -> None:
         audiovisual_result = op.execute(
             sa.text("SELECT suggested_services FROM industry_templates WHERE industry_type = 'audiovisual'")
         )
-        audiovisual_row = audiovisual_result.fetchone()
+        if audiovisual_result:
+            audiovisual_row = audiovisual_result.fetchone()
+        else:
+            audiovisual_row = None
         if audiovisual_row and audiovisual_row[0]:
             current_services = audiovisual_row[0] if isinstance(audiovisual_row[0], list) else json.loads(audiovisual_row[0])
             existing_names = {s.get('name') for s in current_services if isinstance(s, dict)}
@@ -225,4 +231,7 @@ def downgrade() -> None:
             op.execute(
                 sa.text(f"UPDATE industry_templates SET suggested_services = '{json.dumps(filtered_services).replace(chr(39), chr(39)+chr(39))}' WHERE industry_type = 'audiovisual'")
             )
+
+
+
 

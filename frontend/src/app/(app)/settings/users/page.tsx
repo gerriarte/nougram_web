@@ -19,13 +19,12 @@ import {
   useUpdateUserRoleInOrganization,
   useAddUserToOrganization,
   useRemoveUserFromOrganization,
-  useInviteUserToOrganization,
   useGetOrganizationStats,
   useGetInvitations,
   useCancelInvitation,
   useCreateInvitation,
 } from "@/lib/queries"
-import { OrganizationUser } from "@/lib/types/organizations"
+import { OrganizationUser, Invitation } from "@/lib/types/organizations"
 import { canInviteUsers } from "@/lib/permissions"
 import { LimitIndicator, canCreateResource } from "@/components/organization/LimitIndicator"
 import {
@@ -47,6 +46,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
+import { LoadingSkeleton } from "@/components/common/LoadingSkeleton"
+import { ErrorDisplay } from "@/components/common/ErrorDisplay"
 
 const roleLabels: Record<string, string> = {
   org_admin: "Administrador",
@@ -76,7 +77,6 @@ export default function UsersSettingsPage() {
   const updateRoleMutation = useUpdateUserRoleInOrganization()
   const addUserMutation = useAddUserToOrganization()
   const removeUserMutation = useRemoveUserFromOrganization()
-  const inviteUserMutation = useInviteUserToOrganization()
   const createInvitationMutation = useCreateInvitation()
   const cancelInvitationMutation = useCancelInvitation()
   const { toast } = useToast()
@@ -317,22 +317,31 @@ export default function UsersSettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Usuarios</h1>
+          <p className="text-muted-foreground">Gestiona los usuarios de tu organización</p>
+        </div>
+        <LoadingSkeleton type="table" count={5} />
       </div>
     )
   }
 
   if (error) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Error</CardTitle>
-          <CardDescription>
-            {error instanceof Error ? error.message : "Error al cargar usuarios"}
-          </CardDescription>
-        </CardHeader>
-      </Card>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Usuarios</h1>
+          <p className="text-muted-foreground">Gestiona los usuarios de tu organización</p>
+        </div>
+        <ErrorDisplay
+          error={error}
+          onRetry={() => window.location.reload()}
+          title="Error al cargar usuarios"
+          autoRetry={true}
+          maxRetries={3}
+        />
+      </div>
     )
   }
 
@@ -590,7 +599,7 @@ export default function UsersSettingsPage() {
       </Card>
 
       {/* Invitations Section */}
-      {canInvite && invitationsData && invitationsData.items.length > 0 && (
+      {canInvite && (
         <Card>
           <CardHeader>
             <CardTitle>Invitaciones Pendientes</CardTitle>
@@ -599,19 +608,20 @@ export default function UsersSettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Rol</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Fecha de Invitación</TableHead>
-                  <TableHead>Expira</TableHead>
-                  <TableHead>Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invitationsData.items.map((invitation) => {
+            {invitationsData && invitationsData.items.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Rol</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Fecha de Invitación</TableHead>
+                    <TableHead>Expira</TableHead>
+                    <TableHead>Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {invitationsData.items.map((invitation: Invitation) => {
                   const expiresAt = new Date(invitation.expires_at)
                   const isExpiringSoon = expiresAt.getTime() - Date.now() < 24 * 60 * 60 * 1000 // Less than 24 hours
                   
@@ -674,9 +684,16 @@ export default function UsersSettingsPage() {
                       </TableCell>
                     </TableRow>
                   )
-                })}
-              </TableBody>
-            </Table>
+                  })}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="text-sm">No hay invitaciones pendientes</p>
+                <p className="text-xs mt-1">Usa el botón "Invitar Usuario" para enviar una invitación</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

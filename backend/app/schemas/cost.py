@@ -1,20 +1,33 @@
 """
 Pydantic schemas for Fixed Costs
+ESTÁNDAR NOUGRAM: Campos monetarios usan Decimal serializado como string
 """
 from typing import Optional, Literal
 from datetime import datetime
-from pydantic import BaseModel, Field
+from decimal import Decimal
+from pydantic import BaseModel, Field, field_serializer
+from app.core.pydantic_config import DECIMAL_CONFIG
 
 CurrencyCode = Literal["USD", "COP", "ARS", "EUR"]
 
 
 class CostFixedBase(BaseModel):
-    """Base schema for fixed costs"""
+    """Base schema for fixed costs
+    ESTÁNDAR NOUGRAM: amount_monthly usa Decimal para precisión
+    """
     name: str = Field(..., description="Cost name", min_length=1)
-    amount_monthly: float = Field(..., description="Monthly amount", gt=0)
+    amount_monthly: Decimal = Field(..., description="Monthly amount", gt=0)
     currency: CurrencyCode = Field("USD", description="Currency code (USD, COP, ARS, EUR)")
     category: str = Field(..., description="Cost category (e.g., 'Overhead', 'Software')")
     description: Optional[str] = Field(None, description="Cost description")
+    
+    # ESTÁNDAR NOUGRAM: Serializar Decimal como string
+    @field_serializer('amount_monthly')
+    def serialize_amount_monthly(self, value: Decimal) -> str:
+        """Serializa Decimal como string para mantener precisión"""
+        return str(value) if value is not None else None
+    
+    model_config = DECIMAL_CONFIG
 
 
 class CostFixedCreate(CostFixedBase):
@@ -23,12 +36,22 @@ class CostFixedCreate(CostFixedBase):
 
 
 class CostFixedUpdate(BaseModel):
-    """Schema for updating a fixed cost"""
+    """Schema for updating a fixed cost
+    ESTÁNDAR NOUGRAM: amount_monthly usa Decimal para precisión
+    """
     name: Optional[str] = Field(None, min_length=1)
-    amount_monthly: Optional[float] = Field(None, gt=0)
+    amount_monthly: Optional[Decimal] = Field(None, gt=0)
     currency: Optional[CurrencyCode] = None
     category: Optional[str] = None
     description: Optional[str] = None
+    
+    # ESTÁNDAR NOUGRAM: Serializar Decimal como string
+    @field_serializer('amount_monthly')
+    def serialize_amount_monthly(self, value: Optional[Decimal]) -> Optional[str]:
+        """Serializa Decimal como string para mantener precisión"""
+        return str(value) if value is not None else None
+    
+    model_config = DECIMAL_CONFIG
 
 
 class CostFixedResponse(CostFixedBase):

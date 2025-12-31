@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -23,6 +24,7 @@ import {
 import { CURRENCIES } from "@/lib/currency"
 import { Loader2 } from "lucide-react"
 import { MESSAGES } from "@/lib/messages"
+import { usePrimaryCurrency } from "@/hooks/usePrimaryCurrency"
 
 const costSchema = z.object({
   name: z.string().min(1, MESSAGES.validation.nameRequired),
@@ -50,6 +52,8 @@ export function CostForm({
   defaultValues,
   mode = "create",
 }: CostFormProps) {
+  const primaryCurrency = usePrimaryCurrency() // Moneda primaria de la organización
+  
   const {
     register,
     handleSubmit,
@@ -62,10 +66,17 @@ export function CostForm({
     defaultValues: defaultValues || {
       name: "",
       amount_monthly: 0,
-      currency: "USD",
-      category: "general",
+      currency: primaryCurrency, // Usar moneda primaria por defecto
+      category: "Infraestructura",
     },
   })
+  
+  // Actualizar currency cuando cambie la moneda primaria (solo si no hay defaultValues)
+  useEffect(() => {
+    if (!defaultValues && mode === "create") {
+      setValue("currency", primaryCurrency)
+    }
+  }, [primaryCurrency, defaultValues, mode, setValue])
 
   const handleFormSubmit = async (data: CostFormData) => {
     await onSubmit(data)
@@ -144,12 +155,21 @@ export function CostForm({
             <label htmlFor="category" className="text-sm font-medium">
               Category
             </label>
-            <Input
-              id="category"
-              {...register("category")}
-              placeholder="e.g., office, software, marketing"
-              className="mt-1"
-            />
+            <Select
+              value={watch("category")}
+              onValueChange={(value) => setValue("category", value)}
+            >
+              <SelectTrigger className="mt-1">
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Infraestructura">Infraestructura</SelectItem>
+                <SelectItem value="Herramientas (Software/SaaS)">Herramientas (Software/SaaS)</SelectItem>
+                <SelectItem value="Administración">Administración</SelectItem>
+                <SelectItem value="Ventas & MKT">Ventas & MKT</SelectItem>
+                <SelectItem value="Nómina Indirecta">Nómina Indirecta</SelectItem>
+              </SelectContent>
+            </Select>
             {errors.category && (
               <p className="text-sm text-destructive mt-1">{errors.category.message}</p>
             )}

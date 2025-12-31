@@ -147,11 +147,18 @@ class OrganizationUsersListResponse(BaseModel):
 class SocialChargesConfig(BaseModel):
     """Schema for social charges configuration (Ley 100 - Colombia)"""
     enable_social_charges: bool = Field(default=False, description="Enable social charges calculation")
-    health_percentage: Optional[float] = Field(None, ge=0, le=100, description="Health percentage")
-    pension_percentage: Optional[float] = Field(None, ge=0, le=100, description="Pension percentage")
-    arl_percentage: Optional[float] = Field(None, ge=0, le=100, description="ARL percentage")
-    parafiscales_percentage: Optional[float] = Field(None, ge=0, le=100, description="Parafiscales percentage")
-    total_percentage: Optional[float] = Field(None, ge=0, le=100, description="Total percentage (calculated)")
+    health_percentage: Optional[float] = Field(8.5, ge=0, le=100, description="Health percentage (Employer share)")
+    pension_percentage: Optional[float] = Field(12.0, ge=0, le=100, description="Pension percentage (Employer share)")
+    arl_percentage: Optional[float] = Field(0.522, ge=0, le=100, description="ARL percentage")
+    parafiscales_percentage: Optional[float] = Field(4.0, ge=0, le=100, description="Caja de Compensación / Parafiscales percentage")
+    
+    # New breakdown for Colombia (Sprint 18)
+    prima_services_percentage: Optional[float] = Field(8.33, ge=0, le=100, description="Provision for Prima de servicios")
+    cesantias_percentage: Optional[float] = Field(8.33, ge=0, le=100, description="Provision for Cesantías")
+    int_cesantias_percentage: Optional[float] = Field(1.0, ge=0, le=100, description="Provision for Intereses de cesantías")
+    vacations_percentage: Optional[float] = Field(4.17, ge=0, le=100, description="Provision for Vacaciones")
+    
+    total_percentage: Optional[float] = Field(None, ge=0, le=200, description="Total multiplier percentage (e.g. 51.0 for ~1.51)")
 
     class Config:
         json_schema_extra = {
@@ -160,8 +167,12 @@ class SocialChargesConfig(BaseModel):
                 "health_percentage": 8.5,
                 "pension_percentage": 12.0,
                 "arl_percentage": 0.522,
-                "parafiscales_percentage": 8.0,
-                "total_percentage": 29.022
+                "parafiscales_percentage": 4.0,
+                "prima_services_percentage": 8.33,
+                "cesantias_percentage": 8.33,
+                "int_cesantias_percentage": 1.0,
+                "vacations_percentage": 4.17,
+                "total_percentage": 52.852
             }
         }
 

@@ -90,3 +90,6 @@ export function BarChart({ data, height = 300, currency = "USD" }: BarChartProps
 
 
 
+
+
+

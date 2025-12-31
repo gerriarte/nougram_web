@@ -272,3 +272,6 @@ class TestPricingStrategyFactory:
         assert result["internal_cost"] == 100.0
         assert result["client_price"] == 200.0
 
+
+
+

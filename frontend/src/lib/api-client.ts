@@ -1,7 +1,9 @@
 /**
  * API Client configuration for backend communication
+ * ESTÁNDAR NOUGRAM: Transforma automáticamente strings Decimal a Dinero
  */
 import { logger } from './logger';
+import { transformAPIResponse } from './money-transformer';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
@@ -44,7 +46,7 @@ async function retryRequest<T>(
   
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
-      const response = await apiRequestInternal<T>(endpoint, options);
+      const response = await apiRequestInternal<T>(endpoint, options, undefined);
       
       // Don't retry on 4xx errors (client errors) except 408 (timeout) and 429 (rate limit)
       if (response.error && !response.error.includes('timeout') && !response.error.includes('rate limit')) {
@@ -80,10 +82,12 @@ async function retryRequest<T>(
 
 /**
  * Internal API request function (without retry logic)
+ * ESTÁNDAR NOUGRAM: Transforma automáticamente strings Decimal a Dinero
  */
 async function apiRequestInternal<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  currency?: string  // Opcional: moneda para transformación si no viene en la respuesta
 ): Promise<ApiResponse<T>> {
   try {
     const token = getAuthToken();
@@ -98,21 +102,6 @@ async function apiRequestInternal<T>(
 
     const url = `${API_URL}${endpoint}`;
     logger.debug(`[API] ${options.method || 'GET'} ${url}`, { headers, body: options.body });
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/dfff7b82-9de7-4929-be91-d40c01fc1897',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        sessionId:'debug-session',
-        runId:'pre-fix',
-        hypothesisId:'H1',
-        location:'src/lib/api-client.ts:142',
-        message:'apiRequestInternal pre-fetch',
-        data:{ endpoint, url, method: options.method || 'GET' },
-        timestamp:Date.now()
-      })
-    }).catch(()=>{});
-    // #endregion agent log
 
     const response = await fetch(url, {
       ...options,
@@ -120,38 +109,8 @@ async function apiRequestInternal<T>(
     });
 
     logger.debug(`[API] Response status: ${response.status}`, response);
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/dfff7b82-9de7-4929-be91-d40c01fc1897',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        sessionId:'debug-session',
-        runId:'pre-fix',
-        hypothesisId:'H1',
-        location:'src/lib/api-client.ts:149',
-        message:'apiRequestInternal response',
-        data:{ endpoint, status: response.status },
-        timestamp:Date.now()
-      })
-    }).catch(()=>{});
-    // #endregion agent log
 
     if (!response.ok) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/dfff7b82-9de7-4929-be91-d40c01fc1897',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          sessionId:'debug-session',
-          runId:'pre-fix',
-          hypothesisId:'H1',
-          location:'src/lib/api-client.ts:153',
-          message:'apiRequestInternal non-ok response',
-          data:{ endpoint, status: response.status },
-          timestamp:Date.now()
-        })
-      }).catch(()=>{});
-      // #endregion agent log
       if (response.status === 401) {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('auth_token');
@@ -188,26 +147,17 @@ async function apiRequestInternal<T>(
     }
 
     const data = await response.json();
-    logger.debug(`[API] Response data:`, data);
-    return { data };
+    
+    // ESTÁNDAR NOUGRAM: Transformar strings Decimal a Dinero automáticamente
+    const transformedData = transformAPIResponse<T>(data, currency);
+    
+    logger.debug(`[API] Response data (transformed):`, transformedData);
+    return { data: transformedData };
   } catch (error) {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/dfff7b82-9de7-4929-be91-d40c01fc1897',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        sessionId:'debug-session',
-        runId:'pre-fix',
-        hypothesisId:'H1',
-        location:'src/lib/api-client.ts:192',
-        message:'apiRequestInternal exception',
-        data:{ endpoint, error: error instanceof Error ? error.message : 'unknown' },
-        timestamp:Date.now()
-      })
-    }).catch(()=>{});
-    // #endregion agent log
     if (error instanceof TypeError && error.message === 'Failed to fetch') {
-      return { error: 'Error de conexión. Verifica que el servidor esté corriendo.' };
+      return { 
+        error: 'Error de conexión. El servidor backend no está disponible. Verifica que el backend esté corriendo en http://localhost:8000' 
+      };
     }
     return { 
       error: translateError(error instanceof Error ? error.message : 'Error de red') 
@@ -217,16 +167,18 @@ async function apiRequestInternal<T>(
 
 /**
  * Make API request to backend with automatic retry for network errors
+ * ESTÁNDAR NOUGRAM: Transforma automáticamente strings Decimal a Dinero
  */
 export async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {},
-  retry: boolean = true
+  retry: boolean = true,
+  currency?: string  // Opcional: moneda para transformación si no viene en la respuesta
 ): Promise<ApiResponse<T>> {
   if (retry) {
     return retryRequest(endpoint, options);
   }
-  return apiRequestInternal(endpoint, options);
+  return apiRequestInternal(endpoint, options, currency);
 }
 
 /**

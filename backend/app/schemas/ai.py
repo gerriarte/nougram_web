@@ -55,3 +55,6 @@ class NaturalLanguageCommandResponse(BaseModel):
     requires_confirmation: bool = Field(default=True, description="Whether user confirmation is required")
     reasoning: Optional[str] = Field(None, description="AI reasoning for the parsed command")
 
+
+
+

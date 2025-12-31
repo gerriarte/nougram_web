@@ -187,3 +187,6 @@ Una vez que la Fase 1 esté funcionando correctamente:
 - **Fase 2:** Parsing de documentos (nómina/gastos)
 - **Fase 3:** Chat de comandos en lenguaje natural
 
+
+
+

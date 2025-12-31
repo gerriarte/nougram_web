@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from 'next/navigation'
-import { Bell, Search, Settings, Rocket, Globe, Plug, CheckCircle, CreditCard, Building2, Loader2 } from 'lucide-react'
+import { Bell, Search, Settings, Rocket, Globe, Plug, CheckCircle, CreditCard, Building2, Loader2, LogOut, User, UserCog } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { OrganizationSwitcher } from './OrganizationSwitcher'
@@ -11,6 +11,7 @@ import { Badge } from '../ui/badge'
 import { ReactNode } from 'react'
 import { useGetCurrentUser, useGetMyCreditBalance } from '@/lib/queries'
 import { canManageSubscription, consumesCredits } from '@/lib/permissions'
+import { useAuthContext } from '@/contexts/AuthContext'
 
 interface AppHeaderProps {
   title: string
@@ -44,8 +45,44 @@ export function AppHeader({
   const router = useRouter()
   const { data: currentUser } = useGetCurrentUser()
   const { data: creditBalance, isLoading: creditBalanceLoading } = useGetMyCreditBalance()
-  
+  const { logout } = useAuthContext()
+
   const showCreditsBadge = consumesCredits(currentUser)
+
+  // Calculate credit level for color coding
+  const getCreditLevel = () => {
+    if (!creditBalance || creditBalance.is_unlimited) return 'sufficient'
+    if (creditBalance.credits_per_month === null) return 'sufficient'
+
+    const usagePercentage = creditBalance.credits_per_month > 0
+      ? (creditBalance.credits_used_this_month / creditBalance.credits_per_month) * 100
+      : 0
+
+    const availablePercentage = creditBalance.credits_per_month > 0
+      ? (creditBalance.credits_available / creditBalance.credits_per_month) * 100
+      : 0
+
+    // Critical: less than 10% available or usage > 90%
+    if (availablePercentage < 10 || usagePercentage > 90) return 'critical'
+    // Low: less than 30% available or usage > 70%
+    if (availablePercentage < 30 || usagePercentage > 70) return 'low'
+    // Sufficient: otherwise
+    return 'sufficient'
+  }
+
+  const getCreditBadgeClassName = () => {
+    const level = getCreditLevel()
+    const baseClasses = "flex items-center gap-2"
+
+    switch (level) {
+      case 'critical':
+        return `${baseClasses} hover:bg-destructive-50 hover:border-destructive-300 hover:text-destructive-700 border-destructive-200 text-destructive-700`
+      case 'low':
+        return `${baseClasses} hover:bg-warning-50 hover:border-warning-300 hover:text-warning-700 border-warning-200 text-warning-700`
+      default:
+        return `${baseClasses} hover:bg-primary-50 hover:border-primary-300 hover:text-primary-700`
+    }
+  }
 
   const handleNavigate = (path: string) => {
     router.push(path)
@@ -87,7 +124,7 @@ export function AppHeader({
           <Button
             variant="outline"
             onClick={() => handleNavigate('/credits')}
-            className="flex items-center gap-2 hover:bg-primary-50 hover:border-primary-300 hover:text-primary-700"
+            className={getCreditBadgeClassName()}
             aria-label={`Créditos disponibles: ${creditBalance?.is_unlimited ? 'ilimitados' : creditBalance?.credits_available || 0}`}
           >
             <CreditCard className="w-4 h-4" aria-hidden="true" />
@@ -96,11 +133,11 @@ export function AppHeader({
             ) : (
               <>
                 <span className="font-semibold">
-                  {creditBalance?.is_unlimited 
-                    ? '∞' 
+                  {creditBalance?.is_unlimited
+                    ? '∞'
                     : creditBalance?.credits_available.toLocaleString() || '0'}
                 </span>
-                <span className="text-muted-foreground text-sm hidden sm:inline">créditos</span>
+                <span className="text-sm hidden sm:inline opacity-70">créditos</span>
               </>
             )}
           </Button>
@@ -135,21 +172,21 @@ export function AppHeader({
             <DropdownMenuContent align="end" className="w-64">
               <DropdownMenuLabel>Configuración de la Herramienta</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => handleNavigate('/settings/currency')}
                 className="cursor-pointer"
               >
                 <Globe className="w-4 h-4 mr-2" />
                 Moneda
               </DropdownMenuItem>
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => handleNavigate('/settings/integrations')}
                 className="cursor-pointer"
               >
                 <Plug className="w-4 h-4 mr-2" />
                 Integraciones
               </DropdownMenuItem>
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => handleNavigate('/settings/approvals')}
                 className="cursor-pointer"
               >
@@ -158,14 +195,14 @@ export function AppHeader({
               </DropdownMenuItem>
               {canManageSubscription(currentUser) && (
                 <>
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={() => handleNavigate('/settings/billing')}
                     className="cursor-pointer"
                   >
                     <CreditCard className="w-4 h-4 mr-2" />
                     Suscripciones
                   </DropdownMenuItem>
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     onClick={() => handleNavigate('/settings/organizations')}
                     className="cursor-pointer"
                   >
@@ -175,12 +212,53 @@ export function AppHeader({
                 </>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => handleNavigate('/onboarding')}
                 className="cursor-pointer"
               >
                 <Rocket className="w-4 h-4 mr-2" />
                 Configuración Inicial
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* User Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-grey-500 hover:text-primary-600 hover:bg-primary-50"
+              >
+                <User className="w-5 h-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              {currentUser && (
+                <>
+                  <DropdownMenuLabel>
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium">{currentUser.full_name}</p>
+                      <p className="text-xs text-muted-foreground">{currentUser.email}</p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                </>
+              )}
+              <DropdownMenuItem
+                onClick={() => handleNavigate('/settings/users')}
+                className="cursor-pointer"
+              >
+                <UserCog className="w-4 h-4 mr-2" />
+                Usuarios
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => logout()}
+                className="cursor-pointer text-error-600 focus:text-error-700 focus:bg-error-50"
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Cerrar Sesión
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

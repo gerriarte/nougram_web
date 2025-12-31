@@ -25,6 +25,9 @@ import { Plus, Trash2, Edit2 } from "lucide-react"
 import { useGetQuoteExpenses, useCreateQuoteExpense, useUpdateQuoteExpense, useDeleteQuoteExpense, type QuoteExpense, type QuoteExpenseCreate } from "@/lib/queries"
 import { formatCurrency } from "@/lib/currency"
 import { useToast } from "@/hooks/use-toast"
+// ESTÁNDAR NOUGRAM: Usar dinero.js para cálculos precisos
+import { fromAPI, multiplyMoney, sumMoney, toAPI, formatCurrency as formatDinero } from "@/lib/money"
+import type { Dinero } from 'dinero.js'
 import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
@@ -169,12 +172,27 @@ export function ExpensesSection({ projectId, quoteId, currency, onExpensesChange
     }
   }
 
-  const calculateClientPrice = (cost: number, markup: number, quantity: number) => {
-    return cost * quantity * (1 + markup)
+  // ESTÁNDAR NOUGRAM: Calcular precio cliente usando dinero.js
+  const calculateClientPrice = (cost: number, markup: number, quantity: number): number => {
+    const costMoney = fromAPI(cost, currency)
+    const quantityMoney = multiplyMoney(costMoney, quantity)
+    const markupMultiplier = 1 + markup
+    const clientPriceMoney = multiplyMoney(quantityMoney, markupMultiplier)
+    return toAPI(clientPriceMoney)
   }
 
-  const totalExpensesCost = expenses.reduce((sum, exp) => sum + (exp.cost * exp.quantity), 0)
-  const totalExpensesClientPrice = expenses.reduce((sum, exp) => sum + exp.client_price, 0)
+  // ESTÁNDAR NOUGRAM: Calcular totales usando dinero.js
+  const totalExpensesCostMoney: Dinero<number>[] = expenses.map(exp => {
+    const costMoney = fromAPI(exp.cost, currency)
+    return multiplyMoney(costMoney, exp.quantity)
+  })
+  const totalExpensesCost = toAPI(sumMoney(totalExpensesCostMoney) || fromAPI(0, currency))
+
+  const totalExpensesClientPriceMoney: Dinero<number>[] = expenses.map(exp => {
+    // Los expenses ya vienen del API con client_price calculado, pero lo convertimos a Dinero
+    return fromAPI(exp.client_price, currency)
+  })
+  const totalExpensesClientPrice = toAPI(sumMoney(totalExpensesClientPriceMoney) || fromAPI(0, currency))
 
   return (
     <Card>
@@ -367,6 +385,9 @@ export function ExpensesSection({ projectId, quoteId, currency, onExpensesChange
     </Card>
   )
 }
+
+
+
 
 
 

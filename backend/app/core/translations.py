@@ -104,3 +104,6 @@ def get_locale_from_request(request) -> str:
     
     return DEFAULT_LOCALE
 
+
+
+

@@ -5,11 +5,40 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '../api-client';
 import { queryKeys } from './queryKeys';
 
+export interface BlendedCostRateResponse {
+  blended_cost_rate: number;
+  total_monthly_costs: number;
+  total_fixed_overhead: number;
+  total_tools_costs: number;
+  total_salaries: number;
+  total_monthly_hours: number;
+  active_team_members: number;
+  primary_currency: string;
+  currencies_used: Array<{
+    code: string;
+    count: number;
+    exchange_rate_to_primary: number;
+    total_amount: number;
+  }>;
+  exchange_rates_date?: string;
+}
+
+export interface AgencySettingsResponse {
+  primary_currency: string;
+  currency_symbol: string;
+  available_currencies: Array<{
+    code: string;
+    name: string;
+    symbol: string;
+  }>;
+  exchange_rates?: Record<string, any>;
+}
+
 export function useGetBlendedCostRate() {
   return useQuery({
     queryKey: ['blended-cost-rate'],
     queryFn: async () => {
-      const response = await apiRequest('/settings/calculations/agency-cost-hour');
+      const response = await apiRequest<BlendedCostRateResponse>('/settings/calculations/agency-cost-hour');
       if (response.error) {
         throw new Error(response.error);
       }
@@ -20,7 +49,7 @@ export function useGetBlendedCostRate() {
 }
 
 export function useGetDashboardData(
-  startDate?: string, 
+  startDate?: string,
   endDate?: string,
   currency?: string,
   status?: string,
@@ -38,7 +67,7 @@ export function useGetDashboardData(
       if (clientName) params.append('client_name', clientName);
       if (comparePrevious) params.append('compare_previous', 'true');
       const url = `/insights/dashboard${params.toString() ? '?' + params.toString() : ''}`;
-      const response = await apiRequest(url);
+      const response = await apiRequest<any>(url);
       if (response.error) {
         throw new Error(response.error);
       }
@@ -51,10 +80,10 @@ export function useGetCurrencySettings(includeRates: boolean = false) {
   return useQuery({
     queryKey: ['currency-settings', includeRates],
     queryFn: async () => {
-      const url = includeRates 
+      const url = includeRates
         ? '/settings/currency?include_rates=true'
         : '/settings/currency';
-      const response = await apiRequest(url);
+      const response = await apiRequest<AgencySettingsResponse>(url);
       if (response.error) {
         throw new Error(response.error);
       }
@@ -82,7 +111,7 @@ export function useGetExchangeRates() {
 
 export function useUpdateCurrencySettings() {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: async (data: { primary_currency: string }) => {
       return await apiRequest('/settings/currency', {
@@ -99,8 +128,8 @@ export function useUpdateCurrencySettings() {
 
 export function useCalculateQuote() {
   return useMutation({
-    mutationFn: async (data: { 
-      items: Array<{ service_id: number; estimated_hours?: number; pricing_type?: string; fixed_price?: number; quantity?: number; recurring_price?: number; billing_frequency?: string; project_value?: number }>; 
+    mutationFn: async (data: {
+      items: Array<{ service_id: number; estimated_hours?: number; pricing_type?: string; fixed_price?: number; quantity?: number; recurring_price?: number; billing_frequency?: string; project_value?: number }>;
       expenses?: Array<{ name: string; description?: string; cost: number; markup_percentage: number; category?: string; quantity?: number }>;
       tax_ids?: number[];
       revisions_included?: number;

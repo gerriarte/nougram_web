@@ -4,7 +4,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 
 interface LoadingSkeletonProps {
-  type?: "card" | "table" | "list" | "chart"
+  type?: "card" | "table" | "list" | "chart" | "form" | "detail"
   count?: number
   className?: string
 }
@@ -85,6 +85,51 @@ export function LoadingSkeleton({
     )
   }
 
+  if (type === "form") {
+    return (
+      <Card className={className}>
+        <CardHeader>
+          <Skeleton className="h-6 w-48 mb-2" />
+          <Skeleton className="h-4 w-64" />
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {Array.from({ length: count }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (type === "detail") {
+    return (
+      <div className={`space-y-6 ${className || ""}`}>
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-96" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          {Array.from({ length: count }).map((_, i) => (
+            <Card key={i}>
+              <CardHeader>
+                <Skeleton className="h-5 w-32" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-24 mb-2" />
+                <Skeleton className="h-3 w-40" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return null
 }
+
+
 

@@ -23,6 +23,8 @@ import {
 } from "@/components/ui/dialog"
 import { CURRENCIES } from "@/lib/currency"
 import { Users } from "lucide-react"
+import { usePrimaryCurrency } from "@/hooks/usePrimaryCurrency"
+import { useEffect } from "react"
 
 const teamMemberSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -51,6 +53,8 @@ export function TeamMemberForm({
   defaultValues,
   mode = "create",
 }: TeamMemberFormProps) {
+  const primaryCurrency = usePrimaryCurrency() // Moneda primaria de la organización
+  
   const {
     register,
     handleSubmit,
@@ -64,10 +68,17 @@ export function TeamMemberForm({
       name: "",
       role: "",
       salary_monthly_brute: 0,
-      currency: "USD",
+      currency: primaryCurrency, // Usar moneda primaria por defecto
       billable_hours_per_week: 40,
     },
   })
+  
+  // Actualizar currency cuando cambie la moneda primaria (solo si no hay defaultValues)
+  useEffect(() => {
+    if (!defaultValues && mode === "create") {
+      setValue("currency", primaryCurrency)
+    }
+  }, [primaryCurrency, defaultValues, mode, setValue])
 
   const handleFormSubmit = async (data: TeamMemberFormData) => {
     await onSubmit(data)

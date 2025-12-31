@@ -1,7 +1,10 @@
 /**
  * Financial calculation utilities for frontend
  * Used for real-time BCR calculations and financial projections
+ * ESTÁNDAR NOUGRAM: Usa dinero.js para precisión grado bancario
  */
+import { fromAPI, sumMoney, divideMoney, multiplyMoney, toAPI, formatCurrency as formatDinero } from './money';
+import type { Dinero } from 'dinero.js';
 
 export interface TeamMember {
   name: string
@@ -35,6 +38,7 @@ export interface CostBreakdown {
 
 /**
  * Calculate Blended Cost Rate (BCR) from team members and fixed costs
+ * ESTÁNDAR NOUGRAM: Usa dinero.js para precisión grado bancario
  * 
  * Formula:
  * - Real Cost per Resource = Salary + (Salary * SocialCharges%)
@@ -64,25 +68,22 @@ export function calculateBCR(
     socialChargesMultiplier = 1.0 + (totalPercentage / 100.0)
   }
 
-  // Calculate total monthly salaries with social charges
-  let totalMonthlySalaries = 0.0
-  const salaryBreakdown = teamMembers.map(member => {
-    const salaryWithCharges = member.salary * socialChargesMultiplier
-    totalMonthlySalaries += salaryWithCharges
-    
-    return {
-      name: member.name,
-      salary: member.salary,
-      salaryWithCharges,
-      billableHours: member.billableHours * 4.33 // Monthly hours (4.33 weeks/month)
-    }
+  // ESTÁNDAR NOUGRAM: Calcular salarios con cargas sociales usando Dinero
+  const salaryAmounts: Dinero<number>[] = teamMembers.map(member => {
+    const salary = fromAPI(member.salary, member.currency || currency)
+    const salaryWithCharges = multiplyMoney(salary, socialChargesMultiplier)
+    return salaryWithCharges
   })
 
-  // Calculate total fixed costs (simplified - assumes same currency for now)
-  const totalFixedCosts = fixedCosts.reduce((sum, cost) => sum + cost.amount, 0)
+  // ESTÁNDAR NOUGRAM: Calcular costos fijos usando Dinero
+  const fixedCostAmounts: Dinero<number>[] = fixedCosts.map(cost => {
+    return fromAPI(cost.amount, cost.currency || currency)
+  })
 
-  // Calculate total monthly costs
-  const totalMonthlyCosts = totalMonthlySalaries + totalFixedCosts
+  // ESTÁNDAR NOUGRAM: Sumar todos los costos usando Dinero
+  const allCosts = [...salaryAmounts, ...fixedCostAmounts]
+  const totalMonthlyCostsMoney = sumMoney(allCosts) || fromAPI(0, currency)
+  const totalMonthlySalariesMoney = sumMoney(salaryAmounts) || fromAPI(0, currency)
 
   // Calculate total billable hours per month (assuming 4.33 weeks per month)
   const totalBillableHours = teamMembers.reduce(
@@ -90,14 +91,29 @@ export function calculateBCR(
     0
   )
 
-  // Calculate BCR
-  const blendedCostRate = totalBillableHours > 0 
-    ? totalMonthlyCosts / totalBillableHours 
-    : 0
+  // ESTÁNDAR NOUGRAM: Calcular BCR usando Dinero
+  let blendedCostRate = 0
+  if (totalBillableHours > 0) {
+    const bcrMoney = divideMoney(totalMonthlyCostsMoney, totalBillableHours)
+    blendedCostRate = toAPI(bcrMoney)
+  }
+
+  // ESTÁNDAR NOUGRAM: Convertir a formato de respuesta (mantener compatibilidad)
+  const salaryBreakdown = teamMembers.map(member => {
+    const salary = fromAPI(member.salary, member.currency || currency)
+    const salaryWithCharges = multiplyMoney(salary, socialChargesMultiplier)
+    
+    return {
+      name: member.name,
+      salary: member.salary,
+      salaryWithCharges: toAPI(salaryWithCharges),
+      billableHours: member.billableHours * 4.33 // Monthly hours (4.33 weeks/month)
+    }
+  })
 
   return {
-    totalMonthlySalaries,
-    totalMonthlyCosts,
+    totalMonthlySalaries: toAPI(totalMonthlySalariesMoney),
+    totalMonthlyCosts: toAPI(totalMonthlyCostsMoney),
     totalBillableHours,
     blendedCostRate,
     salaryBreakdown
@@ -106,10 +122,12 @@ export function calculateBCR(
 
 /**
  * Calculate real cost per resource including social charges
+ * ESTÁNDAR NOUGRAM: Usa dinero.js para precisión
  */
 export function calculateRealCost(
   salary: number,
-  socialChargesConfig?: SocialChargesConfig
+  socialChargesConfig?: SocialChargesConfig,
+  currency: string = "USD"
 ): number {
   if (!socialChargesConfig?.enable_social_charges) {
     return salary
@@ -121,19 +139,25 @@ export function calculateRealCost(
     (socialChargesConfig.arl_percentage || 0) +
     (socialChargesConfig.parafiscales_percentage || 0)
 
-  return salary * (1.0 + (totalPercentage / 100.0))
+  // ESTÁNDAR NOUGRAM: Usar Dinero para cálculo preciso
+  const salaryMoney = fromAPI(salary, currency)
+  const multiplier = 1.0 + (totalPercentage / 100.0)
+  const realCostMoney = multiplyMoney(salaryMoney, multiplier)
+  
+  return toAPI(realCostMoney)
 }
 
 /**
  * Format currency amount
+ * ESTÁNDAR NOUGRAM: Usa dinero.js para formateo preciso
+ * @deprecated Usar formatCurrency de money.ts directamente con Dinero
  */
 export function formatCurrency(amount: number, currency: string = "USD"): string {
-  const formatter = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: currency,
-    minimumFractionDigits: currency === 'COP' ? 0 : 2,
-    maximumFractionDigits: currency === 'COP' ? 0 : 2,
-  })
-  return formatter.format(amount)
+  // ESTÁNDAR NOUGRAM: Convertir a Dinero y usar formateo preciso
+  const dinero = fromAPI(amount, currency)
+  return formatDinero(dinero, 'es-CO')
 }
+
+
+
 

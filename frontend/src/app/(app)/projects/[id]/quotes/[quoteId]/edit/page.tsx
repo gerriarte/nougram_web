@@ -64,6 +64,7 @@ export default function EditQuotePage() {
   const [expenses, setExpenses] = useState<QuoteExpense[]>([])
   const [revisionsIncluded, setRevisionsIncluded] = useState<number>(2)
   const [revisionCostPerAdditional, setRevisionCostPerAdditional] = useState<number | undefined>(undefined)
+  const [targetMargin, setTargetMargin] = useState<number>(0.40) // 40% por defecto
 
   const services = servicesData?.items || []
   const { data: expensesData } = useGetQuoteExpenses(projectId, quoteId)
@@ -86,10 +87,11 @@ export default function EditQuotePage() {
       setNotes(quote.notes || "")
       setRevisionsIncluded(quote.revisions_included ?? 2)
       setRevisionCostPerAdditional(quote.revision_cost_per_additional ?? undefined)
+      setTargetMargin(quote.target_margin_percentage ?? 0.40) // Load target margin or default to 40%
     }
   }, [quote])
 
-  // Auto-calculate quote when items, expenses, or revisions change
+  // Auto-calculate quote when items, expenses, revisions, or target margin change
   useEffect(() => {
     const timer = setTimeout(() => {
       if (quoteItems.length > 0 || expenses.length > 0) {
@@ -100,7 +102,7 @@ export default function EditQuotePage() {
     }, 500)
 
     return () => clearTimeout(timer)
-  }, [quoteItems, expenses, revisionsIncluded, revisionCostPerAdditional])
+  }, [quoteItems, expenses, revisionsIncluded, revisionCostPerAdditional, targetMargin])
 
   const calculateQuote = async () => {
     if (quoteItems.length === 0 && expenses.length === 0) return
@@ -122,6 +124,7 @@ export default function EditQuotePage() {
         items: quoteItems,
         expenses: expensesForCalculation,
         tax_ids: taxIds,
+        target_margin_percentage: targetMargin,  // Include target margin
         revisions_included: revisionsIncluded,
         revision_cost_per_additional: revisionCostPerAdditional,
         revisions_count: undefined, // Only used when calculating additional revision costs
@@ -201,6 +204,7 @@ export default function EditQuotePage() {
           data: {
             items: quoteItems,
             notes: notes || null,
+            target_margin_percentage: targetMargin,  // Include target margin
             revisions_included: revisionsIncluded,
             revision_cost_per_additional: revisionCostPerAdditional ?? null,
           },
@@ -476,7 +480,13 @@ export default function EditQuotePage() {
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Margin:</span>
+                    <span className="text-muted-foreground">Target Margin:</span>
+                    <span className="font-medium">
+                      {(targetMargin * 100).toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Actual Margin:</span>
                     <span
                       className={`text-xl font-bold ${
                         calculatedQuote.margin_percentage < 0.20
@@ -486,6 +496,32 @@ export default function EditQuotePage() {
                     >
                       {(calculatedQuote.margin_percentage * 100).toFixed(1)}%
                     </span>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t space-y-4">
+                  <div>
+                    <label htmlFor="target-margin" className="text-sm font-medium mb-2 block">
+                      Target Margin (%)
+                    </label>
+                    <Input
+                      id="target-margin"
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={(targetMargin * 100).toFixed(1)}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value) / 100
+                        if (!isNaN(value) && value >= 0 && value <= 1) {
+                          setTargetMargin(value)
+                        }
+                      }}
+                      className="w-full"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Set the target profit margin for this quote (0-100%)
+                    </p>
                   </div>
                 </div>
 

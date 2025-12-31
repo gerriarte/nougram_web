@@ -48,7 +48,8 @@ class AIAnalysisResponse(BaseModel):
 async def analyze_financial_data(
     request: AIAnalysisRequest,
     current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    tenant: TenantContext = Depends(get_tenant_context)
 ):
     """
     Analyze financial data with AI
@@ -68,7 +69,7 @@ async def analyze_financial_data(
         if request.use_mock_data:
             context = _get_mock_financial_context()
         else:
-            context = await _build_financial_context_safe(db)
+            context = await _build_financial_context_safe(db, tenant.organization_id, tenant.organization)
         
         # Get AI analysis
         result = await ai_service.analyze_financial_data(
@@ -338,9 +339,10 @@ def _get_mock_financial_context() -> dict:
     }
 
 
-async def _build_financial_context_safe(db: AsyncSession) -> dict:
+async def _build_financial_context_safe(db: AsyncSession, organization_id: int, organization: "Organization" = None) -> dict:
     """
     Build financial context safely, with fallbacks for missing data
+    Filter by organization_id for multi-tenancy.
     """
     from app.models.cost import CostFixed
     from app.models.team import TeamMember
@@ -353,7 +355,10 @@ async def _build_financial_context_safe(db: AsyncSession) -> dict:
     try:
         # 1. Get costs (safe)
         costs_result = await db.execute(
-            select(CostFixed).where(CostFixed.deleted_at.is_(None))
+            select(CostFixed).where(
+                CostFixed.deleted_at.is_(None),
+                CostFixed.organization_id == organization_id
+            )
         )
         costs = costs_result.scalars().all()
         
@@ -372,7 +377,10 @@ async def _build_financial_context_safe(db: AsyncSession) -> dict:
     try:
         # 2. Get team (safe)
         team_result = await db.execute(
-            select(TeamMember).where(TeamMember.is_active == True)
+            select(TeamMember).where(
+                TeamMember.is_active == True,
+                TeamMember.organization_id == organization_id
+            )
         )
         team_members = team_result.scalars().all()
         
@@ -402,7 +410,8 @@ async def _build_financial_context_safe(db: AsyncSession) -> dict:
         services_result = await db.execute(
             select(Service).where(
                 Service.is_active == True,
-                Service.deleted_at.is_(None)
+                Service.deleted_at.is_(None),
+                Service.organization_id == organization_id
             )
         )
         services = services_result.scalars().all()
@@ -425,7 +434,8 @@ async def _build_financial_context_safe(db: AsyncSession) -> dict:
         projects_result = await db.execute(
             select(Project).where(
                 Project.created_at >= cutoff_date,
-                Project.deleted_at.is_(None)
+                Project.deleted_at.is_(None),
+                Project.organization_id == organization_id
             ).order_by(Project.created_at.desc()).limit(10)
         )
         projects = projects_result.scalars().all()
@@ -462,14 +472,17 @@ async def _build_financial_context_safe(db: AsyncSession) -> dict:
         print(f"Error loading projects: {e}")
         context['projects'] = []
     
-    try:
         # 5. Get settings
-        settings_result = await db.execute(select(AgencySettings))
-        settings_obj = settings_result.scalar_one_or_none()
-        context['primary_currency'] = getattr(settings_obj, 'primary_currency', 'USD') if settings_obj else 'USD'
-    except Exception as e:
-        print(f"Error loading settings: {e}")
-        context['primary_currency'] = 'USD'
+        primary_currency = "USD"
+        if organization and organization.settings:
+            primary_currency = organization.settings.get('primary_currency', 'USD')
+        else:
+            # Fallback to general settings
+            settings_result = await db.execute(select(AgencySettings))
+            settings_obj = settings_result.scalar_one_or_none()
+            primary_currency = getattr(settings_obj, 'primary_currency', 'USD') if settings_obj else 'USD'
+        
+        context['primary_currency'] = primary_currency
     
     # Si no hay datos suficientes, usar mock
     if context.get('team_size', 0) == 0 and len(context.get('projects', [])) == 0:

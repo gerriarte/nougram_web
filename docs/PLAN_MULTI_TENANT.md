@@ -1,7 +1,7 @@
 # 🏗️ Plan de Trabajo: Arquitectura Multi-Tenant SaaS
 
 **Fecha de análisis:** 12 de Diciembre, 2025  
-**Estado:** Sprint 18 completado ✅ | Sprint 19 planificado (IA para Configuración Asistida) | Deuda técnica identificada
+**Estado:** Sprint 18 completado ✅ | Sprint 19 en progreso (IA para Configuración Asistida) | Sprint 20 planificado (Proyección de Ventas Anual) | Deuda técnica identificada
 
 ---
 
@@ -9,8 +9,8 @@
 
 Este plan transforma la aplicación actual (single-tenant) en una plataforma SaaS multi-tenant completa, permitiendo que múltiples organizaciones usen la aplicación de forma aislada y segura.
 
-**Timeline Total:** 50-66 semanas  
-**Estado Actual:** ✅ Sprint 18 completado (100%) | Sprint 19 planificado (IA para Configuración Asistida) | Deuda técnica identificada y planificada
+**Timeline Total:** 57-75 semanas  
+**Estado Actual:** ✅ Sprint 18 completado (100%) | ⏳ Sprint 19 en progreso (IA para Configuración Asistida) | ⏳ Sprint 20 planificado (Proyección de Ventas Anual) | ⏳ Sprint 21 planificado (Precisión Financiera) | Deuda técnica identificada y planificada
 
 ---
 
@@ -135,12 +135,12 @@ Este plan transforma la aplicación actual (single-tenant) en una plataforma Saa
 
 ---
 
-### Sprint 6: Gestión de Organizaciones ⏳ ~95% COMPLETADO
+### Sprint 6: Gestión de Organizaciones ✅ COMPLETADO
 
 **Objetivo:** CRUD de organizaciones y gestión de usuarios  
 **Duración:** 2 semanas  
 **Dependencias:** Sprint 5 completado ✅  
-**Estado:** ⏳ ~95% Completado (MVP funcional, faltan mejoras para producción)  
+**Estado:** ✅ 100% Completado  
 **Prioridad:** Alta
 
 **Nota:** El sprint está funcional a nivel básico, pero quedan tareas pendientes para producción completa. Ver `docs/sprints/SPRINT6_PROGRESO.md` y `docs/COMPLETAR_100_PORCIENTO.md` para detalles.
@@ -180,12 +180,12 @@ Este plan transforma la aplicación actual (single-tenant) en una plataforma Saa
 - ⚠️ Vista de organizaciones básica funcionando (falta página de detalle completa)
 
 #### Tareas Pendientes (para 100%):
-- ⏳ Sistema de invitaciones completo (modelo en BD, emails, aceptación)
-- ⏳ Tests unitarios adicionales (OrganizationRepository, edge cases)
-- ⏳ Documentación API completa
-- ⏳ Página de detalle de organización (`/settings/organizations/[id]`)
-- ⏳ Validación de límites visible en frontend
-- ⏳ Mejoras de UX en página de organizaciones
+- ✅ Sistema de invitaciones completo (modelo en BD, emails, aceptación) - **COMPLETADO**
+- ✅ Tests unitarios adicionales (OrganizationRepository, edge cases) - **COMPLETADO** (20 tests, 100% cobertura)
+- ⏳ Documentación API completa - **PENDIENTE** (opcional, no crítico)
+- ✅ Página de detalle de organización (`/settings/organizations/[id]`) - **COMPLETADO**
+- ✅ Validación de límites visible en frontend - **COMPLETADO**
+- ✅ Mejoras de UX en página de organizaciones - **COMPLETADO**
 
 **Referencias:**
 - Ver `docs/sprints/SPRINT6_PROGRESO.md` sección "Tareas Pendientes" para detalles del backend
@@ -1885,6 +1885,607 @@ Actualmente, `AIService` funciona como un "Analista Financiero" (salida de datos
 
 ---
 
+## 📊 FASE 8: Planificación Financiera Avanzada (Sprint 20)
+
+### Sprint 20: Módulo de Proyección de Ventas Anual
+
+**Objetivo:** Implementar sistema completo de proyección anual de ventas con matriz editable mes/servicio para planificación financiera estratégica  
+**Duración:** 3-4 semanas  
+**Estado:** ⏳ Pendiente  
+**Dependencias:** Sprint 18 completado ✅ (BCR y estructura de costos), Sprint 19 completado (opcional - IA para asistencia)  
+**Prioridad:** Alta
+
+#### Contexto
+
+Este sprint implementa un módulo de planificación financiera que permite al Owner proyectar sus ingresos anuales basándose en el volumen de servicios y horas estimadas. A diferencia del sistema de proyección existente (Sprint 18) que calcula proyecciones temporales basadas en capacidad y win rates, este módulo permite crear y persistir proyecciones anuales detalladas con edición mes a mes.
+
+**Valor de negocio:**
+- ✅ Planificación financiera estratégica anual
+- ✅ Visualización clara de ingresos proyectados vs. punto de equilibrio
+- ✅ Identificación temprana de capacidad ociosa o sobrecarga
+- ✅ Toma de decisiones informada sobre contratación y recursos
+- ✅ Comparativa automática con costos operativos (Overhead + Nómina)
+
+#### Tareas Detalladas:
+
+**20.1: Modelo de Base de Datos - SalesProjection**
+
+- Crear: `backend/app/models/sales_projection.py` (nuevo)
+- Modelo `SalesProjection`:
+  ```python
+  class SalesProjection(Base):
+      __tablename__ = "sales_projections"
+      
+      id = Column(Integer, primary_key=True)
+      organization_id = Column(Integer, ForeignKey("organizations.id"), nullable=False, index=True)
+      year = Column(Integer, nullable=False, index=True)  # Año de la proyección
+      is_active = Column(Boolean, default=True)  # Proyección activa (solo una por año)
+      notes = Column(String, nullable=True)  # Notas adicionales
+      created_at = Column(DateTime(timezone=True), server_default=func.now())
+      updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+      created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+      
+      # Relationships
+      organization = relationship("Organization")
+      created_by = relationship("User")
+      entries = relationship("SalesProjectionEntry", back_populates="projection", cascade="all, delete-orphan")
+  ```
+
+- Modelo `SalesProjectionEntry`:
+  ```python
+  class SalesProjectionEntry(Base):
+      __tablename__ = "sales_projection_entries"
+      
+      id = Column(Integer, primary_key=True)
+      projection_id = Column(Integer, ForeignKey("sales_projections.id"), nullable=False, index=True)
+      service_id = Column(Integer, ForeignKey("services.id"), nullable=False, index=True)
+      month = Column(Integer, nullable=False)  # 1-12
+      quantity = Column(Integer, default=0)  # Cantidad de servicios a vender
+      hours_per_unit = Column(Float, default=0.0)  # Horas por unidad de servicio
+      created_at = Column(DateTime(timezone=True), server_default=func.now())
+      updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+      
+      # Unique constraint: una entrada por servicio/mes/proyección
+      __table_args__ = (
+          UniqueConstraint('projection_id', 'service_id', 'month', name='uq_projection_service_month'),
+      )
+      
+      # Relationships
+      projection = relationship("SalesProjection", back_populates="entries")
+      service = relationship("Service")
+  ```
+
+- Índices compuestos: `(organization_id, year)`, `(projection_id, service_id, month)`
+
+**20.2: Migración de Base de Datos**
+
+- Crear: `backend/alembic/versions/XXX_add_sales_projection_models.py`
+- Pasos:
+  1. Crear tabla `sales_projections`
+  2. Crear tabla `sales_projection_entries`
+  3. Crear índices y constraints
+  4. Agregar foreign keys
+
+**20.3: Repositorio de Proyecciones**
+
+- Crear: `backend/app/repositories/sales_projection_repository.py` (nuevo)
+- Métodos:
+  - `get_by_organization_and_year(organization_id: int, year: int, db: AsyncSession) -> Optional[SalesProjection]`
+  - `get_active_projection(organization_id: int, db: AsyncSession) -> Optional[SalesProjection]`
+  - `create(projection_data: dict, db: AsyncSession) -> SalesProjection`
+  - `update(projection_id: int, projection_data: dict, db: AsyncSession) -> SalesProjection`
+  - `delete(projection_id: int, db: AsyncSession) -> None`
+  - `get_entries(projection_id: int, db: AsyncSession) -> List[SalesProjectionEntry]`
+  - `upsert_entry(entry_data: dict, db: AsyncSession) -> SalesProjectionEntry`
+  - `bulk_upsert_entries(entries: List[dict], db: AsyncSession) -> List[SalesProjectionEntry]`
+
+**20.4: Schemas Pydantic**
+
+- Crear: `backend/app/schemas/sales_projection.py` (nuevo)
+- Schemas:
+  ```python
+  class SalesProjectionEntryCreate(BaseModel):
+      service_id: int
+      month: int = Field(..., ge=1, le=12)
+      quantity: int = Field(default=0, ge=0)
+      hours_per_unit: float = Field(default=0.0, ge=0.0)
+  
+  class SalesProjectionCreate(BaseModel):
+      year: int = Field(..., ge=2020, le=2100)
+      notes: Optional[str] = None
+      entries: List[SalesProjectionEntryCreate] = Field(default_factory=list)
+  
+  class SalesProjectionEntryResponse(BaseModel):
+      id: int
+      service_id: int
+      service_name: str  # Joined from Service
+      month: int
+      quantity: int
+      hours_per_unit: float
+  
+  class SalesProjectionSummaryResponse(BaseModel):
+      """Resumen mensual calculado"""
+      month: int
+      total_revenue: float
+      total_hours: float
+      service_breakdown: List[Dict[str, Any]]  # Desglose por servicio
+  
+  class SalesProjectionResponse(BaseModel):
+      id: int
+      organization_id: int
+      year: int
+      is_active: bool
+      notes: Optional[str]
+      entries: List[SalesProjectionEntryResponse]
+      summary: List[SalesProjectionSummaryResponse]  # Resumen calculado por mes
+      total_annual_revenue: float
+      total_annual_hours: float
+      break_even_monthly_cost: float  # Overhead + Nómina mensual
+      created_at: datetime
+      updated_at: Optional[datetime]
+  ```
+
+**20.5: Servicio de Cálculo de Proyecciones**
+
+- Crear: `backend/app/services/annual_sales_projection_service.py` (nuevo)
+- Función principal: `calculate_projection_summary()`
+  ```python
+  async def calculate_projection_summary(
+      projection: SalesProjection,
+      db: AsyncSession
+  ) -> Dict:
+      """
+      Calcula el resumen de la proyección:
+      - Ingreso estimado por mes: quantity * hours_per_unit * (BCR * (1 + ServiceMargin))
+      - Total anual proyectado
+      - Comparativa con break-even (Overhead + Nómina mensual)
+      """
+  ```
+- Lógica de cálculo:
+  - Obtener BCR actual de la organización
+  - Para cada entrada (mes/servicio):
+    - Obtener `service.default_margin_target`
+    - Calcular: `revenue = quantity * hours_per_unit * (BCR * (1 + margin_target))`
+  - Agregar por mes y por año
+  - Obtener break-even mensual (total de costos fijos + nómina)
+  - Comparar ingresos proyectados vs. break-even
+
+**20.6: Endpoints de API**
+
+- Crear: `backend/app/api/v1/endpoints/annual_projection.py` (nuevo)
+- Endpoints:
+  - `GET /api/v1/projections/annual` - Obtener proyección activa del año actual
+  - `GET /api/v1/projections/annual/{year}` - Obtener proyección de un año específico
+  - `POST /api/v1/projections/annual` - Crear nueva proyección anual
+  - `PUT /api/v1/projections/annual/{id}` - Actualizar proyección existente
+  - `DELETE /api/v1/projections/annual/{id}` - Eliminar proyección
+  - `GET /api/v1/projections/annual/{id}/summary` - Obtener resumen calculado (con ingresos, break-even, etc.)
+  - `POST /api/v1/projections/annual/{id}/entries/bulk` - Actualizar múltiples entradas (para matriz)
+  - `POST /api/v1/projections/annual/{id}/replicate-month` - Replicar valores de un mes a todos los meses
+
+**20.7: Validación de Permisos**
+
+- Actualizar: `backend/app/core/permissions.py`
+- Agregar permiso: `can_view_financial_projections` (solo `owner` y `admin_financiero`)
+- Validar permisos en todos los endpoints de proyecciones
+
+**20.8: Frontend - Tipos TypeScript**
+
+- Crear: `frontend/src/lib/types/annual-projection.ts` (nuevo)
+- Interfaces:
+  ```typescript
+  export interface SalesProjectionEntry {
+    id?: number;
+    service_id: number;
+    service_name: string;
+    month: number;
+    quantity: number;
+    hours_per_unit: number;
+  }
+  
+  export interface MonthlySummary {
+    month: number;
+    total_revenue: number;
+    total_hours: number;
+    service_breakdown: Array<{
+      service_id: number;
+      service_name: string;
+      revenue: number;
+      hours: number;
+    }>;
+  }
+  
+  export interface SalesProjection {
+    id: number;
+    organization_id: number;
+    year: number;
+    is_active: boolean;
+    notes?: string;
+    entries: SalesProjectionEntry[];
+    summary: MonthlySummary[];
+    total_annual_revenue: number;
+    total_annual_hours: number;
+    break_even_monthly_cost: number;
+    created_at: string;
+    updated_at?: string;
+  }
+  ```
+
+**20.9: Frontend - Hooks de Queries**
+
+- Crear: `frontend/src/lib/queries/annualProjection.ts` (nuevo)
+- Hooks:
+  - `useGetAnnualProjection(year?: number)` - Obtener proyección
+  - `useCreateAnnualProjection()` - Crear proyección
+  - `useUpdateAnnualProjection()` - Actualizar proyección
+  - `useBulkUpdateProjectionEntries()` - Actualizar múltiples entradas
+  - `useReplicateMonth()` - Replicar mes a todos los meses
+  - `useGetProjectionSummary()` - Obtener resumen calculado
+
+**20.10: Frontend - Componente de Matriz Editable**
+
+- Crear: `frontend/src/components/projections/AnnualProjectionMatrix.tsx` (nuevo)
+- Características:
+  - Tabla con TanStack Table (filas = servicios, columnas = 12 meses)
+  - Inline editing: Click en celda para editar `quantity` y `hours_per_unit`
+  - Cálculo reactivo: Actualizar totales al cambiar valores (sin recargar)
+  - Validación: Validar que `quantity >= 0` y `hours_per_unit >= 0`
+  - Auto-save: Guardar cambios después de debounce (500ms)
+  - Loading states: Mostrar skeleton mientras carga
+- Estructura:
+  ```typescript
+  <Table>
+    <TableHeader>
+      <TableRow>
+        <TableHead>Servicio</TableHead>
+        {months.map(month => <TableHead key={month}>{monthName}</TableHead>)}
+        <TableHead>Total Anual</TableHead>
+      </TableRow>
+    </TableHeader>
+    <TableBody>
+      {services.map(service => (
+        <TableRow key={service.id}>
+          <TableCell>{service.name}</TableCell>
+          {months.map(month => (
+            <EditableCell
+              key={month}
+              value={getEntry(service.id, month)}
+              onSave={(quantity, hours) => handleUpdate(service.id, month, quantity, hours)}
+            />
+          ))}
+          <TableCell>{calculateAnnualTotal(service.id)}</TableCell>
+        </TableRow>
+      ))}
+    </TableBody>
+  </Table>
+  ```
+
+**20.11: Frontend - Componente de Celda Editable**
+
+- Crear: `frontend/src/components/projections/EditableProjectionCell.tsx` (nuevo)
+- Características:
+  - Muestra: `quantity × hours_per_unit = total_hours`
+  - Click para editar: Inputs separados para cantidad y horas
+  - Validación en tiempo real
+  - Formato de números con separadores de miles
+  - Tooltip con información del servicio (margen objetivo, BCR usado)
+- Diseño: Material Design, colores minimalistas
+
+**20.12: Frontend - Visualización con Gráficos**
+
+- Crear: `frontend/src/components/projections/ProjectionCharts.tsx` (nuevo)
+- Componentes:
+  - `RevenueVsBreakEvenChart`: Gráfico de áreas (Recharts)
+    - Línea de ingresos proyectados por mes
+    - Línea de break-even (Overhead + Nómina mensual)
+    - Área sombreada mostrando diferencia (positiva/negativa)
+  - `MonthlyRevenueBreakdown`: Gráfico de barras apiladas
+    - Desglose de ingresos por servicio cada mes
+  - `CapacityUtilizationChart`: Gráfico de líneas
+    - Horas proyectadas vs. capacidad disponible del equipo
+    - Alerta visual si capacidad excedida o ociosa
+- Librería: Recharts (ya disponible en el proyecto)
+
+**20.13: Frontend - Alertas de Validación Financiera**
+
+- Crear: `frontend/src/components/projections/CapacityAlerts.tsx` (nuevo)
+- Validaciones:
+  - **Capacidad Ociosa**: Si horas proyectadas < 70% de capacidad disponible → Alerta amarilla
+  - **Capacidad Excedida**: Si horas proyectadas > 100% de capacidad disponible → Alerta roja
+  - **Break-even**: Si ingresos proyectados < break-even mensual → Alerta naranja
+- Mostrar alertas en panel lateral o banner superior
+
+**20.14: Frontend - Funcionalidad de Replicación**
+
+- Agregar a: `frontend/src/components/projections/AnnualProjectionMatrix.tsx`
+- Botón "Replicar a todos los meses":
+  - Seleccionar mes origen
+  - Botón "Replicar valores de [Mes] a todos los meses"
+  - Confirmación antes de replicar
+  - Actualizar todas las celdas con valores del mes seleccionado
+
+**20.15: Frontend - Página Principal de Proyecciones**
+
+- Crear: `frontend/src/app/(app)/projections/annual/page.tsx` (nuevo)
+- Estructura:
+  - Header con año seleccionado (selector de año)
+  - Botón "Crear Nueva Proyección" (si no existe)
+  - Matriz editable (componente `AnnualProjectionMatrix`)
+  - Panel lateral con:
+    - Resumen anual (total ingresos, total horas)
+    - Break-even mensual
+    - Gráficos de visualización
+    - Alertas de capacidad
+  - Botón "Guardar Proyección" (si hay cambios sin guardar)
+
+**20.16: Integración con Servicios y BCR**
+
+- Actualizar: `backend/app/services/annual_sales_projection_service.py`
+- Integración:
+  - Obtener BCR actual usando `calculate_blended_cost_rate()`
+  - Obtener servicios activos de la organización
+  - Obtener capacidad del equipo (total horas facturables mensuales)
+  - Obtener break-even (costos fijos + nómina mensual)
+- Cache: Cachear BCR y break-even (invalidar cuando cambien costos/equipo)
+
+**20.17: Tests Backend**
+
+- Crear: `backend/tests/integration/test_annual_projection.py` (nuevo)
+- Tests:
+  - Crear proyección anual
+  - Actualizar entradas de proyección
+  - Calcular resumen (verificar fórmulas)
+  - Validar permisos (solo owner/admin_financiero)
+  - Replicar mes a todos los meses
+  - Validar cálculos de ingresos vs. break-even
+  - Tests de capacidad (ociosa, excedida)
+
+**20.18: Tests Frontend**
+
+- Crear: `frontend/src/components/projections/__tests__/AnnualProjectionMatrix.test.tsx` (nuevo)
+- Tests:
+  - Renderizado de matriz
+  - Edición inline de celdas
+  - Cálculo reactivo de totales
+  - Validación de inputs
+  - Replicación de mes
+
+**Archivos clave a crear/modificar:**
+
+**Backend:**
+- `backend/app/models/sales_projection.py` (nuevo)
+- `backend/app/repositories/sales_projection_repository.py` (nuevo)
+- `backend/app/services/annual_sales_projection_service.py` (nuevo)
+- `backend/app/schemas/sales_projection.py` (nuevo)
+- `backend/app/api/v1/endpoints/annual_projection.py` (nuevo)
+- `backend/app/core/permissions.py` (actualizar - agregar permiso)
+- `backend/alembic/versions/XXX_add_sales_projection_models.py` (nuevo)
+- `backend/tests/integration/test_annual_projection.py` (nuevo)
+
+**Frontend:**
+- `frontend/src/lib/types/annual-projection.ts` (nuevo)
+- `frontend/src/lib/queries/annualProjection.ts` (nuevo)
+- `frontend/src/components/projections/AnnualProjectionMatrix.tsx` (nuevo)
+- `frontend/src/components/projections/EditableProjectionCell.tsx` (nuevo)
+- `frontend/src/components/projections/ProjectionCharts.tsx` (nuevo)
+- `frontend/src/components/projections/CapacityAlerts.tsx` (nuevo)
+- `frontend/src/app/(app)/projections/annual/page.tsx` (nuevo)
+- `frontend/src/components/projections/__tests__/AnnualProjectionMatrix.test.tsx` (nuevo)
+
+**Criterios de aceptación:**
+- [ ] Modelo `SalesProjection` y `SalesProjectionEntry` creados
+- [ ] Migración de base de datos ejecuta sin errores
+- [ ] Repositorio completo con todos los métodos necesarios
+- [ ] Endpoints de API funcionando (CRUD completo)
+- [ ] Cálculo de resumen funciona correctamente (Revenue = Quantity × Hours × BCR × (1 + Margin))
+- [ ] Comparativa con break-even funciona
+- [ ] Frontend con matriz editable funcional
+- [ ] Inline editing funciona sin recargar página
+- [ ] Cálculo reactivo de totales funciona correctamente
+- [ ] Gráficos de visualización muestran datos correctos
+- [ ] Alertas de capacidad funcionan (ociosa, excedida)
+- [ ] Funcionalidad de replicación funciona
+- [ ] Validación de permisos funciona (solo owner/admin_financiero)
+- [ ] Tests backend pasando (15+ tests)
+- [ ] Tests frontend pasando (opcional)
+- [ ] Documentación de API actualizada
+- [ ] UI responsive y accesible
+
+**Consideraciones técnicas:**
+
+**Fórmula de Cálculo:**
+```
+Revenue_per_service_month = quantity × hours_per_unit × [BCR × (1 + service.default_margin_target)]
+Total_monthly_revenue = Sum(Revenue_per_service_month) for all services
+Total_annual_revenue = Sum(Total_monthly_revenue) for 12 months
+```
+
+**Break-even:**
+```
+Break_even_monthly = Total_Fixed_Costs + Total_Monthly_Salaries
+```
+
+**Capacidad:**
+```
+Available_capacity_monthly = Sum(team_member.billable_hours_per_week × 4.33) for all active members
+Projected_hours_monthly = Sum(quantity × hours_per_unit) for all services
+Utilization = (Projected_hours_monthly / Available_capacity_monthly) × 100
+```
+
+**Riesgos y mitigaciones:**
+
+| Riesgo | Mitigación |
+|--------|------------|
+| Performance con muchos servicios/meses | Paginación virtual, debounce en auto-save, cálculo optimizado |
+| Sincronización de datos (BCR cambia) | Invalidar cache cuando cambien costos/equipo, mostrar fecha de último cálculo |
+| Validación de capacidad compleja | Cálculo en backend, alertas claras en frontend |
+| UX compleja (matriz grande) | Scroll horizontal/vertical, sticky headers, búsqueda de servicios |
+
+**Resultados esperados:**
+- ✅ Sistema completo de proyección anual de ventas
+- ✅ Matriz editable mes/servicio funcional
+- ✅ Cálculos reactivos en tiempo real
+- ✅ Visualizaciones claras de ingresos vs. break-even
+- ✅ Alertas de capacidad ociosa/excedida
+- ✅ Herramienta de planificación financiera estratégica
+- ✅ Mejora en toma de decisiones del Owner
+
+---
+
+## 💰 FASE 9: Precisión Financiera (Sprint 21)
+
+### Sprint 21: Implementación de Precisión Financiera con Dinero.js y Decimal
+
+**Objetivo:** Eliminar errores de precisión en cálculos financieros usando `decimal.Decimal` (backend) y `dinero.js` v2 (frontend)  
+**Duración:** 4-5 semanas (3 fases)  
+**Estado:** ⏳ Pendiente  
+**Dependencias:** Sprint 20 completado (opcional - puede ejecutarse en paralelo)  
+**Prioridad:** 🔴 **CRÍTICA**
+
+#### Contexto
+
+Este sprint implementa un sistema robusto de precisión financiera para eliminar errores de redondeo y garantizar cálculos exactos en todas las operaciones monetarias. El sistema actual usa `float` en Python y `number` en JavaScript, lo que causa discrepancias en cálculos acumulativos.
+
+**Problemas actuales:**
+- Uso de `float`/`number` causa errores de precisión (ej: 0.1 + 0.2 = 0.30000000000000004)
+- Redondeos manuales inconsistentes (`round(total, 2)`) en múltiples lugares
+- Riesgo de discrepancias en cálculos acumulativos (sumas de múltiples items)
+- COP configurado sin decimales pero cálculos internos usan floats
+- **Pérdida de precisión en serialización JSON** (float → JSON → float)
+
+#### ESTÁNDAR DE SINCRONIZACIÓN FINANCIERA NOUGRAM
+
+Este sprint implementa el estándar estricto de sincronización financiera:
+
+1. **Backend (Python/FastAPI)**:
+   - ✅ Configurar Pydantic para que todos los campos `Decimal` se serialicen como **'strings'** en respuestas JSON
+   - ✅ Usar `from decimal import Decimal, ROUND_HALF_UP`
+   - ✅ Evitar pérdida de precisión en el navegador
+
+2. **Frontend (React/TypeScript)**:
+   - ✅ Utilizar `dinero.js` (v2) exclusivamente
+   - ✅ Crear transformador que convierta strings del API a objetos `dinero`
+   - ✅ Realizar toda la lógica de "vista previa" del margen en el front usando solo funciones de `dinero.js`
+
+3. **Regla de Validación CRÍTICA**:
+   - ✅ El precio final de la propuesta **SIEMPRE** se recalcula en el Backend antes de guardar
+   - ✅ El Frontend es **SOLO** para visualización interactiva del usuario
+   - ✅ Nunca confiar en cálculos del frontend para persistencia
+
+**Solución:**
+- Backend: `decimal.Decimal` nativo de Python para cálculos precisos
+- Frontend: `dinero.js` v2 para cálculos inmutables
+- Representación en unidades menores (centavos/subunidades)
+- Formateo consistente con localización `es-CO`
+
+#### Tareas Detalladas:
+
+**21.1: Fase 1 - Fundación y Helpers (Semana 1)**
+
+- Crear: `backend/app/core/money.py` - Clase `Money` inmutable usando `Decimal`
+- Crear: `backend/app/core/pydantic_config.py` - Configuración para serializar Decimal como string
+- Crear: `frontend/src/lib/money.ts` - Helpers usando `dinero.js` v2
+- Crear: `frontend/src/lib/money-transformer.ts` - Transformador strings API → Dinero
+- Instalar: `dinero.js` en frontend (`npm install dinero.js`)
+- Actualizar: `backend/app/core/currency.py` - Integrar con `Money`
+- Actualizar: `frontend/src/lib/currency.ts` - Integrar con `dinero.js`
+- Actualizar: `frontend/src/lib/api-client.ts` - Integrar transformador automático
+- Actualizar: Schemas Pydantic con `field_serializer` para Decimal → string
+- Crear: Tests unitarios para ambos módulos
+- Crear: Tests de serialización Decimal → string
+- Crear: Tests de transformación string → Dinero
+
+**21.2: Fase 2 - Migración de Cálculos Críticos (Semanas 2-3)**
+
+- Migrar: `calculate_blended_cost_rate()` a usar `Money` y retornar `Decimal`
+- Migrar: `calculate_quote_totals_enhanced()` a usar `Money` y retornar `Decimal`
+- Actualizar: Schemas de respuesta (`QuoteCalculateResponse`, `BlendedCostRateResponse`) con serialización Decimal → string
+- Migrar: Cálculos de BCR en frontend a usar `dinero.js`
+- Migrar: Cálculos de márgenes e impuestos
+- **CRÍTICO**: Validar que endpoint `/quotes/calculate` SIEMPRE recalcula en backend
+- **CRÍTICO**: Frontend solo muestra vista previa (no guarda cálculos)
+- Crear: Tests de integración validando precisión
+- Crear: Tests de recalculo backend independiente del frontend
+
+**21.3: Fase 3 - Migración Completa (Semanas 4-5)**
+
+- Migrar: Todos los servicios financieros restantes
+- Migrar: Todos los componentes frontend que hacen cálculos
+- Actualizar: Schemas con validación de precisión
+- Crear: Documentación completa de uso
+- Validar: Tests E2E y benchmarks de performance
+
+**Archivos clave a crear/modificar:**
+
+**Backend:**
+- `backend/app/core/money.py` (nuevo)
+- `backend/app/core/calculations.py` (actualizar)
+- `backend/app/core/currency.py` (actualizar)
+- `backend/app/services/annual_sales_projection_service.py` (actualizar)
+- `backend/tests/unit/test_money.py` (nuevo)
+- `backend/tests/integration/test_money_precision.py` (nuevo)
+
+**Frontend:**
+- `frontend/src/lib/money.ts` (nuevo)
+- `frontend/src/lib/finance-utils.ts` (actualizar)
+- `frontend/src/lib/currency.ts` (actualizar)
+- `frontend/src/components/projections/AnnualProjectionMatrix.tsx` (actualizar)
+- `frontend/src/lib/__tests__/money.test.ts` (nuevo)
+- `frontend/package.json` (agregar `dinero.js`)
+
+**Documentación:**
+- `docs/PLAN_PRECISION_FINANCIERA.md` (nuevo - plan detallado completo)
+
+**Criterios de aceptación:**
+- [ ] Módulo `Money` creado en backend con todas las operaciones
+- [ ] Módulo `money.ts` creado en frontend con `dinero.js`
+- [ ] Helpers de conversión API ↔ Money funcionando
+- [ ] `calculate_blended_cost_rate` migrado a `Money`
+- [ ] `calculate_quote_totals_enhanced` migrado a `Money`
+- [ ] Cálculos de BCR en frontend migrados a `dinero.js`
+- [ ] Todos los cálculos financieros migrados
+- [ ] Tests unitarios pasando (100% cobertura en helpers)
+- [ ] Tests de integración validando precisión
+- [ ] Tests E2E pasando
+- [ ] Documentación completa de uso
+- [ ] 0 errores de redondeo en cálculos acumulativos
+- [ ] 0 regresiones en funcionalidad existente
+
+**Consideraciones técnicas:**
+
+**Fórmula de Precisión:**
+```
+Backend: Decimal con precisión de 4 decimales para cálculos internos, 2 para display
+Frontend: dinero.js con precisión de 2 decimales (centavos), COP sin decimales en display
+```
+
+**Compatibilidad:**
+- Mantener funciones wrapper que acepten `float`/`number` para compatibilidad
+- Conversión automática en capa de servicio
+- Base de datos mantiene `Float` (convertir en capa de servicio)
+
+**Riesgos y mitigaciones:**
+
+| Riesgo | Mitigación |
+|--------|------------|
+| Performance: Decimal es más lento que float | Impacto mínimo, benchmarking si es necesario |
+| Compatibilidad: Código existente usa float | Funciones wrapper que acepten float |
+| Migración compleja: Muchos lugares a actualizar | Migración gradual por fases |
+| Bundle size: dinero.js agrega ~15KB | Aceptable para el valor proporcionado |
+
+**Resultados esperados:**
+- ✅ Eliminación completa de errores de precisión
+- ✅ Cálculos financieros exactos y confiables
+- ✅ Formateo consistente de monedas
+- ✅ Código más mantenible y testeable
+- ✅ Base sólida para futuros cálculos financieros
+
+**Referencias:**
+- Ver `docs/PLAN_PRECISION_FINANCIERA.md` para plan detallado completo con código de ejemplo
+- **ESTÁNDAR DE SINCRONIZACIÓN FINANCIERA**: Ver sección completa en `PLAN_PRECISION_FINANCIERA.md` con reglas críticas de implementación
+
+---
+
 ## 🔧 FASE 7: Refactorización y Deuda Técnica
 
 ### Deuda Técnica: Refactorización de queries.ts
@@ -3124,7 +3725,7 @@ docs/
 | Multi-Tenant | Sprint 3 | 2 semanas | ✅ Completado |
 | Multi-Tenant | Sprint 4 | 2 semanas | ✅ Completado |
 | Multi-Tenant | Sprint 5 | 2 semanas | ✅ Completado |
-| Multi-Tenant | Sprint 6 | 2 semanas | ⏳ ~95% Completado |
+| Multi-Tenant | Sprint 6 | 2 semanas | ✅ Completado |
 | Multi-Tenant | Sprint 6.5 | 1 semana | ✅ Completado |
 | Multi-Tenant | Sprint 7 | 2 semanas | ✅ Completado |
 | Multi-Tenant | Sprint 8 | 2 semanas | ✅ Completado |
@@ -3139,6 +3740,8 @@ docs/
 | Frontend y Tareas Programadas | Sprint 17 | 2-3 semanas | ✅ Completado |
 | Onboarding Estructura Costos | Sprint 18 | 4-5 semanas | ✅ Completado |
 | IA para Configuración Asistida | Sprint 19 | 4-6 semanas | ⏳ En Progreso (Fase 1 ✅, Fase 2 pendiente) |
+| Planificación Financiera Avanzada | Sprint 20 | 3-4 semanas | ⏳ Pendiente |
+| Precisión Financiera | Sprint 21 | 4-5 semanas | ⏳ Pendiente |
 | Refactorización | Refactor queries.ts | 1-2 semanas | ✅ Completado |
 | Deuda Técnica Crítica | Fix Organization Switcher | 3-5 días | ✅ Completado |
 | Deuda Técnica | Sistema i18n Híbrido | 2-3 semanas | ✅ Completado (Base) |
@@ -3148,7 +3751,7 @@ docs/
 | Deuda Técnica | Strategy Pattern para Pricing | 1-2 semanas | ✅ Completado |
 | Deuda Técnica | JSON Logging | 3-5 días | ✅ Completado |
 | Deuda Técnica | Limpieza y Organización de Archivos | 1-2 días | ✅ Completado |
-| **Total** | | **50-66 semanas** | |
+| **Total** | | **57-75 semanas** | |
 
 ---
 

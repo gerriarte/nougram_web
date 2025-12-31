@@ -35,3 +35,6 @@ async def locale_middleware(request: Request, call_next):
     response = await call_next(request)
     return response
 
+
+
+

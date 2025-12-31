@@ -93,8 +93,19 @@ class ProjectService:
             )
         
         # Calculate blended cost rate
+        from app.models.organization import Organization
+        org_result = await self.db.execute(select(Organization).where(Organization.id == self.organization_id))
+        org = org_result.scalar_one_or_none()
+        primary_currency = org.settings.get('primary_currency', 'USD') if org and org.settings else 'USD'
+        social_config = org.settings.get('social_charges_config') if org and org.settings else None
+        
         logger.info("Calculating blended cost rate...")
-        blended_rate = await calculate_blended_cost_rate(self.db, tenant_id=self.organization_id)
+        blended_rate = await calculate_blended_cost_rate(
+            self.db, 
+            primary_currency=primary_currency,
+            tenant_id=self.organization_id,
+            social_charges_config=social_config
+        )
         logger.info(f"Blended cost rate: {blended_rate}")
         
         # Calculate quote totals using enhanced function
@@ -115,13 +126,15 @@ class ProjectService:
         tax_ids = project_data.tax_ids or []
         revisions_included = project_data.revisions_included if hasattr(project_data, 'revisions_included') and project_data.revisions_included is not None else 2
         revision_cost_per_additional = getattr(project_data, 'revision_cost_per_additional', None)
-        logger.info(f"Calculating quote totals (enhanced) with {len(tax_ids)} taxes and revisions_included={revisions_included}...")
+        target_margin_percentage = getattr(project_data, 'target_margin_percentage', None)
+        logger.info(f"Calculating quote totals (enhanced) with {len(tax_ids)} taxes, revisions_included={revisions_included}, target_margin={target_margin_percentage}...")
         totals = await calculate_quote_totals_enhanced(
             self.db, 
             items_dict, 
             blended_rate, 
             tax_ids,
             expenses=None,  # Expenses are added separately via expenses endpoints
+            target_margin_percentage=target_margin_percentage,  # Pass target margin
             revisions_included=revisions_included,
             revision_cost_per_additional=revision_cost_per_additional,
             revisions_count=None  # Only used when calculating additional revision costs
@@ -154,6 +167,7 @@ class ProjectService:
             total_internal_cost=totals["total_internal_cost"],
             total_client_price=totals["total_client_price"],
             margin_percentage=totals["margin_percentage"],
+            target_margin_percentage=target_margin_percentage,  # Save target margin
             revisions_included=revisions_included,
             revision_cost_per_additional=revision_cost_per_additional
         )
@@ -272,7 +286,17 @@ class ProjectService:
             )
         
         # Calculate blended cost rate
-        blended_rate = await calculate_blended_cost_rate(self.db, project.currency, tenant_id=self.organization_id)
+        from app.models.organization import Organization
+        org_result = await self.db.execute(select(Organization).where(Organization.id == self.organization_id))
+        org = org_result.scalar_one_or_none()
+        social_config = org.settings.get('social_charges_config') if org and org.settings else None
+        
+        blended_rate = await calculate_blended_cost_rate(
+            self.db, 
+            project.currency, 
+            tenant_id=self.organization_id,
+            social_charges_config=social_config
+        )
         
         # Get project taxes
         tax_ids = [tax.id for tax in project.taxes] if project.taxes else []
@@ -294,6 +318,7 @@ class ProjectService:
         
         revisions_included = quote_data.revisions_included if quote_data.revisions_included is not None else (existing_quote.revisions_included if existing_quote.revisions_included else 2)
         revision_cost_per_additional = quote_data.revision_cost_per_additional if hasattr(quote_data, 'revision_cost_per_additional') and quote_data.revision_cost_per_additional is not None else existing_quote.revision_cost_per_additional
+        target_margin_percentage = getattr(quote_data, 'target_margin_percentage', None)
         
         totals = await calculate_quote_totals_enhanced(
             self.db, 
@@ -301,6 +326,7 @@ class ProjectService:
             blended_rate, 
             tax_ids,
             expenses=None,
+            target_margin_percentage=target_margin_percentage,  # Pass target margin
             revisions_included=revisions_included,
             revision_cost_per_additional=revision_cost_per_additional,
             revisions_count=None
@@ -313,6 +339,7 @@ class ProjectService:
             total_internal_cost=totals["total_internal_cost"],
             total_client_price=totals["total_client_price"],
             margin_percentage=totals["margin_percentage"],
+            target_margin_percentage=target_margin_percentage,  # Save target margin
             notes=quote_data.notes,
             revisions_included=revisions_included,
             revision_cost_per_additional=revision_cost_per_additional

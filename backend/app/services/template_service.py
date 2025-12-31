@@ -235,9 +235,34 @@ async def apply_industry_template(
     
     # Update organization settings with onboarding context
     settings = organization.settings or {}
+    
+    # Set social charges configuration for Colombia
+    if region.upper() == "COL":
+        if "social_charges_config" not in settings or customize:
+            settings["social_charges_config"] = {
+                "enable_social_charges": True,
+                "health_percentage": 8.5,
+                "pension_percentage": 12.0,
+                "arl_percentage": 0.522,
+                "parafiscales_percentage": 4.0,
+                "prima_services_percentage": 8.33,
+                "cesantias_percentage": 8.33,
+                "int_cesantias_percentage": 1.0,
+                "vacations_percentage": 4.17,
+                "total_percentage": 52.852
+            }
+            # Add customization if provided (Sprint 18 - allow overriding defaults)
+            if customize and "taxes" in customize:
+                tax_data = customize["taxes"]
+                for key in ["health", "pension", "arl", "parafiscales", "prima_services", "cesantias", "int_cesantias", "vacations"]:
+                    if key in tax_data:
+                        field_name = f"{key}_percentage" if not key.endswith("_percentage") else key
+                        settings["social_charges_config"][field_name] = tax_data[key]
+
     settings.update({
         "onboarding_completed": True,
         "industry_type": industry_type,
+        "primary_currency": currency,
         "template_applied_at": datetime.now(timezone.utc).isoformat(),
         "template_applied_region": region,
         "template_applied_currency": currency,

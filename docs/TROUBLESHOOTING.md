@@ -206,3 +206,6 @@ Si encuentras un problema que no está documentado aquí:
 
 **Última actualización:** Diciembre 2025
 
+
+
+

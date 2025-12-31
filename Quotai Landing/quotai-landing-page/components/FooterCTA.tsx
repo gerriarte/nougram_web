@@ -34,8 +34,8 @@ export const FooterCTA: React.FC = () => {
         </div>
 
         <div className="mt-12 flex flex-col items-center justify-between gap-6 md:flex-row text-xs lg:text-sm text-slate-500">
-          <div className="font-bold text-slate-900 text-xl tracking-tight">
-            Nougram
+          <div className="flex items-center">
+            <img src="/logo-nougram.webp" alt="Nougram" className="h-8 w-auto object-contain" />
           </div>
           <div>
             &copy; {new Date().getFullYear()} Nougram. Todos los derechos reservados.

@@ -10,7 +10,11 @@ import { apiRequest } from "@/lib/api-client"
 import { logger } from "@/lib/logger"
 import { useQueryClient } from "@tanstack/react-query"
 import { queryKeys, CurrentUser } from "@/lib/queries"
-import { Loader2, Building2 } from "lucide-react"
+import { Loader2, Building2, AlertCircle, CheckCircle2 } from "lucide-react"
+import { PasswordInput } from "@/components/auth/PasswordInput"
+import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { cn } from "@/lib/utils"
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -49,15 +53,29 @@ export default function RegisterPage() {
       .substring(0, 50)
   }
 
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
+
   const validateForm = (): string | null => {
     if (!organizationName.trim()) {
       return "El nombre de la organización es requerido"
     }
+    if (organizationName.trim().length < 3) {
+      return "El nombre de la organización debe tener al menos 3 caracteres"
+    }
     if (!adminFullName.trim()) {
       return "El nombre completo es requerido"
     }
+    if (adminFullName.trim().length < 2) {
+      return "El nombre completo debe tener al menos 2 caracteres"
+    }
     if (!adminEmail.trim()) {
       return "El correo electrónico es requerido"
+    }
+    if (!validateEmail(adminEmail)) {
+      return "Por favor, ingresa un correo electrónico válido"
     }
     if (!adminPassword.trim()) {
       return "La contraseña es requerida"
@@ -153,9 +171,10 @@ export default function RegisterPage() {
         {/* Form */}
         <form onSubmit={(e) => { e.preventDefault(); handleRegister(); }} className="space-y-4">
           {error && (
-            <div className="p-3 rounded-lg bg-error-50 border border-error-500 text-error-700 text-sm">
-              {error}
-            </div>
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
           {/* Organization Section */}
@@ -224,43 +243,79 @@ export default function RegisterPage() {
                 type="email"
                 placeholder="admin@ejemplo.com"
                 value={adminEmail}
-                onChange={(e) => setAdminEmail(e.target.value)}
+                onChange={(e) => {
+                  setAdminEmail(e.target.value)
+                  setError(null)
+                }}
                 className="mt-2 h-10 bg-white border-grey-300"
                 disabled={loading}
+                autoComplete="email"
+                required
               />
+              {adminEmail && !validateEmail(adminEmail) && (
+                <p className="mt-1 text-xs text-error-500">
+                  Por favor, ingresa un correo electrónico válido
+                </p>
+              )}
             </div>
 
             <div>
               <Label htmlFor="adminPassword" className="text-grey-700">
                 Contraseña <span className="text-error-500">*</span>
               </Label>
-              <Input
+              <PasswordInput
                 id="adminPassword"
-                type="password"
                 placeholder="Mínimo 8 caracteres"
                 value={adminPassword}
-                onChange={(e) => setAdminPassword(e.target.value)}
+                onChange={(e) => {
+                  setAdminPassword(e.target.value)
+                  setError(null)
+                }}
                 className="mt-2 h-10 bg-white border-grey-300"
                 disabled={loading}
+                autoComplete="new-password"
+                required
+                minLength={8}
               />
-              <p className="mt-1 text-xs text-grey-500">
-                Mínimo 8 caracteres
-              </p>
+              {adminPassword && (
+                <div className="mt-2">
+                  <PasswordStrengthIndicator password={adminPassword} />
+                </div>
+              )}
             </div>
 
             <div>
               <Label htmlFor="confirmPassword" className="text-grey-700">
                 Confirmar Contraseña <span className="text-error-500">*</span>
               </Label>
-              <Input
+              <PasswordInput
                 id="confirmPassword"
-                type="password"
                 placeholder="Repite tu contraseña"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="mt-2 h-10 bg-white border-grey-300"
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value)
+                  setError(null)
+                }}
+                className={cn(
+                  "mt-2 h-10 bg-white border-grey-300",
+                  confirmPassword && adminPassword !== confirmPassword && "border-error-500"
+                )}
                 disabled={loading}
+                autoComplete="new-password"
+                required
               />
+              {confirmPassword && adminPassword !== confirmPassword && (
+                <p className="mt-1 text-xs text-error-500 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  Las contraseñas no coinciden
+                </p>
+              )}
+              {confirmPassword && adminPassword === confirmPassword && adminPassword.length > 0 && (
+                <p className="mt-1 text-xs text-success-600 flex items-center gap-1">
+                  <CheckCircle2 className="h-3 w-3" />
+                  Las contraseñas coinciden
+                </p>
+              )}
             </div>
           </div>
 

@@ -116,3 +116,6 @@ async def create_sales_projection(
             detail="Error calculating sales projection"
         )
 
+
+
+

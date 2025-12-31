@@ -35,6 +35,7 @@ class PricingStrategy(ABC):
 class HourlyPricingStrategy(PricingStrategy):
     """
     Strategy for hourly pricing: Hours × BCR
+    Note: client_price is calculated at quote level using target_margin_percentage
     """
     
     def calculate(
@@ -48,11 +49,11 @@ class HourlyPricingStrategy(PricingStrategy):
         
         Args:
             item: Must contain 'estimated_hours'
-            service: Service with default_margin_target
+            service: Service model (default_margin_target used as fallback if no quote-level margin)
             blended_cost_rate: Cost per hour
             
         Returns:
-            Dictionary with internal_cost and client_price
+            Dictionary with internal_cost and client_price (client_price uses service margin as fallback)
         """
         estimated_hours = item.get("estimated_hours", 0)
         if estimated_hours <= 0:
@@ -60,7 +61,8 @@ class HourlyPricingStrategy(PricingStrategy):
         
         internal_cost = blended_cost_rate * estimated_hours
         
-        # Calculate client price with margin
+        # Calculate client price with service margin (fallback if no quote-level margin)
+        # This will be overridden at quote level if target_margin_percentage is provided
         if service.default_margin_target > 0 and service.default_margin_target < 1:
             client_price = internal_cost / (1 - service.default_margin_target)
         else:
@@ -68,7 +70,7 @@ class HourlyPricingStrategy(PricingStrategy):
         
         return {
             "internal_cost": internal_cost,
-            "client_price": client_price
+            "client_price": client_price  # Will be recalculated at quote level if target_margin_percentage is provided
         }
 
 
@@ -249,4 +251,7 @@ class PricingStrategyFactory:
             strategy: PricingStrategy instance
         """
         cls._strategies[pricing_type] = strategy
+
+
+
 

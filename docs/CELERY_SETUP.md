@@ -218,3 +218,6 @@ celery_app = Celery(
 - En producción, es recomendable ejecutar worker y beat en procesos separados para mejor escalabilidad
 - Los logs de Celery incluyen información detallada sobre el progreso de las tareas
 
+
+
+

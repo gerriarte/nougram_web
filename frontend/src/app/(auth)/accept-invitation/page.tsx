@@ -11,6 +11,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { useAcceptInvitation } from "@/lib/queries"
 import { apiRequest } from "@/lib/api-client"
 import type { Invitation } from "@/lib/types/organizations"
+import { PasswordInput } from "@/components/auth/PasswordInput"
+import { PasswordStrengthIndicator } from "@/components/auth/PasswordStrengthIndicator"
 
 export default function AcceptInvitationPage() {
   const router = useRouter()
@@ -280,18 +282,20 @@ export default function AcceptInvitationPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Contraseña *</Label>
-                  <Input
+                  <PasswordInput
                     id="password"
-                    type="password"
                     placeholder="Mínimo 8 caracteres"
-                    value={formData.password}
+                    value={formData.password || ""}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required
                     minLength={8}
+                    autoComplete="new-password"
                   />
-                  <p className="text-xs text-muted-foreground">
-                    La contraseña debe tener al menos 8 caracteres
-                  </p>
+                  {formData.password && (
+                    <div className="mt-2">
+                      <PasswordStrengthIndicator password={formData.password} />
+                    </div>
+                  )}
                 </div>
               </div>
             )}

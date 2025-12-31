@@ -53,6 +53,8 @@ export interface ApplyTemplateRequest {
       name: string;
       monthly_cost?: number;
       weekly_hours?: number;
+      billable_hours_per_week?: number;
+      currency?: string;
     }>;
     services?: Array<{
       name: string;
@@ -64,6 +66,7 @@ export interface ApplyTemplateRequest {
       amount?: number;
       category?: string;
     }>;
+    taxes?: any;
     client_types?: string[];
     services_offered?: string[];
     team_size_range?: string;
@@ -98,6 +101,9 @@ export interface TemplateCardData {
   suggestedServices: SuggestedService[];
   suggestedCompanyCosts: SuggestedCost[];
 }
+
+
+
 
 
 

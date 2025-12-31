@@ -56,3 +56,6 @@ class ErrorCode(str, Enum):
     NETWORK_ERROR = "NETWORK_ERROR"
     UNKNOWN_ERROR = "UNKNOWN_ERROR"
 
+
+
+

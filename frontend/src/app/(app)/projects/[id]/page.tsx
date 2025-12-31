@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import React, { useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,7 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { ArrowLeft, Pencil, Plus, Loader2, Package, Download, Mail, FileText } from "lucide-react"
+import { ArrowLeft, Pencil, Plus, Loader2, Package, Download, Mail, FileText, TrendingUp } from "lucide-react"
 import { useGetProject, useGetProjectQuotes, useGetCurrentUser } from "@/lib/queries"
 import { formatCurrency } from "@/lib/currency"
 import { Badge } from "@/components/ui/badge"
@@ -20,6 +20,7 @@ import { downloadPDF, downloadDOCX } from "@/lib/api-client"
 import { SendEmailDialog } from "@/components/quotes/send-email-dialog"
 import { useToast } from "@/hooks/use-toast"
 import { canSendQuotes } from "@/lib/permissions"
+import { RentabilitySummary } from "@/components/quotes/RentabilitySummary"
 
 export default function ProjectDetailPage() {
   const params = useParams()
@@ -33,6 +34,7 @@ export default function ProjectDetailPage() {
   const { toast } = useToast()
   const [selectedQuote, setSelectedQuote] = useState<any>(null)
   const [sendEmailDialogOpen, setSendEmailDialogOpen] = useState(false)
+  const [expandedQuoteId, setExpandedQuoteId] = useState<number | null>(null)
 
   if (projectLoading) {
     return (
@@ -166,97 +168,135 @@ export default function ProjectDetailPage() {
                     <TableHead>Internal Cost</TableHead>
                     <TableHead>Margin</TableHead>
                     <TableHead>Created</TableHead>
+                    <TableHead className="text-right">Análisis</TableHead>
                     <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {quotes.map((quote: any) => (
-                    <TableRow key={quote.id}>
-                      <TableCell className="font-medium">v{quote.version}</TableCell>
-                      <TableCell>{formatCurrency(quote.total_client_price || 0, project.currency)}</TableCell>
-                      <TableCell>{formatCurrency(quote.total_internal_cost || 0, project.currency)}</TableCell>
-                      <TableCell>
-                        <span className={quote.margin_percentage && quote.margin_percentage < 0.20 ? "text-destructive" : ""}>
-                          {((quote.margin_percentage || 0) * 100).toFixed(1)}%
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {new Date(quote.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+                    <React.Fragment key={quote.id}>
+                      <TableRow className={expandedQuoteId === quote.id ? "bg-grey-50" : ""}>
+                        <TableCell className="font-medium">v{quote.version}</TableCell>
+                        <TableCell>{formatCurrency(quote.total_client_price || 0, project.currency)}</TableCell>
+                        <TableCell>{formatCurrency(quote.total_internal_cost || 0, project.currency)}</TableCell>
+                        <TableCell>
+                          <span className={quote.margin_percentage && quote.margin_percentage < 0.20 ? "text-destructive" : ""}>
+                            {((quote.margin_percentage || 0) * 100).toFixed(1)}%
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {new Date(quote.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-right">
                           <Button
-                            variant="ghost"
+                            variant={expandedQuoteId === quote.id ? "default" : "outline"}
                             size="sm"
-                            onClick={async () => {
-                              try {
-                                const safeProjectName = project?.name.replace(/[^a-z0-9]/gi, '_') || 'project'
-                                const filename = `cotizacion_${safeProjectName}_v${quote.version}.pdf`
-                                await downloadPDF(`/projects/${projectId}/quotes/${quote.id}/pdf`, filename)
-                                toast({
-                                  title: "PDF descargado",
-                                  description: "La cotización se ha descargado correctamente",
-                                })
-                              } catch (error: any) {
-                                toast({
-                                  title: "Error",
-                                  description: error.message || "No se pudo descargar el PDF",
-                                  variant: "destructive",
-                                })
-                              }
-                            }}
+                            onClick={() => setExpandedQuoteId(expandedQuoteId === quote.id ? null : quote.id)}
+                            className={expandedQuoteId === quote.id ? "" : "text-grey-600 border-grey-300"}
                           >
-                            <Download className="h-4 w-4 mr-1" />
-                            PDF
+                            <TrendingUp className="h-4 w-4 mr-1" />
+                            Ver Rentabilidad
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={async () => {
-                              try {
-                                const safeProjectName = project?.name.replace(/[^a-z0-9]/gi, '_') || 'project'
-                                const filename = `cotizacion_${safeProjectName}_v${quote.version}.docx`
-                                await downloadDOCX(`/projects/${projectId}/quotes/${quote.id}/docx`, filename)
-                                toast({
-                                  title: "DOCX descargado",
-                                  description: "La cotización se ha descargado correctamente",
-                                })
-                              } catch (error: any) {
-                                toast({
-                                  title: "Error",
-                                  description: error.message || "No se pudo descargar el DOCX",
-                                  variant: "destructive",
-                                })
-                              }
-                            }}
-                          >
-                            <FileText className="h-4 w-4 mr-1" />
-                            DOCX
-                          </Button>
-                          {canSendQuotesPermission && (
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            {/* ... actions ... */}
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => {
-                                setSelectedQuote(quote)
-                                setSendEmailDialogOpen(true)
+                              onClick={async () => {
+                                try {
+                                  const safeProjectName = project?.name.replace(/[^a-z0-9]/gi, '_') || 'project'
+                                  const filename = `cotizacion_${safeProjectName}_v${quote.version}.pdf`
+                                  await downloadPDF(`/projects/${projectId}/quotes/${quote.id}/pdf`, filename)
+                                  toast({
+                                    title: "PDF descargado",
+                                    description: "La cotización se ha descargado correctamente",
+                                  })
+                                } catch (error: any) {
+                                  toast({
+                                    title: "Error",
+                                    description: error.message || "No se pudo descargar el PDF",
+                                    variant: "destructive",
+                                  })
+                                }
                               }}
                             >
-                              <Mail className="h-4 w-4 mr-1" />
-                              Email
+                              <Download className="h-4 w-4 mr-1" />
+                              PDF
                             </Button>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => router.push(`/projects/${projectId}/quotes/${quote.id}/edit`)}
-                          >
-                            <Pencil className="h-4 w-4 mr-1" />
-                            Edit
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={async () => {
+                                try {
+                                  const safeProjectName = project?.name.replace(/[^a-z0-9]/gi, '_') || 'project'
+                                  const filename = `cotizacion_${safeProjectName}_v${quote.version}.docx`
+                                  await downloadDOCX(`/projects/${projectId}/quotes/${quote.id}/docx`, filename)
+                                  toast({
+                                    title: "DOCX descargado",
+                                    description: "La cotización se ha descargado correctamente",
+                                  })
+                                } catch (error: any) {
+                                  toast({
+                                    title: "Error",
+                                    description: error.message || "No se pudo descargar el DOCX",
+                                    variant: "destructive",
+                                  })
+                                }
+                              }}
+                            >
+                              <FileText className="h-4 w-4 mr-1" />
+                              DOCX
+                            </Button>
+                            {canSendQuotesPermission && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedQuote(quote)
+                                  setSendEmailDialogOpen(true)
+                                }}
+                              >
+                                <Mail className="h-4 w-4 mr-1" />
+                                Email
+                              </Button>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => router.push(`/projects/${projectId}/quotes/${quote.id}/edit`)}
+                            >
+                              <Pencil className="h-4 w-4 mr-1" />
+                              Edit
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      {expandedQuoteId === quote.id && (
+                        <TableRow className="bg-grey-50/30 hover:bg-grey-50/30">
+                          <TableCell colSpan={7} className="p-8 border-b-2 border-grey-100">
+                            <div className="bg-white rounded-2xl shadow-sm border border-grey-200 p-6">
+                              <div className="flex items-center justify-between mb-6">
+                                <h3 className="text-xl font-bold text-grey-900 flex items-center gap-2">
+                                  <TrendingUp className="h-5 w-5 text-blue-600" />
+                                  Análisis de Rentabilidad - v{quote.version}
+                                </h3>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setExpandedQuoteId(null)}
+                                  className="text-grey-400 hover:text-grey-600"
+                                >
+                                  Cerrar Análisis
+                                </Button>
+                              </div>
+                              <RentabilitySummary quoteId={quote.id} currency={project.currency} />
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
                   ))}
                 </TableBody>
               </Table>

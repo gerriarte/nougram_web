@@ -17,8 +17,8 @@ export const Header: React.FC = () => {
         }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-        <div className="text-2xl font-extrabold tracking-tighter text-white">
-          Nougram
+        <div className="flex items-center">
+          <img src="/logo-nougram.webp" alt="Nougram" className="h-8 sm:h-10 w-auto object-contain" />
         </div>
         <nav>
           <button

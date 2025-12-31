@@ -52,7 +52,44 @@ export {
 export * from './templates';
 
 // Organizations
-export * from './organizations';
+// Using explicit exports to avoid webpack module resolution issues
+export {
+  useGetOrganizations,
+  useGetOrganization,
+  useGetMyOrganization,
+  useCreateOrganization,
+  useUpdateOrganization,
+  useGetOrganizationUsers,
+  useInviteUserToOrganization,
+  useAddUserToOrganization,
+  useGetInvitations,
+  useCreateInvitation,
+  useCancelInvitation,
+  useAcceptInvitation,
+  useUpdateUserRoleInOrganization,
+  useRemoveUserFromOrganization,
+  useGetOrganizationStats,
+  useUpdateOrganizationSubscription,
+} from './organizations';
+
+export type {
+  Organization,
+  OrganizationListResponse,
+  OrganizationCreate,
+  OrganizationUpdate,
+  OrganizationUser,
+  OrganizationUsersListResponse,
+  OrganizationInviteRequest,
+  OrganizationInviteResponse,
+  OrganizationUsageStats,
+  AddUserToOrganizationRequest,
+  UpdateUserRoleInOrganizationRequest,
+  Invitation,
+  InvitationListResponse,
+  InvitationCreate,
+  InvitationAcceptRequest,
+  InvitationAcceptResponse,
+} from './organizations';
 
 // Billing
 export * from './billing';
@@ -71,4 +108,3 @@ export * from './salesProjection';
 
 // AI
 export * from './ai';
-

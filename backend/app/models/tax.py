@@ -1,7 +1,8 @@
 """
 Tax model for projects
+ESTÁNDAR NOUGRAM: Campos de porcentaje usan Numeric para precisión grado bancario
 """
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, func
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, func, Numeric
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
@@ -12,13 +13,14 @@ class Tax(Base):
     """
     Tax model - defines taxes that can be applied to projects
     Examples: IVA (Colombia), Transaction Cost (Argentina), VAT (Europe)
+    ESTÁNDAR NOUGRAM: percentage usa Numeric(10,4) para precisión
     """
     __tablename__ = "taxes"
     
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False, index=True)  # e.g., "IVA", "Transaction Cost"
     code = Column(String, nullable=False, unique=True, index=True)  # e.g., "IVA_CO", "TX_AR"
-    percentage = Column(Float, nullable=False, default=0.0)  # Tax percentage (e.g., 19.0 for 19%)
+    percentage = Column(Numeric(precision=10, scale=4), nullable=False, default=0.0)  # ESTÁNDAR NOUGRAM: Numeric - Tax percentage (e.g., 19.0 for 19%)
     country = Column(String, nullable=True, index=True)  # Country code (e.g., "CO", "AR", "US")
     is_active = Column(Boolean, default=True)
     description = Column(String, nullable=True)  # Optional description
