@@ -1,7 +1,8 @@
 # 🏗️ Plan de Trabajo: Arquitectura Multi-Tenant SaaS
 
 **Fecha de análisis:** 12 de Diciembre, 2025  
-**Estado:** Sprint 18 completado ✅ | Sprint 19 en progreso (IA para Configuración Asistida) | Sprint 20 planificado (Proyección de Ventas Anual) | Deuda técnica identificada
+**Fecha de actualización:** 30 de Enero, 2025  
+**Estado:** Sprint 18 completado ✅ | Sprint 19 en progreso (IA para Configuración Asistida) | Sprint 20 planificado (Proyección de Ventas Anual) | Sprint 21 parcialmente completado | Tareas pendientes siendo seguidas en Linear (ver sección "📋 Seguimiento en Linear")
 
 ---
 
@@ -10,7 +11,7 @@
 Este plan transforma la aplicación actual (single-tenant) en una plataforma SaaS multi-tenant completa, permitiendo que múltiples organizaciones usen la aplicación de forma aislada y segura.
 
 **Timeline Total:** 57-75 semanas  
-**Estado Actual:** ✅ Sprint 18 completado (100%) | ⏳ Sprint 19 en progreso (IA para Configuración Asistida) | ⏳ Sprint 20 planificado (Proyección de Ventas Anual) | ⏳ Sprint 21 planificado (Precisión Financiera) | Deuda técnica identificada y planificada
+**Estado Actual:** ✅ Sprint 18 completado (100%) | ⏳ Sprint 19 en progreso (IA para Configuración Asistida) | ⏳ Sprint 20 planificado (Proyección de Ventas Anual) | ⚠️ Sprint 21 parcialmente completado (Precisión Financiera - migración pendiente en Linear Issue #7) | Tareas pendientes siendo seguidas en Linear (12 issues - ver sección "📋 Seguimiento en Linear")
 
 ---
 
@@ -140,10 +141,10 @@ Este plan transforma la aplicación actual (single-tenant) en una plataforma Saa
 **Objetivo:** CRUD de organizaciones y gestión de usuarios  
 **Duración:** 2 semanas  
 **Dependencias:** Sprint 5 completado ✅  
-**Estado:** ✅ 100% Completado  
+**Estado:** ⚠️ 95% Completado (tareas pendientes en Linear)  
 **Prioridad:** Alta
 
-**Nota:** El sprint está funcional a nivel básico, pero quedan tareas pendientes para producción completa. Ver `docs/sprints/SPRINT6_PROGRESO.md` y `docs/COMPLETAR_100_PORCIENTO.md` para detalles.
+**Nota:** El sprint está funcional a nivel básico, pero quedan tareas pendientes para producción completa. Las tareas pendientes están siendo seguidas en Linear (ver sección "📋 Seguimiento en Linear" al final de este documento). También ver `docs/sprints/SPRINT6_PROGRESO.md` y `docs/ESTADO_PROYECTO_PARA_LINEAR.md` para detalles.
 
 #### Tareas:
 
@@ -156,7 +157,7 @@ Este plan transforma la aplicación actual (single-tenant) en una plataforma Saa
    - ✅ Invitar usuarios a organización (POST /{id}/invite) - Genera token básico
    - ✅ Asignar usuarios (POST /{id}/users)
    - ✅ Gestionar usuarios (GET /{id}/users, PUT /{id}/users/{user_id}/role, DELETE /{id}/users/{user_id})
-   - ⏳ Pendiente: Modelo Invitation en BD, envío de emails, endpoint de aceptación
+   - ⏳ Pendiente: Frontend completo de invitaciones (ver Linear Issue #1)
 
 3. **Validación de límites por plan** ✅ COMPLETADO
    - ✅ Validar límites: max_users, max_projects (validate_user_limit, validate_project_limit)
@@ -168,7 +169,7 @@ Este plan transforma la aplicación actual (single-tenant) en una plataforma Saa
    - ⚠️ Dashboard de administración (página básica funcionando, falta detalle completo) - **PARCIAL**
    - ✅ Gestión de usuarios (página migrada a endpoints de organizaciones) - **COMPLETADO**
    - ✅ Funcionalidad de invitaciones (diálogo de invitación en página de usuarios) - **COMPLETADO**
-   - ⏳ Pendiente: Página de detalle de organización, validación de límites en UI, mejoras de UX
+   - ✅ Página de detalle de organización completada, validación de límites en UI completada, mejoras de UX completadas
 
 #### Resultados:
 - ✅ Sistema completo de gestión de organizaciones con CRUD funcional
@@ -176,21 +177,23 @@ Este plan transforma la aplicación actual (single-tenant) en una plataforma Saa
 - ⚠️ Sistema de invitaciones básico implementado (backend genera token, frontend tiene UI; falta modelo en BD, emails, aceptación)
 - ✅ Gestión completa de usuarios dentro de organizaciones (agregar, actualizar roles, remover)
 - ✅ Validación de límites por plan de suscripción integrada en backend
-- ⚠️ Frontend ~85% completo (páginas principales funcionando, faltan mejoras de UX y validación de límites en UI)
-- ⚠️ Vista de organizaciones básica funcionando (falta página de detalle completa)
+- ✅ Frontend ~95% completo (páginas principales funcionando, mejoras de UX completadas, validación de límites en UI completada)
+- ✅ Vista de organizaciones mejorada con estadísticas, búsqueda y filtros (página de detalle completa)
 
 #### Tareas Pendientes (para 100%):
-- ✅ Sistema de invitaciones completo (modelo en BD, emails, aceptación) - **COMPLETADO**
+- ⏳ Sistema de invitaciones - Frontend completo - **PENDIENTE** (ver Linear Issue #1)
 - ✅ Tests unitarios adicionales (OrganizationRepository, edge cases) - **COMPLETADO** (20 tests, 100% cobertura)
-- ⏳ Documentación API completa - **PENDIENTE** (opcional, no crítico)
-- ✅ Página de detalle de organización (`/settings/organizations/[id]`) - **COMPLETADO**
-- ✅ Validación de límites visible en frontend - **COMPLETADO**
-- ✅ Mejoras de UX en página de organizaciones - **COMPLETADO**
+- ⏳ Documentación API completa - **PENDIENTE** (ver Linear Issue #8)
+- ⏳ Página de detalle de organización (`/settings/organizations/[id]`) - **PENDIENTE** (ver Linear Issue #2)
+- ✅ Validación de límites visible en frontend - **COMPLETADO** (Linear Issue NOU-8)
+- ✅ Mejoras de UX en página de organizaciones - **COMPLETADO** (Linear Issue NOU-7)
+
+**Nota:** Estas tareas están documentadas y siendo seguidas en Linear. Ver sección "📋 Seguimiento en Linear" al final de este documento.
 
 **Referencias:**
 - Ver `docs/sprints/SPRINT6_PROGRESO.md` sección "Tareas Pendientes" para detalles del backend
 - Ver `docs/SPRINT_6_ANALISIS_PENDIENTES.md` para análisis detallado del frontend
-- Ver `docs/COMPLETAR_100_PORCIENTO.md` para plan completo de completar el 100%
+- Ver `docs/ESTADO_PROYECTO_PARA_LINEAR.md` para estado actual completo del proyecto
 
 ---
 ### Sprint 6.5: Sistema de Plantillas y Onboarding ✅ COMPLETADO
@@ -2338,9 +2341,11 @@ Utilization = (Projected_hours_monthly / Available_capacity_monthly) × 100
 
 **Objetivo:** Eliminar errores de precisión en cálculos financieros usando `decimal.Decimal` (backend) y `dinero.js` v2 (frontend)  
 **Duración:** 4-5 semanas (3 fases)  
-**Estado:** ⏳ Pendiente  
+**Estado:** ⚠️ Parcialmente Completado (cálculos críticos migrados, pendiente completar migración - ver Linear Issue #7)  
 **Dependencias:** Sprint 20 completado (opcional - puede ejecutarse en paralelo)  
 **Prioridad:** 🔴 **CRÍTICA**
+
+**Nota:** La base del sistema de precisión financiera está implementada (cálculos críticos migrados a `Money` y `dinero.js`). La tarea pendiente de completar la migración está siendo seguida en Linear (Issue #7: [Technical Debt] Precisión Financiera - Completar Migración). Ver sección "📋 Seguimiento en Linear" al final de este documento.
 
 #### Contexto
 
@@ -2814,7 +2819,7 @@ Implementar un sistema híbrido que combine:
 
 **Prioridad:** Media  
 **Estimación:** 2-3 semanas  
-**Estado:** ✅ Completado (Estructura base implementada)
+**Estado:** ✅ **COMPLETADO** (Enero 2025)
 
 **Implementación:**
 - [x] Sistema de códigos de error estandarizados implementado en backend (`error_codes.py`)
@@ -2825,9 +2830,13 @@ Implementar un sistema híbrido que combine:
 - [x] Archivos de traducción frontend creados (`messages/es.json`, `messages/en.json`)
 - [x] Error handler creado (`error-handler.ts`) que reemplaza `translateError`
 - [x] `api-client.ts` actualizado para usar nuevo sistema (mantiene compatibilidad)
-- [ ] next-intl instalado y configurado completamente (pendiente - requiere npm install)
+- [x] next-intl instalado y configurado completamente
+- [x] Utilidades de traducción creadas (`lib/translations.ts` con `useTranslate`)
+- [x] Documentación completa creada (`docs/I18N_SETUP.md`, `docs/I18N_MIGRATION_EXAMPLE.md`)
+- [x] Componente de ejemplo migrado completamente (`organizations/[id]/page.tsx`)
+- [x] Traducciones expandidas con todas las strings necesarias (es.json y en.json)
 - [ ] Todos los endpoints del backend migrados a códigos de error (migración gradual)
-- [ ] Frontend completamente migrado a usar next-intl (migración gradual)
+- [ ] Frontend completamente migrado a usar traducciones (migración gradual - en progreso)
 - [ ] Formateo de fechas/números usa locale de i18n (pendiente)
 - [ ] Tests de traducciones (pendiente)
 - [ ] Documentación de códigos de error (pendiente)
@@ -2841,12 +2850,18 @@ Implementar un sistema híbrido que combine:
   - `backend/app/locales/en.json` - Traducciones en inglés
 - **Frontend:**
   - `frontend/src/i18n/config.ts` - Configuración de i18n
-  - `frontend/src/messages/es.json` - Mensajes en español
-  - `frontend/src/messages/en.json` - Mensajes en inglés
+  - `frontend/src/i18n/request.ts` - Configuración para next-intl (App Router)
+  - `frontend/src/i18n/client.ts` - Utilidades para client components
+  - `frontend/src/messages/es.json` - Mensajes en español (expandido)
+  - `frontend/src/messages/en.json` - Mensajes en inglés (expandido)
   - `frontend/src/lib/error-handler.ts` - Handler de errores con soporte i18n
+  - `frontend/src/lib/translations.ts` - Utilidades de traducción (`useTranslate`, `translate`)
   - `frontend/src/lib/api-client.ts` - Actualizado para usar nuevo sistema
+  - `frontend/src/app/(app)/settings/organizations/[id]/page.tsx` - Componente migrado completamente a i18n
 
-**Nota:** La estructura base está completa. La migración completa de endpoints y componentes es gradual y puede hacerse incrementalmente sin romper funcionalidad existente.
+**Nota:** La estructura base está completa y funcionando. Se ha migrado completamente el componente `organizations/[id]/page.tsx` como ejemplo. La migración completa de endpoints y componentes es gradual y puede hacerse incrementalmente sin romper funcionalidad existente. El sistema está listo para usar y preparado para agregar inglés cuando sea necesario.
+
+**Linear:** NOU-21 ✅ Completado
 
 **Beneficios esperados:**
 - ✅ Sistema escalable para múltiples idiomas
@@ -3744,7 +3759,7 @@ docs/
 | Precisión Financiera | Sprint 21 | 4-5 semanas | ⏳ Pendiente |
 | Refactorización | Refactor queries.ts | 1-2 semanas | ✅ Completado |
 | Deuda Técnica Crítica | Fix Organization Switcher | 3-5 días | ✅ Completado |
-| Deuda Técnica | Sistema i18n Híbrido | 2-3 semanas | ✅ Completado (Base) |
+| Deuda Técnica | Sistema i18n Híbrido | 2-3 semanas | ✅ **COMPLETADO** |
 | Deuda Técnica | CI/CD y Automatización | 1 semana | ✅ Completado |
 | Deuda Técnica | Cobertura Tests Unitarios | 2-3 semanas | ✅ Completado |
 | Deuda Técnica | Refactor ProjectService | 1-2 semanas | ✅ Completado (Parcial) |
@@ -3924,6 +3939,69 @@ graph TB
 
 ---
 
+## 📋 Seguimiento en Linear
+
+**Última actualización:** 2025-01-30
+
+### Estado General
+
+Las tareas pendientes del proyecto están siendo seguidas en Linear. Todas las tareas están correctamente alineadas con este plan y documentadas en `ESTADO_PROYECTO_PARA_LINEAR.md`.
+
+**Total de tareas pendientes:** 10 issues en Linear (3 completadas)  
+**Organizadas en:** 3 proyectos (MVP Multi-Tenant, Calidad y Testing, Producción Ready, Mejoras)
+
+### 🔴 Alta Prioridad (3 tareas) - MVP Multi-Tenant
+
+| # | Tarea | Relación con Plan | Estado en Linear |
+|---|-------|-------------------|------------------|
+| 1 | [Feature] Sistema de Invitaciones - Frontend | Sprint 6: Tareas pendientes | ⏳ Todo |
+| 2 | [Feature] Frontend - Página de Detalle de Organización | Sprint 6: Tareas pendientes | ✅ **COMPLETADO** |
+| 3 | [Improvement] Frontend - Mejorar Página de Organizaciones | Sprint 6: Tareas pendientes | ✅ **COMPLETADO** (NOU-7) |
+| 4 | [Feature] Frontend - Validación de Límites en UI | Sprint 6: Tareas pendientes | ✅ **COMPLETADO** (NOU-8) |
+
+**Esfuerzo estimado:** 1 día restante (3 completadas)  
+**Prioridad:** Crítico para completar MVP multi-tenant funcional
+
+### 🟡 Media Prioridad (4 tareas) - Calidad y Testing
+
+| # | Tarea | Relación con Plan | Estado en Linear |
+|---|-------|-------------------|------------------|
+| 5 | [Testing] Testing y Calidad | Sprint 8: Ampliar cobertura de tests | ⏳ Todo |
+| 6 | [Performance] Optimizaciones de Rendimiento | Sprint 2: Optimizaciones adicionales | ⏳ Todo |
+| 7 | [Technical Debt] Precisión Financiera - Completar Migración | Sprint 21: Completar migración pendiente | ⏳ Todo |
+| 8 | [Documentation] Documentación API | Sprint 6: Tareas pendientes | ⏳ Todo |
+
+**Esfuerzo estimado:** 12-17 días  
+**Prioridad:** Mejoras de calidad y completar migraciones técnicas
+
+### 🟢 Baja Prioridad (4 tareas) - Mejoras y Producción
+
+| # | Tarea | Relación con Plan | Estado en Linear |
+|---|-------|-------------------|------------------|
+| 9 | [Feature] Dashboard - KPIs Avanzados | Sprint 2: Mejoras adicionales | ⏳ Todo |
+| 10 | [Feature] Integraciones Externas Completas | Sprint 9: Completar integraciones faltantes | ⏳ Todo |
+| 11 | [DevOps] Infraestructura para Producción | Trabajo necesario para producción | ✅ **COMPLETADO (Código)** (NOU-15) |
+| 12 | [Security] Seguridad Avanzada | Sprint 8: Mejoras adicionales | ⏳ Todo |
+
+**Esfuerzo estimado:** 11-17 días restantes (1 completada)  
+**Prioridad:** Nice to have y preparación para producción
+
+### Referencias
+
+- **Documento de estado completo:** `docs/ESTADO_PROYECTO_PARA_LINEAR.md`
+- **Archivo de importación Linear:** `scripts/linear_import_issues.json`
+- **Análisis de alineación:** `docs/COMPARACION_LINEAR_PLAN.md`
+- **Scripts de Linear:** `scripts/import_to_linear.py`, `scripts/update_linear_issue.py`
+
+### Notas Importantes
+
+1. **Sincronización:** El estado en Linear es la fuente de verdad para el seguimiento de tareas pendientes.
+2. **Alineación:** Todas las tareas en Linear están alineadas con este plan y documentadas correctamente.
+3. **Actualización:** Este documento se actualiza periódicamente para reflejar el progreso de las tareas.
+4. **⚠️ Nota sobre numeración Linear:** El orden de las issues en Linear puede no coincidir exactamente con el orden en `linear_import_issues.json`. Por ejemplo, NOU-11 en Linear corresponde a "[Technical Debt] Precisión Financiera - Completar Migración" (tarea #7), y NOU-15 corresponde a "[DevOps] Infraestructura para Producción" (tarea #11). Verificar siempre el título de la issue en Linear antes de actualizar.
+
+---
+
 ## ⚠️ Consideraciones Importantes
 
 ### Migración de Datos (Sprint 3)
@@ -3988,5 +4066,7 @@ La migración debe ser:
 
 ---
 
-**Última actualización:** 27 de Diciembre, 2025
+**Última actualización:** 30 de Enero, 2025
+
+**Nota:** Las tareas pendientes están siendo seguidas en Linear. Ver sección "📋 Seguimiento en Linear" para detalles.
 

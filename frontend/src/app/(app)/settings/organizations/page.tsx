@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -41,7 +41,9 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  CreditCard
+  CreditCard,
+  Search,
+  Eye
 } from "lucide-react"
 import { 
   useGetOrganizations, 
@@ -55,6 +57,7 @@ import { Organization } from "@/lib/types/organizations"
 import { useToast } from "@/hooks/use-toast"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { cn } from "@/lib/utils"
 
 const SUBSCRIPTION_PLANS = [
   { value: 'free', label: 'Free', color: 'bg-grey-100 text-grey-700' },
@@ -68,6 +71,133 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled: 'bg-grey-50 text-grey-700 border-grey-200',
   past_due: 'bg-warning-50 text-warning-700 border-warning-200',
   trialing: 'bg-info-50 text-info-700 border-info-200',
+}
+
+// Component to display organization row with stats
+function OrganizationRow({ 
+  org, 
+  router, 
+  openSubscriptionDialog, 
+  getStatusIcon,
+}: {
+  org: Organization
+  router: ReturnType<typeof useRouter>
+  openSubscriptionDialog: (org: Organization) => void
+  getStatusIcon: (status: string) => JSX.Element
+}) {
+  const { data: orgStats } = useGetOrganizationStats(org.id)
+  
+  const formatUsage = (current: number, limit: number) => {
+    if (limit === -1) return `${current} (∞)`
+    const percentage = limit === 0 ? 100 : Math.min(100, (current / limit) * 100)
+    const colorClass = percentage >= 100 
+      ? 'text-destructive font-semibold' 
+      : percentage >= 80 
+      ? 'text-warning-700 font-medium' 
+      : 'text-grey-600'
+    return (
+      <span className={colorClass}>
+        {current}/{limit} ({percentage.toFixed(0)}%)
+      </span>
+    )
+  }
+
+  return (
+    <TableRow>
+      <TableCell>
+        <div>
+          <div className="font-medium text-grey-900">{org.name}</div>
+          <div className="text-sm text-grey-500">{org.slug}</div>
+        </div>
+      </TableCell>
+      <TableCell>
+        <Badge 
+          variant="outline" 
+          className={SUBSCRIPTION_PLANS.find(p => p.value === org.subscription_plan)?.color || ''}
+        >
+          {SUBSCRIPTION_PLANS.find(p => p.value === org.subscription_plan)?.label || org.subscription_plan}
+        </Badge>
+      </TableCell>
+      <TableCell>
+        <Badge 
+          variant="outline" 
+          className={STATUS_COLORS[org.subscription_status] || STATUS_COLORS.active}
+        >
+          <span className="flex items-center gap-1.5">
+            {getStatusIcon(org.subscription_status)}
+            {org.subscription_status}
+          </span>
+        </Badge>
+      </TableCell>
+      <TableCell>
+        {orgStats ? (
+          formatUsage(orgStats.current_usage.users, orgStats.limits.users)
+        ) : (
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-grey-400" />
+            <span>{org.user_count || 0}</span>
+          </div>
+        )}
+      </TableCell>
+      <TableCell>
+        {orgStats ? (
+          formatUsage(orgStats.current_usage.projects, orgStats.limits.projects)
+        ) : (
+          <span className="text-grey-400">-</span>
+        )}
+      </TableCell>
+      <TableCell>
+        {orgStats ? (
+          formatUsage(orgStats.current_usage.services, orgStats.limits.services)
+        ) : (
+          <span className="text-grey-400">-</span>
+        )}
+      </TableCell>
+      <TableCell>
+        {orgStats ? (
+          formatUsage(orgStats.current_usage.team_members, orgStats.limits.team_members)
+        ) : (
+          <span className="text-grey-400">-</span>
+        )}
+      </TableCell>
+      <TableCell>
+        <div className="text-sm text-grey-600">
+          {new Date(org.created_at).toLocaleDateString()}
+        </div>
+      </TableCell>
+      <TableCell className="text-right">
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push(`/settings/organizations/${org.id}`)}
+            className="text-primary-600 hover:text-primary-700"
+          >
+            <Eye className="w-4 h-4 mr-1" />
+            Ver Detalles
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push(`/admin/organizations/${org.id}/credits`)}
+            className="text-primary-600 hover:text-primary-700"
+          >
+            <CreditCard className="w-4 h-4 mr-1" />
+            Créditos
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => openSubscriptionDialog(org)}
+            className="text-primary-600 hover:text-primary-700"
+          >
+            <Pencil className="w-4 h-4 mr-1" />
+            Plan
+          </Button>
+        </div>
+      </TableCell>
+    </TableRow>
+  )
 }
 
 export default function OrganizationsPage() {
@@ -85,12 +215,37 @@ export default function OrganizationsPage() {
   const [isSubscriptionDialogOpen, setIsSubscriptionDialogOpen] = useState(false)
   const [selectedOrg, setSelectedOrg] = useState<Organization | null>(null)
   const [selectedPlan, setSelectedPlan] = useState<string>('')
+  
+  // Search and filter state (only for super-admin)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterPlan, setFilterPlan] = useState<string>('all')
+  const [filterStatus, setFilterStatus] = useState<string>('all')
 
   const organizations = organizationsData?.items || []
   const isSuperAdmin = currentUser?.role === 'super_admin'
   
   // Use myOrg for non-super-admin view
   const displayOrg = isSuperAdmin ? null : myOrg
+  
+  // Filtered organizations for super-admin
+  const filteredOrganizations = useMemo(() => {
+    if (!isSuperAdmin) return []
+    
+    return organizations.filter((org) => {
+      // Search filter
+      const matchesSearch = searchQuery === '' || 
+        org.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        org.slug.toLowerCase().includes(searchQuery.toLowerCase())
+      
+      // Plan filter
+      const matchesPlan = filterPlan === 'all' || org.subscription_plan === filterPlan
+      
+      // Status filter
+      const matchesStatus = filterStatus === 'all' || org.subscription_status === filterStatus
+      
+      return matchesSearch && matchesPlan && matchesStatus
+    })
+  }, [organizations, searchQuery, filterPlan, filterStatus, isSuperAdmin])
 
   const handleUpdateSubscription = async () => {
     if (!selectedOrg || !selectedPlan) return
@@ -343,99 +498,96 @@ export default function OrganizationsPage() {
           </TabsContent>
         </Tabs>
       ) : (
-        // Super admin: Show organizations list
+        // Super admin: Show organizations list with search and filters
         <Card>
           <CardHeader>
-            <CardTitle>Organizations List</CardTitle>
-            <CardDescription>
-              {organizations.length} organization{organizations.length !== 1 ? 's' : ''} found
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Lista de Organizaciones</CardTitle>
+                <CardDescription>
+                  {filteredOrganizations.length} de {organizations.length} organización{organizations.length !== 1 ? 'es' : ''}
+                </CardDescription>
+              </div>
+            </div>
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Organization</TableHead>
-                  <TableHead>Plan</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Users</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {organizations.map((org) => (
-                  <TableRow key={org.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium text-grey-900">{org.name}</div>
-                        <div className="text-sm text-grey-500">{org.slug}</div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant="outline" 
-                        className={SUBSCRIPTION_PLANS.find(p => p.value === org.subscription_plan)?.color || ''}
-                      >
-                        {SUBSCRIPTION_PLANS.find(p => p.value === org.subscription_plan)?.label || org.subscription_plan}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant="outline" 
-                        className={STATUS_COLORS[org.subscription_status] || STATUS_COLORS.active}
-                      >
-                        <span className="flex items-center gap-1.5">
-                          {getStatusIcon(org.subscription_status)}
-                          {org.subscription_status}
-                        </span>
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-grey-400" />
-                        <span>{org.user_count || 0}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm text-grey-600">
-                        {new Date(org.created_at).toLocaleDateString()}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => router.push(`/settings/organizations/${org.id}`)}
-                          className="text-primary-600 hover:text-primary-700"
-                        >
-                          Ver Detalles
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => router.push(`/admin/organizations/${org.id}/credits`)}
-                          className="text-primary-600 hover:text-primary-700"
-                        >
-                          <CreditCard className="w-4 h-4 mr-1" />
-                          Créditos
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => openSubscriptionDialog(org)}
-                          className="text-primary-600 hover:text-primary-700"
-                        >
-                          <Pencil className="w-4 h-4 mr-1" />
-                          Update Plan
-                        </Button>
-                      </div>
-                    </TableCell>
+          <CardContent className="space-y-4">
+            {/* Search and Filters */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-grey-400" />
+                <Input
+                  placeholder="Buscar por nombre o slug..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={filterPlan} onValueChange={setFilterPlan}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Filtrar por plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los planes</SelectItem>
+                  {SUBSCRIPTION_PLANS.map((plan) => (
+                    <SelectItem key={plan.value} value={plan.value}>
+                      {plan.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Filtrar por estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los estados</SelectItem>
+                  <SelectItem value="active">Activo</SelectItem>
+                  <SelectItem value="cancelled">Cancelado</SelectItem>
+                  <SelectItem value="past_due">Vencido</SelectItem>
+                  <SelectItem value="trialing">Prueba</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Organizations Table */}
+            <div className="border rounded-lg">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Organización</TableHead>
+                    <TableHead>Plan</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Usuarios</TableHead>
+                    <TableHead>Proyectos</TableHead>
+                    <TableHead>Servicios</TableHead>
+                    <TableHead>Miembros</TableHead>
+                    <TableHead>Creada</TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {filteredOrganizations.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={9} className="text-center py-8 text-grey-500">
+                        {searchQuery || filterPlan !== 'all' || filterStatus !== 'all'
+                          ? "No se encontraron organizaciones con los filtros aplicados"
+                          : "No hay organizaciones"}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredOrganizations.map((org) => (
+                      <OrganizationRow
+                        key={org.id}
+                        org={org}
+                        router={router}
+                        openSubscriptionDialog={openSubscriptionDialog}
+                        getStatusIcon={getStatusIcon}
+                      />
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
         </Card>
       )}
