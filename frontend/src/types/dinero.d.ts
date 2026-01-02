@@ -16,9 +16,9 @@ declare module 'dinero.js' {
 
   export interface DineroOptions {
     amount: number
-    currency: string
+    currency: string | { code: string; exponent?: number }
   }
 
   export function dinero(options: DineroOptions): Dinero
-  export function dinero(amount: number, currency: string): Dinero
+  export function dinero(amount: number, currency: string | { code: string; exponent?: number }): Dinero
 }

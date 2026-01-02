@@ -658,7 +658,7 @@ export default function EditQuotePage() {
       </div>
 
       {/* Send Email Dialog */}
-      {quote && project && (
+      {quote && project ? (
         <SendEmailDialog
           open={sendEmailDialogOpen}
           onOpenChange={setSendEmailDialogOpen}
@@ -668,7 +668,7 @@ export default function EditQuotePage() {
           clientEmail={(project as any).client_email || ""}
           quoteVersion={Number((quote as any).version) || 1}
         />
-      )}
+      ) : null}
     </div>
   )
 }

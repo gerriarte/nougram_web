@@ -74,7 +74,7 @@ export function AIAdvisor() {
           </Button>
         </form>
 
-        {mutation.isSuccess && mutation.data && (
+        {mutation.isSuccess && mutation.data ? (
           <div className="mt-4 p-4 bg-muted rounded-lg">
             <div className="flex items-start gap-2">
               <Sparkles className="h-5 w-5 mt-0.5 text-primary" />
@@ -91,7 +91,7 @@ export function AIAdvisor() {
               </div>
             </div>
           </div>
-        )}
+        ) : null}
 
         {mutation.isError && (
           <div className="mt-4 p-4 bg-destructive/10 rounded-lg">

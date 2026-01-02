@@ -14,6 +14,7 @@ declare module '@jest/globals' {
         toBe(value: any): void
         toEqual(value: any): void
         toContain(item: any): void
+        toBeNull(): void
       }
       toContain(item: any): void
       toMatch(pattern: string | RegExp): void

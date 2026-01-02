@@ -35,6 +35,7 @@ describe('Money Transformer - Currency validation', () => {
       };
       
       const originalEnv = process.env.NODE_ENV;
+      // @ts-ignore - NODE_ENV is read-only but we need to test different environments
       process.env.NODE_ENV = 'development';
       
       // En desarrollo debería usar USD como fallback con warning

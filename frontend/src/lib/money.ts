@@ -50,6 +50,7 @@ export function fromAPIString(
   const amount = Math.round(numericValue * factor);
   
   // Sintaxis Dinero.js v2: dinero({ amount, currency })
+  // @ts-ignore - dinero.js acepta objetos de moneda aunque la declaración dice string
   return dinero({ amount, currency: config.currency });
 }
 
@@ -65,6 +66,7 @@ export function fromAPI(
   const factor = Math.pow(10, config.precision);
   const roundedAmount = Math.round(amount * factor);
   
+  // @ts-ignore - dinero.js acepta objetos de moneda aunque la declaración dice string
   return dinero({ amount: roundedAmount, currency: config.currency });
 }
 
