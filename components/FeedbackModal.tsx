@@ -6,17 +6,23 @@ import { Button } from './Button';
 interface FeedbackModalProps {
     isOpen: boolean;
     onClose: () => void;
+    onDecision: (consent: boolean) => Promise<void> | void;
+    isSubmitting?: boolean;
 }
 
 type ModalState = 'initial' | 'accepted' | 'declined';
 
-export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose }) => {
+export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, onDecision, isSubmitting = false }) => {
     const [state, setState] = useState<ModalState>('initial');
 
-    const handleResponse = (accepted: boolean) => {
+    const handleResponse = async (accepted: boolean) => {
+        // 1. Call parent handler (API submit)
+        await onDecision(accepted);
+
+        // 2. Update local UI state
         setState(accepted ? 'accepted' : 'declined');
 
-        // Create a timeout to close the modal after showing the message
+        // 3. Create a timeout to close the modal after showing the message
         setTimeout(() => {
             onClose();
             // Reset state after animation completes (approx)
@@ -79,17 +85,18 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose })
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <button
-                                        onClick={() => handleResponse(false)}
-                                        className="px-6 py-3 rounded-xl border border-white/10 text-slate-300 hover:bg-white/5 transition-all font-medium text-sm"
+                                        className={`px-6 py-3 rounded-xl border border-white/10 text-slate-300 hover:bg-white/5 transition-all font-medium text-sm ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        disabled={isSubmitting}
                                     >
                                         No, gracias
                                     </button>
                                     <Button
                                         onClick={() => handleResponse(true)}
                                         variant="primary"
-                                        className="w-full justify-center"
+                                        className={`w-full justify-center ${isSubmitting ? 'opacity-80 cursor-wait' : ''}`}
+                                        disabled={isSubmitting}
                                     >
-                                        Sí, cuenta conmigo
+                                        {isSubmitting ? 'Enviando...' : 'Sí, cuenta conmigo'}
                                     </Button>
                                 </div>
                             </motion.div>

@@ -25,7 +25,7 @@ export default async function handler(
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { name, email, profession, phone, whatsappConsent, _gotcha } = req.body;
+    const { name, email, profession, phone, whatsappConsent, feedbackConsent, _gotcha } = req.body;
 
     // Honeypot check: If _gotcha is filled, it's a bot. Fail silently.
     if (_gotcha) {
@@ -63,7 +63,9 @@ export default async function handler(
         Email: ${email}
         Profesión: ${profession}
         Teléfono: ${phone || 'No especificado'}
+        Teléfono: ${phone || 'No especificado'}
         WhatsApp Consent: ${whatsappConsent ? 'Sí' : 'No'}
+        Dará Feedback: ${feedbackConsent ? 'Sí' : 'No'}
       `,
             html: `
         <h2>Nuevo registro para la Beta de Nougram</h2>
@@ -72,6 +74,7 @@ export default async function handler(
         <p><strong>Profesión:</strong> ${profession}</p>
         <p><strong>Teléfono:</strong> ${phone || 'No especificado'}</p>
         <p><strong>Acepta WhatsApp:</strong> ${whatsappConsent ? 'Sí' : 'No'}</p>
+        <p><strong>Dará Feedback:</strong> ${feedbackConsent ? 'Sí' : 'No'}</p>
       `,
         };
 
@@ -92,7 +95,7 @@ export default async function handler(
 
                 await sheets.spreadsheets.values.append({
                     spreadsheetId: process.env.GOOGLE_SHEET_ID,
-                    range: `${process.env.GOOGLE_SHEET_NAME || 'Hoja 1'}!A:F`,
+                    range: `${process.env.GOOGLE_SHEET_NAME || 'Hoja 1'}!A:G`,
                     valueInputOption: 'USER_ENTERED',
                     requestBody: {
                         values: [
@@ -102,7 +105,9 @@ export default async function handler(
                                 email,
                                 profession,
                                 phone || '',
-                                whatsappConsent ? 'Sí' : 'No'
+                                phone || '',
+                                whatsappConsent ? 'Sí' : 'No',
+                                feedbackConsent ? 'Sí' : 'No'
                             ]
                         ],
                     },

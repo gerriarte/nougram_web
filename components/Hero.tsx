@@ -68,33 +68,37 @@ export const Hero: React.FC = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateEmail(formData.email)) {
       setEmailError('Por favor, ingresa un correo válido.');
       return;
     }
+    // Open modal to ask for feedback consent before submitting
+    setIsModalOpen(true);
+  };
 
+  const handleFinalSubmit = async (feedbackConsent: boolean) => {
     setIsSubmitting(true);
     try {
       const response = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, feedbackConsent }),
       });
 
       if (response.ok) {
-        // Replace alert with modal
-        setIsModalOpen(true);
         setFormData({ name: '', email: '', profession: '', phone: '', whatsappConsent: false, _gotcha: '' });
         setEmailError('');
         setIsEmailTouched(false);
       } else {
         alert('Hubo un error al enviar tus datos. Por favor intenta de nuevo.');
+        setIsModalOpen(false); // Close modal if error
       }
     } catch (error) {
       console.error("Submission error:", error);
       alert('Hubo un error de conexión. Por favor intenta de nuevo.');
+      setIsModalOpen(false);
     } finally {
       setIsSubmitting(false);
     }
@@ -315,6 +319,8 @@ export const Hero: React.FC = () => {
       <FeedbackModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        onDecision={handleFinalSubmit}
+        isSubmitting={isSubmitting}
       />
     </section >
   );
