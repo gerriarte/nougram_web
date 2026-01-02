@@ -124,4 +124,3 @@ class QuoteExpense(Base):
     
     # Relationships
     quote = relationship("Quote", back_populates="expenses")
-

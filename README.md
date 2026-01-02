@@ -509,8 +509,4 @@ Este proyecto es de uso interno y propietario. Todos los derechos reservados.
 - Next.js por la increíble experiencia de desarrollo
 - La comunidad de código abierto por las herramientas utilizadas
 
----
-
-**¿Preguntas o sugerencias?** Abre un [Issue](https://github.com/gerriarte/Cotizador/issues) o contacta al equipo.
-
-**⭐ Si este proyecto te resulta útil, considera darle una estrella en GitHub.**
+---**¿Preguntas o sugerencias?** Abre un [Issue](https://github.com/gerriarte/Cotizador/issues) o contacta al equipo.**⭐ Si este proyecto te resulta útil, considera darle una estrella en GitHub.**

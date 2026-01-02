@@ -21,4 +21,11 @@ declare module 'dinero.js' {
 
   export function dinero(options: DineroOptions): Dinero
   export function dinero(amount: number, currency: string | { code: string; exponent?: number }): Dinero
+  
+  // Default export for compatibility
+  const defaultExport: {
+    (options: DineroOptions): Dinero
+    (amount: number, currency: string | { code: string; exponent?: number }): Dinero
+  }
+  export default defaultExport
 }

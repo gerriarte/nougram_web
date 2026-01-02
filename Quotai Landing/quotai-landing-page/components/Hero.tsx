@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { COPY } from '../constants';
 import { Button } from './Button';
 import { CheckCircle2, TrendingUp, ShieldCheck, AlertCircle, Sparkles } from 'lucide-react';
 
@@ -33,7 +34,14 @@ const Counter = ({ end, suffix = '', label }: { end: number; suffix?: string; la
 
 export const Hero: React.FC = () => {
   const [loaded, setLoaded] = useState(false);
-  const [formData, setFormData] = useState({ name: '', email: '', profession: '' });
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    profession: '',
+    phone: '',
+    whatsappConsent: false,
+    _gotcha: '' // Honeypot field
+  });
   const [emailError, setEmailError] = useState('');
   const [isEmailTouched, setIsEmailTouched] = useState(false);
 
@@ -44,25 +52,49 @@ export const Hero: React.FC = () => {
   const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+
     if (name === 'email') {
       if (!isEmailTouched) setIsEmailTouched(true);
       setEmailError(value && !validateEmail(value) ? 'Correo inválido' : '');
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateEmail(formData.email)) {
       setEmailError('Por favor, ingresa un correo válido.');
       return;
     }
-    console.log("Captured lead:", formData);
-    alert(`¡Gracias ${formData.name}! Te hemos añadido a la lista de espera.`);
-    setFormData({ name: '', email: '', profession: '' });
-    setEmailError('');
-    setIsEmailTouched(false);
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        alert(`¡Gracias ${formData.name}! Te hemos añadido a la lista de espera.`);
+        setFormData({ name: '', email: '', profession: '', phone: '', whatsappConsent: false });
+        setEmailError('');
+        setIsEmailTouched(false);
+      } else {
+        alert('Hubo un error al enviar tus datos. Por favor intenta de nuevo.');
+      }
+    } catch (error) {
+      console.error("Submission error:", error);
+      alert('Hubo un error de conexión. Por favor intenta de nuevo.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -111,17 +143,27 @@ export const Hero: React.FC = () => {
               className={`text-4xl lg:text-7xl font-bold text-white tracking-tight leading-[1.1] mb-4 fade-in-up ${loaded ? 'visible' : ''}`}
               style={{ transitionDelay: '100ms' }}
             >
-              Deja de <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-indigo-300 to-sky-400 bg-[length:200%_auto] animate-[gradient_8s_ease_infinite]">
-                Cobrar de Menos
-              </span>
+              {COPY.hero.headline.includes(':') ? (
+                <>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-indigo-300 to-sky-400 bg-[length:200%_auto] animate-[gradient_8s_ease_infinite]">
+                    {COPY.hero.headline.split(':')[0]}
+                  </span>
+                  <span className="block text-2xl lg:text-4xl mt-4 text-slate-200 font-normal leading-snug">
+                    {COPY.hero.headline.split(':')[1]}
+                  </span>
+                </>
+              ) : (
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-indigo-300 to-sky-400 bg-[length:200%_auto] animate-[gradient_8s_ease_infinite]">
+                  {COPY.hero.headline}
+                </span>
+              )}
             </h1>
 
             <p
               className={`text-base lg:text-lg text-slate-300/90 mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0 fade-in-up ${loaded ? 'visible' : ''}`}
               style={{ transitionDelay: '200ms' }}
             >
-              <strong className="text-white font-semibold">Nougram</strong> es inteligencia artificial para consultores y creativos. Convierte tu know-how en cotizaciones precisas y recupera el control de tu rentabilidad.
+              {COPY.hero.subheadline}
             </p>
 
             <div
@@ -141,10 +183,12 @@ export const Hero: React.FC = () => {
               <div className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-brand-400" /> 100% Privado</div>
               <div className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-brand-400" /> Machine Learning</div>
             </div>
+
+
           </div>
 
           {/* Right Content: Glass Form */}
-          <div className="w-full max-w-md lg:w-[440px]">
+          <div className="w-full max-w-md lg:w-[440px]" id="join-beta">
             <div
               className={`relative bg-white/5 border border-white/10 backdrop-blur-xl p-6 lg:p-8 rounded-3xl shadow-2xl fade-in-up ${loaded ? 'visible' : ''}`}
               style={{ transitionDelay: '500ms' }}
@@ -157,6 +201,16 @@ export const Hero: React.FC = () => {
                 <p className="text-xs lg:text-sm text-slate-400 mb-5">Únete a la lista de espera exclusiva.</p>
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+                  {/* Honeypot field for bots */}
+                  <input
+                    type="text"
+                    name="_gotcha"
+                    value={formData._gotcha}
+                    onChange={handleChange}
+                    style={{ display: 'none' }}
+                    tabIndex={-1}
+                    autoComplete="off"
+                  />
                   <div className="space-y-3">
                     <input
                       name="name"
@@ -187,8 +241,8 @@ export const Hero: React.FC = () => {
                         value={formData.email}
                         onChange={handleChange}
                         className={`w-full px-4 py-2.5 text-sm bg-dark-800/50 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all hover:bg-dark-800/70 ${emailError
-                            ? 'border-red-500/50 focus:ring-red-500/50'
-                            : 'border-white/10 focus:ring-brand-500/50 focus:border-brand-500/50'
+                          ? 'border-red-500/50 focus:ring-red-500/50'
+                          : 'border-white/10 focus:ring-brand-500/50 focus:border-brand-500/50'
                           }`}
                       />
                       {emailError && (
@@ -197,16 +251,51 @@ export const Hero: React.FC = () => {
                         </div>
                       )}
                     </div>
+
+                    <input
+                      name="phone"
+                      type="tel"
+                      placeholder="Tu Teléfono"
+                      required
+                      value={formData.phone}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 text-sm bg-dark-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/70"
+                    />
+
+                    <label className="flex items-start gap-3 cursor-pointer group">
+                      <div className="relative flex items-center">
+                        <input
+                          name="whatsappConsent"
+                          type="checkbox"
+                          checked={formData.whatsappConsent}
+                          onChange={handleChange}
+                          className="peer sr-only"
+                        />
+                        <div className="w-5 h-5 border border-white/20 rounded-md bg-dark-800/50 peer-checked:bg-brand-500 peer-checked:border-brand-500 transition-all"></div>
+                        <svg
+                          className="absolute w-3.5 h-3.5 text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-opacity pointer-events-none"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth="3"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <span className="text-xs text-slate-400 group-hover:text-slate-300 transition-colors pt-0.5 leading-tight">
+                        Acepto ser agregado al grupo de WhatsApp de Nougram para recibir actualizaciones.
+                      </span>
+                    </label>
                   </div>
 
                   <Button
                     type="submit"
                     variant="primary"
                     fullWidth
-                    className={`mt-2 py-3 lg:py-4 text-sm lg:text-base shadow-lg shadow-brand-500/20 hover:shadow-brand-500/40 border-t border-white/10 ${emailError ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    disabled={!!emailError}
+                    className={`mt-2 py-3 lg:py-4 text-sm lg:text-base shadow-lg shadow-brand-500/20 hover:shadow-brand-500/40 border-t border-white/10 ${emailError || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={!!emailError || isSubmitting}
                   >
-                    Obtener Acceso Anticipado
+                    {isSubmitting ? 'Enviando...' : 'Obtener Acceso Anticipado'}
                   </Button>
                 </form>
 
@@ -217,8 +306,8 @@ export const Hero: React.FC = () => {
             </div>
           </div>
 
-        </div>
-      </div>
-    </section>
+        </div >
+      </div >
+    </section >
   );
 };

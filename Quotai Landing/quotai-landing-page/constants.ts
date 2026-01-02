@@ -1,8 +1,8 @@
 export const COPY = {
   brand: "Nougram",
   hero: {
-    headline: "Deja de Cobrar de Menos: La Autoridad del Dato para Ponerle Precio a tu Talento",
-    subheadline: "Nougram es la herramienta de Machine Learning diseñada para consultores, diseñadores, fotógrafos y líderes de marketing que convierte tu know-how en una cotización precisa y rentable, permitiéndote concentrarte en lo que mejor sabes hacer.",
+    headline: "Cobra mejor tus servicios: Cotizador de precios para servicios con base en conocimientos y experiencia",
+    subheadline: "Nougram es el Cotizador de Machine Learning diseñado para consultores, diseñadores, fotógrafos y líderes de marketing que convierte tu know-how en una cotización precisa y rentable, permitiéndote concentrarte en lo que mejor sabes hacer.",
     cta: "Asegurar mi Acceso Beta y Empezar a Cobrar Bien"
   },
   problem: {
@@ -11,8 +11,8 @@ export const COPY = {
     implication: "La realidad es que la estimación imprecisa no solo reduce tu margen de ganancia; te obliga a desviar tu energía creativa del proyecto para convertirte en un contador manual. Es hora de detener el ciclo de incertidumbre financiera y recuperar tu enfoque."
   },
   solution: {
-    headline: "Nougram: La Única Herramienta de IA que Entiende el Valor de lo Intangible",
-    subheadline: "Te damos la herramienta para que cobres sin disculpas. Nougram utiliza Machine Learning para analizar el valor de tus recursos, la complejidad de tus servicios y el contexto del mercado.",
+    headline: "Nougram: El Único Cotizador de IA que Entiende el Valor de lo Intangible",
+    subheadline: "Te damos el cotizador para que cobres sin disculpas. Nougram utiliza Machine Learning para analizar el valor de tus recursos, la complejidad de tus servicios y el contexto del mercado.",
     benefits: [
       {
         title: "Cobra con Confianza (Y Cifras Reales)",
@@ -54,5 +54,98 @@ export const COPY = {
     title: "Es Hora de que tu Talento Reciba la Recompensa que Merece.",
     description: "El futuro no espera. Deja de malgastar horas en hojas de cálculo y asume el control de tu rentabilidad. Únete a la Beta de Nougram para que el único cálculo que te preocupe sea la fecha de inicio de tu próximo proyecto.",
     button: "Sí, Quiero Cobrar lo Justo y Enfocarme en Mi Trabajo"
+  },
+  pricing: {
+    title: "Planes Flexibles para Cada Etapa",
+    subtitle: "Desde freelancers que inician hasta grandes organizaciones, tenemos un plan que se adapta a tus necesidades.",
+    plans: [
+      {
+        name: "Plan Free",
+        price: "$0",
+        period: "USD",
+        description: "Ideal para usuarios individuales que quieren probar el cotizador",
+        limits: [
+          "1 usuario",
+          "5 cotizaciones",
+          "10 servicios",
+          "3 miembros del equipo",
+          "10 créditos/mes"
+        ],
+        features: [
+          "Generación básica de propuestas",
+          "Exportación a PDF",
+          "Funciones básicas"
+        ],
+        cta: "Empezar Gratis",
+        popular: false
+      },
+      {
+        name: "Plan Starter",
+        price: "$29.99",
+        period: "USD/mes",
+        annualPrice: "$299.99 USD/año",
+        description: "Ideal para equipos pequeños que están comenzando",
+        limits: [
+          "5 usuarios",
+          "25 cotizaciones",
+          "50 servicios",
+          "10 miembros del equipo",
+          "100 créditos/mes"
+        ],
+        features: [
+          "Todo lo del plan Free",
+          "Generación avanzada de propuestas",
+          "Exportación PDF y DOCX",
+          "Envío de propuestas por email",
+          "Analytics básicos"
+        ],
+        cta: "Comenzar Starter",
+        popular: true
+      },
+      {
+        name: "Plan Professional",
+        price: "$99.99",
+        period: "USD/mes",
+        annualPrice: "$999.99 USD/año",
+        description: "Ideal para agencias en crecimiento y equipos medianos",
+        limits: [
+          "20 usuarios",
+          "100 cotizaciones",
+          "200 servicios",
+          "50 miembros del equipo",
+          "500 créditos/mes"
+        ],
+        features: [
+          "Todo lo del plan Starter",
+          "Analytics avanzados",
+          "Plantillas personalizadas",
+          "Soporte prioritario"
+        ],
+        cta: "Obtener Professional",
+        popular: false
+      },
+      {
+        name: "Plan Enterprise",
+        price: "Contactar",
+        period: "",
+        description: "Ideal para grandes organizaciones con necesidades específicas",
+        limits: [
+          "Usuarios ilimitados",
+          "Cotizaciones ilimitadas",
+          "Servicios ilimitados",
+          "Miembros ilimitados",
+          "Créditos ilimitados"
+        ],
+        features: [
+          "Todo lo del plan Professional",
+          "Soporte dedicado",
+          "Integraciones personalizadas",
+          "SLA garantizado",
+          "Despliegue on-premise"
+        ],
+        cta: "Contactar Ventas",
+        popular: false
+      }
+    ]
   }
 };
