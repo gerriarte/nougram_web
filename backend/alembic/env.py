@@ -3,15 +3,14 @@ Alembic environment configuration for database migrations
 Uses synchronous engine for migrations (even though app uses async)
 """
 from logging.config import fileConfig
-from sqlalchemy import pool, create_engine
-from sqlalchemy.engine import Connection
 
 from alembic import context
+from sqlalchemy import create_engine, pool
+from sqlalchemy.engine import Connection
 
-# Import your models and Base
-from app.core.database import Base
-from app.core.config import settings
 import app.models  # noqa: F401 - This ensures all models are imported
+from app.core.config import settings
+from app.core.database import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -76,7 +75,7 @@ def do_run_migrations(connection: Connection) -> None:
 
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode.
-    
+
     Create an Engine and associate a connection with the context.
     Uses synchronous engine for Alembic migrations.
     """

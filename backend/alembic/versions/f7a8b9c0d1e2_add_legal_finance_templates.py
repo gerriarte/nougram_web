@@ -5,19 +5,19 @@ Revises: e6f7a8b9c0d1
 Create Date: 2025-12-27 11:00:00.000000
 
 """
-from typing import Sequence, Union
 import json
+from collections.abc import Sequence
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import JSON, TypeDecorator
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy import TypeDecorator, JSON
 
 # revision identifiers, used by Alembic.
 revision: str = 'f7a8b9c0d1e2'
-down_revision: Union[str, None] = 'e6f7a8b9c0d1'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = 'e6f7a8b9c0d1'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -249,6 +249,17 @@ def upgrade() -> None:
         suggested_services_json = json.dumps(template_data.get('suggested_services')) if template_data.get('suggested_services') else None
         suggested_costs_json = json.dumps(template_data.get('suggested_fixed_costs')) if template_data.get('suggested_fixed_costs') else None
         
+        # Build SQL values as strings to avoid nested f-string issues
+        industry_type = template_data['industry_type'].replace("'", "''")
+        name = template_data['name'].replace("'", "''")
+        description = f"'{template_data.get('description', '').replace("'", "''")}'" if template_data.get('description') else 'NULL'
+        icon = f"'{template_data.get('icon', '').replace("'", "''")}'" if template_data.get('icon') else 'NULL'
+        color = f"'{template_data.get('color', '').replace("'", "''")}'" if template_data.get('color') else 'NULL'
+        
+        roles_val = f"'{suggested_roles_json.replace("'", "''")}'::jsonb" if suggested_roles_json else 'NULL'
+        services_val = f"'{suggested_services_json.replace("'", "''")}'::jsonb" if suggested_services_json else 'NULL'
+        costs_val = f"'{suggested_costs_json.replace("'", "''")}'::jsonb" if suggested_costs_json else 'NULL'
+        
         # Use op.execute() with properly formatted SQL
         if is_postgres:
             # PostgreSQL with JSONB
@@ -258,35 +269,38 @@ def upgrade() -> None:
                     (industry_type, name, description, suggested_roles, suggested_services, 
                      suggested_fixed_costs, is_active, icon, color, created_at)
                     VALUES 
-                    ('{template_data['industry_type']}', 
-                     '{template_data['name'].replace("'", "''")}', 
-                     {f"'{template_data.get('description', '').replace("'", "''")}'" if template_data.get('description') else 'NULL'}, 
-                     {f"'{suggested_roles_json.replace("'", "''")}'::jsonb" if suggested_roles_json else 'NULL'}, 
-                     {f"'{suggested_services_json.replace("'", "''")}'::jsonb" if suggested_services_json else 'NULL'}, 
-                     {f"'{suggested_costs_json.replace("'", "''")}'::jsonb" if suggested_costs_json else 'NULL'}, 
+                    ('{industry_type}', 
+                     '{name}', 
+                     {description}, 
+                     {roles_val}, 
+                     {services_val}, 
+                     {costs_val}, 
                      true, 
-                     {f"'{template_data.get('icon', '').replace("'", "''")}'" if template_data.get('icon') else 'NULL'}, 
-                     {f"'{template_data.get('color', '').replace("'", "''")}'" if template_data.get('color') else 'NULL'}, 
+                     {icon}, 
+                     {color}, 
                      NOW())
                 """)
             )
         else:
             # SQLite or other databases with JSON
+            roles_val_sqlite = f"'{suggested_roles_json.replace("'", "''")}'" if suggested_roles_json else 'NULL'
+            services_val_sqlite = f"'{suggested_services_json.replace("'", "''")}'" if suggested_services_json else 'NULL'
+            costs_val_sqlite = f"'{suggested_costs_json.replace("'", "''")}'" if suggested_costs_json else 'NULL'
             op.execute(
                 sa.text(f"""
                     INSERT INTO industry_templates 
                     (industry_type, name, description, suggested_roles, suggested_services, 
                      suggested_fixed_costs, is_active, icon, color, created_at)
                     VALUES 
-                    ('{template_data['industry_type']}', 
-                     '{template_data['name'].replace("'", "''")}', 
-                     {f"'{template_data.get('description', '').replace("'", "''")}'" if template_data.get('description') else 'NULL'}, 
-                     {f"'{suggested_roles_json.replace("'", "''")}'" if suggested_roles_json else 'NULL'}, 
-                     {f"'{suggested_services_json.replace("'", "''")}'" if suggested_services_json else 'NULL'}, 
-                     {f"'{suggested_costs_json.replace("'", "''")}'" if suggested_costs_json else 'NULL'}, 
+                    ('{industry_type}', 
+                     '{name}', 
+                     {description}, 
+                     {roles_val_sqlite}, 
+                     {services_val_sqlite}, 
+                     {costs_val_sqlite}, 
                      1, 
-                     {f"'{template_data.get('icon', '').replace("'", "''")}'" if template_data.get('icon') else 'NULL'}, 
-                     {f"'{template_data.get('color', '').replace("'", "''")}'" if template_data.get('color') else 'NULL'}, 
+                     {icon}, 
+                     {color}, 
                      datetime('now'))
                 """)
             )

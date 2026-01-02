@@ -2,10 +2,11 @@
 Currency utilities and constants
 ESTÁNDAR NOUGRAM: Usa Money para precisión en formateo y conversiones
 """
-from enum import Enum
-from typing import Optional, Dict, Any, Union
-from decimal import Decimal
 import math
+from decimal import Decimal
+from enum import Enum
+from typing import Any
+
 from app.core.money import Money
 
 
@@ -17,7 +18,7 @@ class Currency(str, Enum):
     EUR = "EUR"  # Euro
 
 
-CURRENCY_INFO: Dict[str, Dict[str, Any]] = {
+CURRENCY_INFO: dict[str, dict[str, Any]] = {
     "USD": {
         "symbol": "$",
         "name": "US Dollar",
@@ -59,7 +60,7 @@ CURRENCY_INFO: Dict[str, Dict[str, Any]] = {
 # Exchange rates to USD (base currency)
 # NOTE: These are example rates. In production, you should fetch real-time rates
 # from an API like exchangerate-api.com, fixer.io, or similar
-EXCHANGE_RATES_TO_USD: Dict[str, float] = {
+EXCHANGE_RATES_TO_USD: dict[str, float] = {
     "USD": 1.0,      # Base currency
     "COP": 4000.0,   # Example: 1 USD = 4000 COP (update with real rates)
     "ARS": 850.0,    # Example: 1 USD = 850 ARS (update with real rates)
@@ -68,8 +69,8 @@ EXCHANGE_RATES_TO_USD: Dict[str, float] = {
 
 
 def format_currency(
-    amount: Union[float, Decimal, Money], 
-    currency: str = "USD", 
+    amount: float | Decimal | Money,
+    currency: str = "USD",
     use_grouping: bool = True
 ) -> str:
     """
@@ -184,7 +185,7 @@ def is_valid_currency(currency: str) -> bool:
     return currency in CURRENCY_INFO
 
 
-def get_all_currencies() -> list[Dict[str, str]]:
+def get_all_currencies() -> list[dict[str, str]]:
     """
     Get list of all supported currencies
     
@@ -202,10 +203,10 @@ def get_all_currencies() -> list[Dict[str, str]]:
 
 
 def convert_currency(
-    amount: Union[float, Decimal, Money], 
-    from_currency: str, 
+    amount: float | Decimal | Money,
+    from_currency: str,
     to_currency: str
-) -> Union[float, Money]:
+) -> float | Money:
     """
     Convert amount from one currency to another
     ESTÁNDAR NOUGRAM: Usa Money para precisión en conversiones
@@ -249,10 +250,10 @@ def convert_currency(
 
 
 def normalize_to_primary_currency(
-    amount: Union[float, Decimal, Money],
-    from_currency: Optional[str],
+    amount: float | Decimal | Money,
+    from_currency: str | None,
     primary_currency: str = "USD"
-) -> Union[float, Money]:
+) -> float | Money:
     """
     Normalize amount to primary currency
     ESTÁNDAR NOUGRAM: Usa Money para precisión en normalización

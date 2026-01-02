@@ -5,19 +5,19 @@ Revises: g8h9i0j1k2l3
 Create Date: 2025-12-27 13:00:00.000000
 
 """
-from typing import Sequence, Union
 import json
+from collections.abc import Sequence
 
 from alembic import op
 import sqlalchemy as sa
+from sqlalchemy import JSON, TypeDecorator
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy import TypeDecorator, JSON
 
 # revision identifiers, used by Alembic.
 revision: str = 'h9i0j1k2l3m4'
-down_revision: Union[str, None] = 'g8h9i0j1k2l3'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = 'g8h9i0j1k2l3'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:

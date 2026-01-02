@@ -3,7 +3,7 @@ Money handling utilities using Decimal for precision
 ESTÁNDAR NOUGRAM: Precisión financiera grado bancario
 """
 from decimal import Decimal, ROUND_HALF_UP, ROUND_DOWN, ROUND_UP
-from typing import Union, Optional
+
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -27,7 +27,7 @@ class Money:
     Clase inmutable para representar dinero con precisión Decimal
     ESTÁNDAR NOUGRAM: Todas las operaciones generan nuevas instancias
     """
-    def __init__(self, amount: Union[float, int, str, Decimal], currency: str = "USD"):
+    def __init__(self, amount: float | int | str | Decimal, currency: str = "USD"):
         if isinstance(amount, Decimal):
             self._amount = amount
         elif isinstance(amount, str):
@@ -64,7 +64,7 @@ class Money:
         # Otras monedas: multiplicar por 100
         return int(self._amount * 100)
     
-    def quantize(self, precision: Optional[Decimal] = None) -> 'Money':
+    def quantize(self, precision: Decimal | None = None) -> 'Money':
         """Redondea a la precisión especificada usando ROUND_HALF_UP"""
         if precision is None:
             precision = DISPLAY_PRECISION if self._currency != "COP" else COP_DISPLAY_PRECISION
@@ -84,14 +84,14 @@ class Money:
             raise ValueError(f"Cannot subtract {self._currency} and {other._currency}")
         return Money(self._amount - other._amount, self._currency)
     
-    def multiply(self, multiplier: Union[float, Decimal]) -> 'Money':
+    def multiply(self, multiplier: float | Decimal) -> 'Money':
         """Multiplica un monto por un escalar"""
         if isinstance(multiplier, float):
             multiplier = Decimal(str(multiplier))
         result = self._amount * multiplier
         return Money(result, self._currency)
     
-    def divide(self, divisor: Union[float, Decimal]) -> 'Money':
+    def divide(self, divisor: float | Decimal) -> 'Money':
         """Divide un monto por un escalar"""
         if isinstance(divisor, float):
             divisor = Decimal(str(divisor))
@@ -100,14 +100,14 @@ class Money:
         result = self._amount / divisor
         return Money(result, self._currency)
     
-    def apply_percentage(self, percentage: Union[float, Decimal]) -> 'Money':
+    def apply_percentage(self, percentage: float | Decimal) -> 'Money':
         """Aplica un porcentaje (ej: 19% de IVA)"""
         if isinstance(percentage, float):
             percentage = Decimal(str(percentage))
         multiplier = percentage / Decimal('100')
         return self.multiply(multiplier)
     
-    def apply_margin(self, margin_percentage: Union[float, Decimal]) -> 'Money':
+    def apply_margin(self, margin_percentage: float | Decimal) -> 'Money':
         """
         Calcula precio con margen: cost / (1 - margin)
         Ejemplo: cost = $100, margin = 40% → price = $100 / (1 - 0.40) = $166.67
@@ -156,7 +156,7 @@ class Money:
 
 
 # Funciones helper para compatibilidad
-def to_money(value: Union[float, int, str, Decimal], currency: str = "USD") -> Money:
+def to_money(value: float | int | str | Decimal, currency: str = "USD") -> Money:
     """Convierte un valor a Money"""
     return Money(value, currency)
 
