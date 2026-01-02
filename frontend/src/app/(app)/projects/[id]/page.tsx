@@ -84,8 +84,8 @@ export default function ProjectDetailPage() {
             Back
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">{project.name}</h1>
-            <p className="text-muted-foreground">{project.client_name}</p>
+            <h1 className="text-3xl font-bold">{(project as any).name || ""}</h1>
+            <p className="text-muted-foreground">{(project as any).client_name || ""}</p>
           </div>
         </div>
         <Button onClick={() => router.push(`/projects/${projectId}/edit`)}>
@@ -100,8 +100,8 @@ export default function ProjectDetailPage() {
             <CardTitle className="text-sm font-medium">Status</CardTitle>
           </CardHeader>
           <CardContent>
-            <Badge variant={getStatusBadgeVariant(project.status)}>
-              {project.status}
+            <Badge variant={getStatusBadgeVariant((project as any).status || "Draft")}>
+              {(project as any).status || "Draft"}
             </Badge>
           </CardContent>
         </Card>
@@ -111,7 +111,7 @@ export default function ProjectDetailPage() {
             <CardTitle className="text-sm font-medium">Currency</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-lg font-semibold">{project.currency}</p>
+            <p className="text-lg font-semibold">{(project as any).currency || "USD"}</p>
           </CardContent>
         </Card>
 
@@ -177,8 +177,8 @@ export default function ProjectDetailPage() {
                     <React.Fragment key={quote.id}>
                       <TableRow className={expandedQuoteId === quote.id ? "bg-grey-50" : ""}>
                         <TableCell className="font-medium">v{quote.version}</TableCell>
-                        <TableCell>{formatCurrency(quote.total_client_price || 0, project.currency)}</TableCell>
-                        <TableCell>{formatCurrency(quote.total_internal_cost || 0, project.currency)}</TableCell>
+                        <TableCell>{formatCurrency(quote.total_client_price || 0, (project as any).currency || "USD")}</TableCell>
+                        <TableCell>{formatCurrency(quote.total_internal_cost || 0, (project as any).currency || "USD")}</TableCell>
                         <TableCell>
                           <span className={quote.margin_percentage && quote.margin_percentage < 0.20 ? "text-destructive" : ""}>
                             {((quote.margin_percentage || 0) * 100).toFixed(1)}%
@@ -206,7 +206,7 @@ export default function ProjectDetailPage() {
                               size="sm"
                               onClick={async () => {
                                 try {
-                                  const safeProjectName = project?.name.replace(/[^a-z0-9]/gi, '_') || 'project'
+                                  const safeProjectName = (project as any)?.name?.replace(/[^a-z0-9]/gi, '_') || 'project'
                                   const filename = `cotizacion_${safeProjectName}_v${quote.version}.pdf`
                                   await downloadPDF(`/projects/${projectId}/quotes/${quote.id}/pdf`, filename)
                                   toast({
@@ -230,7 +230,7 @@ export default function ProjectDetailPage() {
                               size="sm"
                               onClick={async () => {
                                 try {
-                                  const safeProjectName = project?.name.replace(/[^a-z0-9]/gi, '_') || 'project'
+                                  const safeProjectName = (project as any)?.name?.replace(/[^a-z0-9]/gi, '_') || 'project'
                                   const filename = `cotizacion_${safeProjectName}_v${quote.version}.docx`
                                   await downloadDOCX(`/projects/${projectId}/quotes/${quote.id}/docx`, filename)
                                   toast({
@@ -291,7 +291,7 @@ export default function ProjectDetailPage() {
                                   Cerrar Análisis
                                 </Button>
                               </div>
-                              <RentabilitySummary quoteId={quote.id} currency={project.currency} />
+                              <RentabilitySummary quoteId={quote.id} currency={(project as any).currency || "USD"} />
                             </div>
                           </TableCell>
                         </TableRow>
@@ -315,8 +315,8 @@ export default function ProjectDetailPage() {
           }}
           projectId={projectId}
           quoteId={selectedQuote.id}
-          projectName={project.name}
-          clientEmail={project.client_email}
+          projectName={(project as any).name || ""}
+          clientEmail={(project as any).client_email || ""}
           quoteVersion={selectedQuote.version}
         />
       )}

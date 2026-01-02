@@ -55,14 +55,14 @@ export default function NewQuoteVersionPage() {
 
   // Load latest quote data when available to pre-fill the form
   useEffect(() => {
-    if (latestQuote && latestQuote.id && latestQuoteDetails && latestQuoteDetails.items && quoteItems.length === 0) {
-      const items = latestQuoteDetails.items.map((item: any) => ({
+    if (latestQuote && latestQuote.id && latestQuoteDetails && (latestQuoteDetails as any).items && quoteItems.length === 0) {
+      const items = ((latestQuoteDetails as any).items as Array<{ service_id: number; estimated_hours?: number }>).map((item) => ({
         service_id: item.service_id,
-        estimated_hours: item.estimated_hours,
+        estimated_hours: item.estimated_hours || 0,
       }))
       setQuoteItems(items)
-      setNotes(latestQuoteDetails.notes || "")
-      setTargetMargin(latestQuoteDetails.target_margin_percentage ?? 0.40) // Load target margin or default to 40%
+      setNotes((latestQuoteDetails as any).notes || "")
+      setTargetMargin((latestQuoteDetails as any).target_margin_percentage ?? 0.40) // Load target margin or default to 40%
     }
   }, [latestQuote, latestQuoteDetails, quoteItems.length])
 
@@ -84,7 +84,7 @@ export default function NewQuoteVersionPage() {
 
     setIsCalculating(true)
     try {
-      const taxIds = project?.tax_ids || []
+      const taxIds = (project as any)?.tax_ids || []
       const result = await calculateQuoteMutation.mutateAsync({
         items: quoteItems,
         tax_ids: taxIds,
@@ -216,7 +216,7 @@ export default function NewQuoteVersionPage() {
           <div>
             <h1 className="text-3xl font-bold">Create New Quote Version</h1>
             <p className="text-muted-foreground">
-              Creating version {nextVersion} for {project.name}
+              Creating version {nextVersion} for {(project as any)?.name || ""}
             </p>
           </div>
         </div>
@@ -313,12 +313,12 @@ export default function NewQuoteVersionPage() {
                         <div className="text-sm space-y-1 pt-2 border-t">
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Internal Cost:</span>
-                            <span>{formatCurrency(calculatedItem.internal_cost, project.currency)}</span>
+                            <span>{formatCurrency(calculatedItem.internal_cost, (project as any).currency || "USD")}</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Client Price:</span>
                             <span className="font-medium">
-                              {formatCurrency(calculatedItem.client_price, project.currency)}
+                              {formatCurrency(calculatedItem.client_price, (project as any).currency || "USD")}
                             </span>
                           </div>
                           <div className="flex justify-between">
@@ -364,13 +364,13 @@ export default function NewQuoteVersionPage() {
                   <div className="flex justify-between border-b pb-2">
                     <span className="text-muted-foreground">Total Internal Cost:</span>
                     <span className="font-medium">
-                      {formatCurrency(calculatedQuote.total_internal_cost, project.currency)}
+                      {formatCurrency(calculatedQuote.total_internal_cost, (project as any).currency || "USD")}
                     </span>
                   </div>
                   <div className="flex justify-between border-b pb-2">
                     <span className="text-muted-foreground">Subtotal:</span>
                     <span className="text-lg font-medium">
-                      {formatCurrency(calculatedQuote.total_client_price, project.currency)}
+                      {formatCurrency(calculatedQuote.total_client_price, (project as any).currency || "USD")}
                     </span>
                   </div>
                   {calculatedQuote.taxes && calculatedQuote.taxes.length > 0 && (
@@ -380,13 +380,13 @@ export default function NewQuoteVersionPage() {
                           <span className="text-muted-foreground">
                             {tax.name} ({tax.percentage}%):
                           </span>
-                          <span>{formatCurrency(tax.amount, project.currency)}</span>
+                          <span>{formatCurrency(tax.amount, (project as any).currency || "USD")}</span>
                         </div>
                       ))}
                       <div className="flex justify-between border-t pt-2 mt-2">
                         <span className="text-muted-foreground">Total Taxes:</span>
                         <span className="font-medium">
-                          {formatCurrency(calculatedQuote.total_taxes || 0, project.currency)}
+                          {formatCurrency(calculatedQuote.total_taxes || 0, (project as any).currency || "USD")}
                         </span>
                       </div>
                     </>
@@ -394,7 +394,7 @@ export default function NewQuoteVersionPage() {
                   <div className="flex justify-between border-t pt-2">
                     <span className="text-muted-foreground font-medium">Total:</span>
                     <span className="text-xl font-bold">
-                      {formatCurrency(calculatedQuote.total_with_taxes || calculatedQuote.total_client_price, project.currency)}
+                      {formatCurrency(calculatedQuote.total_with_taxes || calculatedQuote.total_client_price, (project as any).currency || "USD")}
                     </span>
                   </div>
                   <div className="flex justify-between pt-2">

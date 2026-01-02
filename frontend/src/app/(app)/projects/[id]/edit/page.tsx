@@ -41,13 +41,13 @@ export default function EditProjectPage() {
   // Load project data when available
   useEffect(() => {
     if (project) {
-      setProjectName(project.name || "")
-      setClientName(project.client_name || "")
-      setClientEmail(project.client_email || "")
-      setStatus(project.status || "Draft")
+      setProjectName((project as any).name || "")
+      setClientName((project as any).client_name || "")
+      setClientEmail((project as any).client_email || "")
+      setStatus((project as any).status || "Draft")
       // Usar moneda del proyecto si existe, sino usar moneda primaria
-      setCurrency(project.currency || primaryCurrency)
-      setSelectedTaxIds(project.tax_ids || [])
+      setCurrency((project as any).currency || primaryCurrency)
+      setSelectedTaxIds((project as any).tax_ids || [])
     }
   }, [project, primaryCurrency])
 
