@@ -49,7 +49,7 @@ export default function TeamSettingsPage() {
   const updateMutation = useUpdateTeamMember()
   const deleteMutation = useDeleteTeamMember()
 
-  const members = data?.items || []
+  const members = (data?.items && Array.isArray(data.items)) ? data.items : []
   const canCreateTeamMember = orgStats 
     ? canCreateResource(orgStats.current_usage.team_members, orgStats.limits.team_members)
     : true

@@ -22,7 +22,7 @@ export function OrganizationSwitcher({ currentOrgId, onOrgChange, onNavigate }: 
   const { data: organizationsData } = useGetOrganizations(1, 100, false)
   const switchOrganization = useSwitchOrganization()
   
-  const organizations = organizationsData?.items || []
+  const organizations = (organizationsData?.items && Array.isArray(organizationsData.items)) ? organizationsData.items : []
   const activeOrg = myOrg || organizations.find(org => org.id === Number(currentOrgId)) || organizations[0]
   
   const orgName = activeOrg?.name || currentUser?.full_name || 'Organization'

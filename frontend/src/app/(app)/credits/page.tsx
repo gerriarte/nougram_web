@@ -101,9 +101,10 @@ export default function CreditsPage() {
   }
 
   // Filter transactions by type if filter is set
+  const historyItems = (historyData?.items && Array.isArray(historyData.items)) ? historyData.items : []
   const filteredTransactions = transactionTypeFilter === "all" 
-    ? historyData?.items || []
-    : (historyData?.items || []).filter(t => t.transaction_type === transactionTypeFilter)
+    ? historyItems
+    : historyItems.filter(t => t.transaction_type === transactionTypeFilter)
 
   // Calculate usage percentage
   const usagePercentage = balance.credits_per_month && balance.credits_per_month > 0
@@ -120,7 +121,7 @@ export default function CreditsPage() {
 
   // Prepare chart data (group transactions by date)
   const chartData = filteredTransactions.reduce((acc, transaction) => {
-    const date = new Date(transaction.created_at).toISOString().split('T')[0]
+    const date = transaction.created_at ? new Date(transaction.created_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
     const existing = acc.find(d => d.date === date)
     if (existing) {
       existing.credits += Math.abs(transaction.amount)
@@ -282,8 +283,8 @@ export default function CreditsPage() {
                     {filteredTransactions.map((transaction) => (
                       <TableRow key={transaction.id}>
                         <TableCell className="whitespace-nowrap">
-                          <span className="sr-only">{formatDate(transaction.created_at)}</span>
-                          <span aria-hidden="true">{formatDate(transaction.created_at)}</span>
+                          <span className="sr-only">{transaction.created_at ? formatDate(transaction.created_at) : "-"}</span>
+                          <span aria-hidden="true">{transaction.created_at ? formatDate(transaction.created_at) : "-"}</span>
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className={getTransactionTypeColor(transaction.transaction_type)}>

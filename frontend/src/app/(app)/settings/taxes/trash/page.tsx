@@ -47,7 +47,7 @@ export default function TaxesTrashPage() {
   const restoreMutation = useRestoreTax()
   const permanentDeleteMutation = usePermanentlyDeleteTax()
 
-  const taxes = data?.items || []
+  const taxes = (data?.items && Array.isArray(data.items)) ? data.items : []
 
   const handleRestoreClick = (tax: Tax) => {
     setTaxToRestore(tax)

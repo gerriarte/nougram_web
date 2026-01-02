@@ -162,7 +162,7 @@ function OrganizationRow({
       </TableCell>
       <TableCell>
         <div className="text-sm text-grey-600">
-          {new Date(org.created_at).toLocaleDateString()}
+          {(org as any).created_at ? new Date((org as any).created_at).toLocaleDateString() : "-"}
         </div>
       </TableCell>
       <TableCell className="text-right">
@@ -221,7 +221,7 @@ export default function OrganizationsPage() {
   const [filterPlan, setFilterPlan] = useState<string>('all')
   const [filterStatus, setFilterStatus] = useState<string>('all')
 
-  const organizations = organizationsData?.items || []
+  const organizations = (organizationsData?.items && Array.isArray(organizationsData.items)) ? organizationsData.items : []
   const isSuperAdmin = currentUser?.role === 'super_admin'
   
   // Use myOrg for non-super-admin view
@@ -369,7 +369,7 @@ export default function OrganizationsPage() {
                   <div>
                     <Label className="text-grey-600">Fecha de Creación</Label>
                     <p className="text-grey-900 text-sm mt-1">
-                      {new Date(displayOrg.created_at).toLocaleDateString()}
+                      {(displayOrg as any).created_at ? new Date((displayOrg as any).created_at).toLocaleDateString() : "-"}
                     </p>
                   </div>
                   <div>
@@ -394,7 +394,7 @@ export default function OrganizationsPage() {
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
                   </div>
-                ) : orgUsers && orgUsers.items.length > 0 ? (
+                ) : orgUsers && (orgUsers as any).items && Array.isArray((orgUsers as any).items) && (orgUsers as any).items.length > 0 ? (
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -404,7 +404,7 @@ export default function OrganizationsPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {orgUsers.items.map((user) => (
+                      {((orgUsers as any).items as any[]).map((user) => (
                         <TableRow key={user.id}>
                           <TableCell className="font-medium">{user.full_name || "Sin nombre"}</TableCell>
                           <TableCell>{user.email}</TableCell>

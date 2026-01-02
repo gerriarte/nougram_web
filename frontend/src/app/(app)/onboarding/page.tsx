@@ -63,7 +63,7 @@ export default function OnboardingPage() {
 
   const { data: templatesData, isLoading: templatesLoading } = useGetTemplates(true);
   // Extract templates array from response
-  const templates = templatesData?.items || [];
+  const templates = (templatesData?.items && Array.isArray(templatesData.items)) ? templatesData.items : [];
   const { data: currentUser, isLoading: userLoading } = useGetCurrentUser();
   const applyTemplate = useApplyTemplate();
   const updateOrganization = useUpdateOrganization();

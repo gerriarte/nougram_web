@@ -121,7 +121,7 @@ export default function ProjectDetailPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">
-              {new Date(project.created_at).toLocaleDateString()}
+              {(project as any).created_at ? new Date((project as any).created_at).toLocaleDateString() : "-"}
             </p>
           </CardContent>
         </Card>
@@ -185,7 +185,7 @@ export default function ProjectDetailPage() {
                           </span>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {new Date(quote.created_at).toLocaleDateString()}
+                          {(quote as any).created_at ? new Date((quote as any).created_at).toLocaleDateString() : "-"}
                         </TableCell>
                         <TableCell className="text-right">
                           <Button

@@ -48,7 +48,7 @@ export default function CostsTrashPage() {
   const restoreMutation = useRestoreFixedCost()
   const permanentDeleteMutation = usePermanentlyDeleteFixedCost()
 
-  const costs = data?.items || []
+  const costs = (data?.items && Array.isArray(data.items)) ? data.items : []
 
   const handleRestoreClick = (cost: FixedCost) => {
     setCostToRestore(cost)

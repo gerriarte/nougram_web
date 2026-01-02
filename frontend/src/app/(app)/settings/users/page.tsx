@@ -345,7 +345,7 @@ export default function UsersSettingsPage() {
     )
   }
 
-  const users = usersData?.items || []
+  const users = (usersData?.items && Array.isArray(usersData.items)) ? usersData.items : []
   const canInvite = canInviteUsers(currentUser)
 
   return (
@@ -608,7 +608,7 @@ export default function UsersSettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {invitationsData && invitationsData.items.length > 0 ? (
+            {invitationsData && (invitationsData as any).items && Array.isArray((invitationsData as any).items) && (invitationsData as any).items.length > 0 ? (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -621,7 +621,7 @@ export default function UsersSettingsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {invitationsData.items.map((invitation: Invitation) => {
+                  {((invitationsData as any).items as Invitation[]).map((invitation: Invitation) => {
                   const expiresAt = new Date(invitation.expires_at)
                   const isExpiringSoon = expiresAt.getTime() - Date.now() < 24 * 60 * 60 * 1000 // Less than 24 hours
                   
@@ -637,7 +637,7 @@ export default function UsersSettingsPage() {
                         {getInvitationStatusBadge(invitation.status)}
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {new Date(invitation.created_at).toLocaleDateString('es-ES', {
+                        {invitation.created_at ? new Date(invitation.created_at).toLocaleDateString('es-ES', {
                           year: 'numeric',
                           month: 'short',
                           day: 'numeric',

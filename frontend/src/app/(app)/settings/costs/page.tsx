@@ -48,7 +48,7 @@ export default function CostsSettingsPage() {
   const updateMutation = useUpdateFixedCost()
   const deleteMutation = useDeleteFixedCost()
 
-  const costs = data?.items || []
+  const costs = (data?.items && Array.isArray(data.items)) ? data.items : []
 
   const handleCreate = async (formData: { name: string; amount_monthly: number; currency: string; category: string }) => {
     try {

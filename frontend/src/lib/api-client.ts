@@ -272,6 +272,4 @@ export async function downloadDOCX(
     logger.error(`Error downloading DOCX from ${endpoint}:`, error);
     throw error;
   }
-}
-
-export default apiRequest;
+}export default apiRequest;

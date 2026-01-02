@@ -147,7 +147,7 @@ export default function ApprovalsPage() {
     )
   }
 
-  const requests = data?.items || []
+  const requests = (data?.items && Array.isArray(data.items)) ? data.items : []
   const pendingCount = requests.filter(r => r.status === 'pending').length
 
   return (

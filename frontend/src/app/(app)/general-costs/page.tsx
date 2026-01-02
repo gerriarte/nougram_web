@@ -23,7 +23,7 @@ const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'
 
 export default function GeneralCostsPage() {
     const { data, isLoading, error } = useGetFixedCosts()
-    const costs = (data as any)?.items || []
+    const costs = ((data as any)?.items && Array.isArray((data as any).items)) ? (data as any).items : []
 
     const stats = useMemo(() => {
         if (!costs.length) return null

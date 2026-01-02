@@ -111,7 +111,14 @@ export default function EditQuotePage() {
     try {
       const taxIds = (project as any)?.tax_ids || []
       // Convert expenses to format expected by API
-      const expensesForCalculation = expenses.map((exp: QuoteExpense) => ({
+      const expensesForCalculation = expenses.map((exp: QuoteExpense): {
+        name: string
+        description?: string
+        cost: number
+        markup_percentage: number
+        category?: string
+        quantity: number
+      } => ({
         name: exp.name,
         description: exp.description,
         cost: exp.cost,
