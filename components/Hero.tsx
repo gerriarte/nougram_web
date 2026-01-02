@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { COPY } from '../constants';
 import { Button } from './Button';
+import { FeedbackModal } from './FeedbackModal';
 import { CheckCircle2, TrendingUp, ShieldCheck, AlertCircle, Sparkles } from 'lucide-react';
 
 const Counter = ({ end, suffix = '', label }: { end: number; suffix?: string; label: string }) => {
@@ -39,10 +40,12 @@ export const Hero: React.FC = () => {
     email: '',
     profession: '',
     phone: '',
-    whatsappConsent: false
+    whatsappConsent: false,
+    _gotcha: '' // Honeypot field
   });
   const [emailError, setEmailError] = useState('');
   const [isEmailTouched, setIsEmailTouched] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     setLoaded(true);
@@ -63,17 +66,38 @@ export const Hero: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateEmail(formData.email)) {
       setEmailError('Por favor, ingresa un correo válido.');
       return;
     }
-    console.log("Captured lead:", formData);
-    alert(`¡Gracias ${formData.name}! Te hemos añadido a la lista de espera.`);
-    setFormData({ name: '', email: '', profession: '', phone: '', whatsappConsent: false });
-    setEmailError('');
-    setIsEmailTouched(false);
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        // Replace alert with modal
+        setIsModalOpen(true);
+        setFormData({ name: '', email: '', profession: '', phone: '', whatsappConsent: false, _gotcha: '' });
+        setEmailError('');
+        setIsEmailTouched(false);
+      } else {
+        alert('Hubo un error al enviar tus datos. Por favor intenta de nuevo.');
+      }
+    } catch (error) {
+      console.error("Submission error:", error);
+      alert('Hubo un error de conexión. Por favor intenta de nuevo.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -180,6 +204,16 @@ export const Hero: React.FC = () => {
                 <p className="text-xs lg:text-sm text-slate-400 mb-5">Únete a la lista de espera exclusiva.</p>
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+                  {/* Honeypot field for bots */}
+                  <input
+                    type="text"
+                    name="_gotcha"
+                    value={formData._gotcha}
+                    onChange={handleChange}
+                    style={{ display: 'none' }}
+                    tabIndex={-1}
+                    autoComplete="off"
+                  />
                   <div className="space-y-3">
                     <input
                       name="name"
@@ -261,10 +295,10 @@ export const Hero: React.FC = () => {
                     type="submit"
                     variant="primary"
                     fullWidth
-                    className={`mt-2 py-3 lg:py-4 text-sm lg:text-base shadow-lg shadow-brand-500/20 hover:shadow-brand-500/40 border-t border-white/10 ${emailError ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    disabled={!!emailError}
+                    className={`mt-2 py-3 lg:py-4 text-sm lg:text-base shadow-lg shadow-brand-500/20 hover:shadow-brand-500/40 border-t border-white/10 ${emailError || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={!!emailError || isSubmitting}
                   >
-                    Obtener Acceso Anticipado
+                    {isSubmitting ? 'Enviando...' : 'Obtener Acceso Anticipado'}
                   </Button>
                 </form>
 
@@ -277,6 +311,11 @@ export const Hero: React.FC = () => {
 
         </div >
       </div >
+
+      <FeedbackModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </section >
   );
 };
