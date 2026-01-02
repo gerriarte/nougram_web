@@ -109,8 +109,8 @@ export default function NewQuotePage() {
   const createProjectMutation = useCreateProject()
   const calculateQuoteMutation = useCalculateQuote()
 
-  const services = servicesData?.items || []
-  const taxes = taxesData?.items || []
+  const services = (servicesData?.items && Array.isArray(servicesData.items)) ? servicesData.items : []
+  const taxes = (taxesData?.items && Array.isArray(taxesData.items)) ? taxesData.items : []
   const canCreateProject = orgStats 
     ? canCreateResource(orgStats.current_usage.projects, orgStats.limits.projects)
     : true
@@ -137,11 +137,11 @@ export default function NewQuotePage() {
         items: quoteItems,
         tax_ids: selectedTaxIds,
         target_margin_percentage: targetMargin,  // Include target margin
-      })
+      }) as any
       setCalculatedQuote(result)
       
       // Check for low margins and show alert
-      const hasLowMargin = result.items.some((item: any) => item.margin_percentage < 0.20)
+      const hasLowMargin = (result as any).items?.some((item: any) => item.margin_percentage < 0.20) || false
       setMarginsAlertVisible(hasLowMargin)
     } catch (error) {
       logger.error("Error calculating quote:", error)

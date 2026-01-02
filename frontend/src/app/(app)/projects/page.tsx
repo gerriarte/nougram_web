@@ -48,7 +48,7 @@ export default function ProjectsPage() {
   const deleteMutation = useDeleteProject()
   const updateMutation = useUpdateProject()
 
-  const projects = data?.items || []
+  const projects = (data?.items && Array.isArray(data.items)) ? data.items : []
 
   const handleDeleteClick = (project: Project) => {
     setProjectToDelete(project)
@@ -253,7 +253,7 @@ export default function ProjectsPage() {
                       </TableCell>
                       <TableCell>{project.currency}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {new Date(project.created_at).toLocaleDateString()}
+                        {project.created_at ? new Date(project.created_at).toLocaleDateString() : "-"}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">

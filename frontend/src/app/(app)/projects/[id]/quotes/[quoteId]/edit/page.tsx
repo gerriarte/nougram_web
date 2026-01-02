@@ -66,7 +66,7 @@ export default function EditQuotePage() {
   const [revisionCostPerAdditional, setRevisionCostPerAdditional] = useState<number | undefined>(undefined)
   const [targetMargin, setTargetMargin] = useState<number>(0.40) // 40% por defecto
 
-  const services = servicesData?.items || []
+  const services = (servicesData?.items && Array.isArray(servicesData.items)) ? servicesData.items : []
   const { data: expensesData } = useGetQuoteExpenses(projectId, quoteId)
   
   // Update expenses when data changes
@@ -128,10 +128,10 @@ export default function EditQuotePage() {
         revisions_included: revisionsIncluded,
         revision_cost_per_additional: revisionCostPerAdditional,
         revisions_count: undefined, // Only used when calculating additional revision costs
-      })
+      }) as any
       setCalculatedQuote(result)
 
-      const hasLowMargin = result.items?.some((item: any) => item.margin_percentage < 0.20) || false
+      const hasLowMargin = (result as any).items?.some((item: any) => item.margin_percentage < 0.20) || false
       setMarginsAlertVisible(hasLowMargin)
     } catch (error) {
       logger.error("Error calculating quote:", error)
@@ -207,7 +207,7 @@ export default function EditQuotePage() {
             target_margin_percentage: targetMargin,  // Include target margin
             revisions_included: revisionsIncluded,
             revision_cost_per_additional: revisionCostPerAdditional ?? null,
-          },
+          } as any,
         })
         toast({
           title: "Success",

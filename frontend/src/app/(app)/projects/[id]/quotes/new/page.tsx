@@ -44,8 +44,9 @@ export default function NewQuoteVersionPage() {
   const [marginsAlertVisible, setMarginsAlertVisible] = useState(false)
   const [targetMargin, setTargetMargin] = useState<number>(0.40) // 40% por defecto
 
-  const services = servicesData?.items || []
-  const latestQuote = quotes && quotes.length > 0 ? quotes[0] : null
+  const services = (servicesData?.items && Array.isArray(servicesData.items)) ? servicesData.items : []
+  const quotesArray = (quotes && Array.isArray(quotes)) ? quotes : []
+  const latestQuote = quotesArray.length > 0 ? quotesArray[0] : null
   
   // Load latest quote details only if there's a quote
   const { data: latestQuoteDetails } = useGetQuote(
@@ -89,10 +90,10 @@ export default function NewQuoteVersionPage() {
         items: quoteItems,
         tax_ids: taxIds,
         target_margin_percentage: targetMargin,  // Include target margin
-      })
+      }) as any
       setCalculatedQuote(result)
 
-      const hasLowMargin = result.items.some((item: any) => item.margin_percentage < 0.20)
+      const hasLowMargin = (result as any).items?.some((item: any) => item.margin_percentage < 0.20) || false
       setMarginsAlertVisible(hasLowMargin)
     } catch (error) {
       logger.error("Error calculating quote:", error)
@@ -162,7 +163,7 @@ export default function NewQuoteVersionPage() {
           items: quoteItems,
           notes: notes || null,
           target_margin_percentage: targetMargin,  // Include target margin
-        },
+        } as any,
       })
       toast({
         title: "Success",
