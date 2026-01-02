@@ -77,11 +77,18 @@ export function AreaChart({
     )
   }
 
-  const defaultFormatter = (value: number) => {
+  const defaultFormatter = (value: any) => {
+    const numValue = typeof value === 'number' ? value : 0
     if (currency && formatter) {
-      return formatter(value)
+      return formatter(numValue)
     }
-    return value.toLocaleString()
+    return numValue.toLocaleString()
+  }
+
+  // @ts-ignore - Recharts Tooltip formatter type compatibility
+  const tooltipFormatter = (value: any) => {
+    const numValue = typeof value === 'number' ? value : 0
+    return formatter ? formatter(numValue) : defaultFormatter(value)
   }
 
   return (
@@ -104,7 +111,7 @@ export function AreaChart({
         />
         <RechartsYAxis />
         <RechartsTooltip 
-          formatter={formatter || defaultFormatter}
+          formatter={tooltipFormatter}
         />
         <RechartsLegend />
         {dataKeys.map((key, index) => (

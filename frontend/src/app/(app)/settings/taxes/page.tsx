@@ -47,7 +47,7 @@ export default function TaxesSettingsPage() {
   const updateMutation = useUpdateTax()
   const deleteMutation = useDeleteTax()
 
-  const taxes = (data?.items && Array.isArray(data.items)) ? data.items : []
+  const taxes = ((data as any)?.items && Array.isArray((data as any).items)) ? (data as any).items : []
 
   const handleCreateClick = () => {
     setEditingTax(null)

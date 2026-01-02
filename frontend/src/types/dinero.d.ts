@@ -1,9 +1,10 @@
 declare module 'dinero.js' {
-  export interface Dinero {
+  export type Dinero = {
     toFormat(format?: string): string
     toUnit(): number
     getAmount(): number
-    getCurrency(): { code: string }
+    currency: { code: string; exponent?: number }
+    amount: number
     add(other: Dinero): Dinero
     subtract(other: Dinero): Dinero
     multiply(factor: number): Dinero

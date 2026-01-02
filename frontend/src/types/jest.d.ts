@@ -9,6 +9,15 @@ declare module '@jest/globals' {
       toThrow(message?: string): void
       toBeCloseTo(value: number, precision?: number): void
       toBeNull(): void
+      toBeDefined(): void
+      not: {
+        toBe(value: any): void
+        toEqual(value: any): void
+        toContain(item: any): void
+      }
+      toContain(item: any): void
+      toMatch(pattern: string | RegExp): void
+      toBeDefined(): void
     }
   }
 }

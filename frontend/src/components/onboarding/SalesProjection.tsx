@@ -36,7 +36,7 @@ export function SalesProjection({ currency }: SalesProjectionProps) {
   const { data: servicesData, isLoading: servicesLoading } = useGetServices()
   const calculateProjection = useCalculateSalesProjection()
 
-  const services: Service[] = (servicesData?.items && Array.isArray(servicesData.items)) ? servicesData.items : []
+  const services: Service[] = ((servicesData as any)?.items && Array.isArray((servicesData as any).items)) ? (servicesData as any).items : []
 
   const handleServiceToggle = (serviceId: number) => {
     setSelectedServices(prev => {

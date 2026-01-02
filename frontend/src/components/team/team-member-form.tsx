@@ -68,7 +68,7 @@ export function TeamMemberForm({
       name: "",
       role: "",
       salary_monthly_brute: 0,
-      currency: primaryCurrency, // Usar moneda primaria por defecto
+      currency: (primaryCurrency || "USD") as "USD" | "COP" | "EUR" | "ARS", // Usar moneda primaria por defecto
       billable_hours_per_week: 40,
     },
   })
@@ -76,7 +76,7 @@ export function TeamMemberForm({
   // Actualizar currency cuando cambie la moneda primaria (solo si no hay defaultValues)
   useEffect(() => {
     if (!defaultValues && mode === "create") {
-      setValue("currency", primaryCurrency)
+      setValue("currency", (primaryCurrency || "USD") as "USD" | "COP" | "EUR" | "ARS")
     }
   }, [primaryCurrency, defaultValues, mode, setValue])
 
@@ -107,7 +107,7 @@ export function TeamMemberForm({
           </div>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6 mt-4">
+        <form onSubmit={handleSubmit(handleFormSubmit as any)} className="space-y-6 mt-4">
           <div className="space-y-2">
             <Label htmlFor="name" className="text-grey-700 font-medium">
               Name <span className="text-error-500">*</span>

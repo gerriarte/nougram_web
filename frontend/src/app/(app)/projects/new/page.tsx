@@ -109,8 +109,8 @@ export default function NewQuotePage() {
   const createProjectMutation = useCreateProject()
   const calculateQuoteMutation = useCalculateQuote()
 
-  const services = (servicesData?.items && Array.isArray(servicesData.items)) ? servicesData.items : []
-  const taxes = (taxesData?.items && Array.isArray(taxesData.items)) ? taxesData.items : []
+  const services = ((servicesData as any)?.items && Array.isArray((servicesData as any).items)) ? (servicesData as any).items : []
+  const taxes = ((taxesData as any)?.items && Array.isArray((taxesData as any).items)) ? (taxesData as any).items : []
   const canCreateProject = orgStats 
     ? canCreateResource(orgStats.current_usage.projects, orgStats.limits.projects)
     : true

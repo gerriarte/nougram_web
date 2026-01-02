@@ -48,7 +48,7 @@ export default function ProjectsPage() {
   const deleteMutation = useDeleteProject()
   const updateMutation = useUpdateProject()
 
-  const projects = (data?.items && Array.isArray(data.items)) ? data.items : []
+  const projects = ((data as any)?.items && Array.isArray((data as any).items)) ? (data as any).items : []
 
   const handleDeleteClick = (project: Project) => {
     setProjectToDelete(project)

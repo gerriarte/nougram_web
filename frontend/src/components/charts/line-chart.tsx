@@ -84,6 +84,12 @@ export function LineChart({
     return numValue.toLocaleString()
   }
 
+  // @ts-ignore - Recharts Tooltip formatter type compatibility
+  const tooltipFormatter = (value: any) => {
+    const numValue = typeof value === 'number' ? value : 0
+    return formatter ? formatter(numValue) : defaultFormatter(value)
+  }
+
   return (
     <RechartsResponsiveContainer width="100%" height={height}>
       <RechartsLineChart data={data}>
@@ -96,7 +102,7 @@ export function LineChart({
         />
         <RechartsYAxis />
         <RechartsTooltip 
-          formatter={(value: any) => (formatter ? formatter(typeof value === 'number' ? value : 0) : defaultFormatter(value))}
+          formatter={tooltipFormatter}
         />
         <RechartsLegend />
         {dataKeys.map((key, index) => (

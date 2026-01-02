@@ -47,7 +47,7 @@ export default function ServicesTrashPage() {
   const restoreMutation = useRestoreService()
   const permanentDeleteMutation = usePermanentlyDeleteService()
 
-  const services = (data?.items && Array.isArray(data.items)) ? data.items : []
+  const services = ((data as any)?.items && Array.isArray((data as any).items)) ? (data as any).items : []
 
   const handleRestoreClick = (service: Service) => {
     setServiceToRestore(service)

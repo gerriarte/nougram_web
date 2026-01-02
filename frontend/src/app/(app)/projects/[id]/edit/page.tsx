@@ -36,7 +36,7 @@ export default function EditProjectPage() {
   const [selectedTaxIds, setSelectedTaxIds] = useState<number[]>([])
 
   const { data: taxesData } = useGetTaxes(undefined, true)
-  const taxes = (taxesData?.items && Array.isArray(taxesData.items)) ? taxesData.items : []
+  const taxes = ((taxesData as any)?.items && Array.isArray((taxesData as any).items)) ? (taxesData as any).items : []
 
   // Load project data when available
   useEffect(() => {

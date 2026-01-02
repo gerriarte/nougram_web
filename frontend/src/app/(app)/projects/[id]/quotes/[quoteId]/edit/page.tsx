@@ -79,7 +79,7 @@ export default function EditQuotePage() {
   const [revisionCostPerAdditional, setRevisionCostPerAdditional] = useState<number | undefined>(undefined)
   const [targetMargin, setTargetMargin] = useState<number>(0.40) // 40% por defecto
 
-  const services = (servicesData?.items && Array.isArray(servicesData.items)) ? servicesData.items : []
+  const services = ((servicesData as any)?.items && Array.isArray((servicesData as any).items)) ? (servicesData as any).items : []
   const { data: expensesData } = useGetQuoteExpenses(projectId, quoteId)
   
   // Update expenses when data changes
@@ -666,7 +666,7 @@ export default function EditQuotePage() {
           quoteId={quoteId}
           projectName={(project as any).name || ""}
           clientEmail={(project as any).client_email || ""}
-          quoteVersion={(quote as any).version || 1}
+          quoteVersion={Number((quote as any).version) || 1}
         />
       )}
     </div>

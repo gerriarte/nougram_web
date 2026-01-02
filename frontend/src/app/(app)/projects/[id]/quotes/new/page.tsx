@@ -57,7 +57,7 @@ export default function NewQuoteVersionPage() {
   const [marginsAlertVisible, setMarginsAlertVisible] = useState(false)
   const [targetMargin, setTargetMargin] = useState<number>(0.40) // 40% por defecto
 
-  const services = (servicesData?.items && Array.isArray(servicesData.items)) ? servicesData.items : []
+  const services = ((servicesData as any)?.items && Array.isArray((servicesData as any).items)) ? (servicesData as any).items : []
   const quotesArray = (quotes && Array.isArray(quotes)) ? quotes : []
   const latestQuote = quotesArray.length > 0 ? quotesArray[0] : null
   

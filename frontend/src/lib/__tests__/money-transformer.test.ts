@@ -5,7 +5,7 @@
 // @ts-ignore - Jest types
 import { describe, it, expect } from '@jest/globals';
 import { transformAPIResponse } from '../money-transformer';
-import { Dinero } from 'dinero.js';
+import type { Dinero } from 'dinero.js';
 
 describe('Money Transformer - Currency validation', () => {
   describe('Currency detection', () => {
@@ -53,7 +53,7 @@ describe('Money Transformer - Currency validation', () => {
       
       const transformed = transformAPIResponse(response) as any;
       expect(transformed.total_client_price).toBeDefined();
-      if (transformed.total_client_price instanceof Dinero) {
+      if (transformed.total_client_price && typeof transformed.total_client_price === 'object' && 'currency' in transformed.total_client_price) {
         expect(transformed.total_client_price.currency.code).toBe('COP');
       }
     });
@@ -66,7 +66,7 @@ describe('Money Transformer - Currency validation', () => {
       
       const transformed = transformAPIResponse(response) as any;
       expect(transformed.total_client_price).toBeDefined();
-      if (transformed.total_client_price instanceof Dinero) {
+      if (transformed.total_client_price && typeof transformed.total_client_price === 'object' && 'currency' in transformed.total_client_price) {
         expect(transformed.total_client_price.currency.code).toBe('USD');
       }
     });
@@ -83,7 +83,7 @@ describe('Money Transformer - Currency validation', () => {
       
       const transformed = transformAPIResponse(response) as any;
       expect(transformed.total_client_price).toBeDefined();
-      if (transformed.total_client_price instanceof Dinero) {
+      if (transformed.total_client_price && typeof transformed.total_client_price === 'object' && 'currency' in transformed.total_client_price) {
         expect(transformed.total_client_price.currency.code).toBe('USD');
       }
     });
@@ -112,7 +112,7 @@ describe('Money Transformer - Currency validation', () => {
       expect(transformed.total_client_price).toBeDefined();
       expect(transformed.total_internal_cost).toBeDefined();
       
-      if (transformed.total_client_price instanceof Dinero) {
+      if (transformed.total_client_price && typeof transformed.total_client_price === 'object' && 'currency' in transformed.total_client_price) {
         expect(transformed.total_client_price.currency.code).toBe('USD');
       }
     });
@@ -134,7 +134,7 @@ describe('Money Transformer - Currency validation', () => {
       expect(transformed.items).toBeDefined();
       expect(Array.isArray(transformed.items)).toBe(true);
       
-      if (transformed.items[0]?.client_price instanceof Dinero) {
+      if (transformed.items[0]?.client_price && typeof transformed.items[0].client_price === 'object' && 'currency' in transformed.items[0].client_price) {
         expect(transformed.items[0].client_price.currency.code).toBe('USD');
       }
     });
@@ -204,9 +204,10 @@ describe('Money Transformer - Currency validation', () => {
       };
       
       const originalEnv = process.env.NODE_ENV;
+      // @ts-ignore - NODE_ENV is read-only but we need to test different environments
       process.env.NODE_ENV = 'development';
       
-      const transformed = transformAPIResponse(response, 'COP');
+      const transformed = transformAPIResponse(response, 'COP') as any;
       expect(transformed.total_client_price).toBeDefined();
       
       // @ts-ignore - NODE_ENV is read-only but we need to test different environments

@@ -48,7 +48,7 @@ export default function ProjectsTrashPage() {
   const restoreMutation = useRestoreProject()
   const permanentDeleteMutation = usePermanentlyDeleteProject()
 
-  const projects = (data?.items && Array.isArray(data.items)) ? data.items : []
+  const projects = ((data as any)?.items && Array.isArray((data as any).items)) ? (data as any).items : []
 
   const handleRestoreClick = (project: Project) => {
     setProjectToRestore(project)

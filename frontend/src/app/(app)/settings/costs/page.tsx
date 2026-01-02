@@ -48,7 +48,7 @@ export default function CostsSettingsPage() {
   const updateMutation = useUpdateFixedCost()
   const deleteMutation = useDeleteFixedCost()
 
-  const costs = (data?.items && Array.isArray(data.items)) ? data.items : []
+  const costs = ((data as any)?.items && Array.isArray((data as any).items)) ? (data as any).items : []
 
   const handleCreate = async (formData: { name: string; amount_monthly: number; currency: string; category: string }) => {
     try {
@@ -236,8 +236,9 @@ export default function CostsSettingsPage() {
                     })}
                     {hasMultipleCurrencies ? (
                       // Show totals by currency when multiple currencies exist
-                      Object.entries(costsByCurrency).map(([currency, currencyCosts]: [string, FixedCost[]]) => {
-                        const total = currencyCosts.reduce((sum: number, cost: FixedCost) => sum + cost.amount_monthly, 0)
+                      Object.entries(costsByCurrency).map(([currency, currencyCosts]) => {
+                        const costsArray = currencyCosts as FixedCost[]
+                        const total = costsArray.reduce((sum: number, cost: FixedCost) => sum + cost.amount_monthly, 0)
                         return (
                           <TableRow key={currency} className="font-semibold bg-muted/50">
                             <TableCell colSpan={2}>

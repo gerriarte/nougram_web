@@ -69,14 +69,14 @@ export function calculateBCR(
   }
 
   // ESTÁNDAR NOUGRAM: Calcular salarios con cargas sociales usando Dinero
-  const salaryAmounts: Dinero<number>[] = teamMembers.map(member => {
+  const salaryAmounts: Dinero[] = teamMembers.map(member => {
     const salary = fromAPI(member.salary, member.currency || currency)
     const salaryWithCharges = multiplyMoney(salary, socialChargesMultiplier)
     return salaryWithCharges
   })
 
   // ESTÁNDAR NOUGRAM: Calcular costos fijos usando Dinero
-  const fixedCostAmounts: Dinero<number>[] = fixedCosts.map(cost => {
+  const fixedCostAmounts: Dinero[] = fixedCosts.map(cost => {
     return fromAPI(cost.amount, cost.currency || currency)
   })
 

@@ -19,13 +19,13 @@ export interface MoneyAmount {
  * Tipo para representar un monto monetario en el frontend
  * ESTÁNDAR NOUGRAM: Usa Dinero<number> para cálculos precisos
  */
-export type Money = Dinero<number>;
+export type Money = Dinero;
 
 /**
  * Helper para convertir MoneyAmount del API a Dinero
  * ESTÁNDAR NOUGRAM: Usa fromAPIString para convertir string → Dinero
  */
-export function toDinero(money: MoneyAmount): Dinero<number> {
+export function toDinero(money: MoneyAmount): Dinero {
   // Importación dinámica para evitar dependencias circulares
   const { fromAPIString } = require('../money');
   return fromAPIString(money.amount, money.currency);
@@ -35,7 +35,7 @@ export function toDinero(money: MoneyAmount): Dinero<number> {
  * Helper para convertir Dinero a MoneyAmount para enviar al API
  * ESTÁNDAR NOUGRAM: Usa toAPIString para convertir Dinero → string
  */
-export function fromDinero(dinero: Dinero<number>, currency: string): MoneyAmount {
+export function fromDinero(dinero: Dinero, currency: string): MoneyAmount {
   // Importación dinámica para evitar dependencias circulares
   const { toAPIString } = require('../money');
   return {

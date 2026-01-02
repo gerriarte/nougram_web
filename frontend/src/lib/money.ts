@@ -34,7 +34,7 @@ export const CURRENCY_CONFIG: Record<string, {
 export function fromAPIString(
   apiString: string,
   currencyCode: string = 'USD'
-): Dinero<number> {
+): Dinero {
   const config = CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.USD;
   const factor = Math.pow(10, config.precision);
   
@@ -60,7 +60,7 @@ export function fromAPIString(
 export function fromAPI(
   amount: number,
   currencyCode: string = 'USD'
-): Dinero<number> {
+): Dinero {
   const config = CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.USD;
   const factor = Math.pow(10, config.precision);
   const roundedAmount = Math.round(amount * factor);
@@ -72,9 +72,9 @@ export function fromAPI(
  * Convierte Dinero a string para enviar al API
  * ESTÁNDAR NOUGRAM: Backend espera strings Decimal
  */
-export function toAPIString(dinero: Dinero<number>): string {
-  const currency = dinero.currency;
-  const config = CURRENCY_CONFIG[currency.code] || CURRENCY_CONFIG.USD;
+export function toAPIString(dinero: Dinero): string {
+  const currencyCode = dinero.currency.code;
+  const config = CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.USD;
   const factor = Math.pow(10, config.precision);
   const value = dinero.amount / factor;
   
@@ -84,9 +84,9 @@ export function toAPIString(dinero: Dinero<number>): string {
 /**
  * Obtiene el valor numérico de Dinero (para compatibilidad)
  */
-export function toAPI(dinero: Dinero<number>): number {
-  const currency = dinero.currency;
-  const config = CURRENCY_CONFIG[currency.code] || CURRENCY_CONFIG.USD;
+export function toAPI(dinero: Dinero): number {
+  const currencyCode = dinero.currency.code;
+  const config = CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.USD;
   const factor = Math.pow(10, config.precision);
   
   return dinero.amount / factor;
@@ -95,7 +95,7 @@ export function toAPI(dinero: Dinero<number>): number {
 /**
  * Suma múltiples Dinero (debe ser misma moneda)
  */
-export function sumMoney(amounts: Dinero<number>[]): Dinero<number> | null {
+export function sumMoney(amounts: Dinero[]): Dinero | null {
   if (amounts.length === 0) return null;
   
   return amounts.reduce((total, amount) => {
@@ -107,14 +107,14 @@ export function sumMoney(amounts: Dinero<number>[]): Dinero<number> | null {
 /**
  * Multiplica Dinero por un escalar
  */
-export function multiplyMoney(dinero: Dinero<number>, multiplier: number): Dinero<number> {
+export function multiplyMoney(dinero: Dinero, multiplier: number): Dinero {
   return dinero.multiply(multiplier);
 }
 
 /**
  * Divide Dinero por un escalar
  */
-export function divideMoney(dinero: Dinero<number>, divisor: number): Dinero<number> {
+export function divideMoney(dinero: Dinero, divisor: number): Dinero {
   if (divisor === 0) {
     throw new Error('Cannot divide by zero');
   }
@@ -124,7 +124,7 @@ export function divideMoney(dinero: Dinero<number>, divisor: number): Dinero<num
 /**
  * Aplica un porcentaje a Dinero (ej: 19% de IVA)
  */
-export function applyPercentage(dinero: Dinero<number>, percentage: number): Dinero<number> {
+export function applyPercentage(dinero: Dinero, percentage: number): Dinero {
   const multiplier = percentage / 100;
   return dinero.multiply(multiplier);
 }
@@ -134,9 +134,9 @@ export function applyPercentage(dinero: Dinero<number>, percentage: number): Din
  * ESTÁNDAR NOUGRAM: Usa redondeo "half up" para consistencia con backend
  */
 export function applyMargin(
-  cost: Dinero<number>,
+  cost: Dinero,
   marginPercentage: number
-): Dinero<number> {
+): Dinero {
   if (marginPercentage >= 100) {
     throw new Error('Margin cannot be >= 100%');
   }
@@ -154,7 +154,7 @@ export function applyMargin(
  * ESTÁNDAR NOUGRAM: Usa locale 'es-CO' para formateo explícito
  */
 export function formatCurrency(
-  dinero: Dinero<number>,
+  dinero: Dinero,
   locale: string = 'es-CO',
   options?: { showSymbol?: boolean }
 ): string {
@@ -172,7 +172,9 @@ export function formatCurrency(
     return showSymbol ? `$${formatted}` : formatted;
   } else {
     // Otras monedas: con decimales
-    const factor = Math.pow(10, dinero.currency.exponent);
+    const currencyCode = dinero.currency.code;
+    const config = CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.USD;
+    const factor = Math.pow(10, config.precision);
     const value = dinero.amount / factor;
     return value.toLocaleString(locale, {
       style: 'currency',
@@ -186,7 +188,7 @@ export function formatCurrency(
 /**
  * Helper para crear Dinero desde string (input de usuario)
  */
-export function fromString(value: string, currencyCode: string = 'USD'): Dinero<number> {
+export function fromString(value: string, currencyCode: string = 'USD'): Dinero {
   // Remover símbolos y espacios
   const cleanValue = value.replace(/[^\d.,-]/g, '');
   

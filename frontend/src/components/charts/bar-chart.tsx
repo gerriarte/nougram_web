@@ -75,6 +75,7 @@ export function BarChart({ data, height = 300, currency = "USD" }: BarChartProps
           interval={0}
         />
         <RechartsYAxis />
+        {/* @ts-ignore - Recharts Tooltip formatter type compatibility */}
         <RechartsTooltip 
           formatter={(value: any) => formatCurrency(typeof value === 'number' ? value : 0, currency)}
         />

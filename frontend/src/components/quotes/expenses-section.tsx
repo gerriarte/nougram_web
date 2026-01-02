@@ -182,13 +182,13 @@ export function ExpensesSection({ projectId, quoteId, currency, onExpensesChange
   }
 
   // ESTÁNDAR NOUGRAM: Calcular totales usando dinero.js
-  const totalExpensesCostMoney: Dinero<number>[] = expenses.map(exp => {
+  const totalExpensesCostMoney: Dinero[] = expenses.map(exp => {
     const costMoney = fromAPI(exp.cost, currency)
     return multiplyMoney(costMoney, exp.quantity)
   })
   const totalExpensesCost = toAPI(sumMoney(totalExpensesCostMoney) || fromAPI(0, currency))
 
-  const totalExpensesClientPriceMoney: Dinero<number>[] = expenses.map(exp => {
+  const totalExpensesClientPriceMoney: Dinero[] = expenses.map(exp => {
     // Los expenses ya vienen del API con client_price calculado, pero lo convertimos a Dinero
     return fromAPI(exp.client_price, currency)
   })

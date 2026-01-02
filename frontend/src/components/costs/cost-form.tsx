@@ -66,7 +66,7 @@ export function CostForm({
     defaultValues: defaultValues || {
       name: "",
       amount_monthly: 0,
-      currency: primaryCurrency, // Usar moneda primaria por defecto
+      currency: (primaryCurrency || "USD") as "USD" | "COP" | "EUR" | "ARS", // Usar moneda primaria por defecto
       category: "Infraestructura",
     },
   })
@@ -74,7 +74,7 @@ export function CostForm({
   // Actualizar currency cuando cambie la moneda primaria (solo si no hay defaultValues)
   useEffect(() => {
     if (!defaultValues && mode === "create") {
-      setValue("currency", primaryCurrency)
+      setValue("currency", (primaryCurrency || "USD") as "USD" | "COP" | "EUR" | "ARS")
     }
   }, [primaryCurrency, defaultValues, mode, setValue])
 
@@ -95,7 +95,7 @@ export function CostForm({
               : "Update the fixed monthly cost details."}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(handleFormSubmit as any)} className="space-y-4">
           <div>
             <label htmlFor="name" className="text-sm font-medium">
               Name

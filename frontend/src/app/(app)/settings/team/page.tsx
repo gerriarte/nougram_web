@@ -49,7 +49,7 @@ export default function TeamSettingsPage() {
   const updateMutation = useUpdateTeamMember()
   const deleteMutation = useDeleteTeamMember()
 
-  const members = (data?.items && Array.isArray(data.items)) ? data.items : []
+  const members = ((data as any)?.items && Array.isArray((data as any).items)) ? (data as any).items : []
   const canCreateTeamMember = orgStats 
     ? canCreateResource(orgStats.current_usage.team_members, orgStats.limits.team_members)
     : true
@@ -197,11 +197,14 @@ export default function TeamSettingsPage() {
                       <TableCell className="text-right">
                         {Object.keys(salariesByCurrency).length > 1 ? (
                           <div className="space-y-1">
-                            {Object.entries(salariesByCurrency).map(([currency, amount]: [string, number]) => (
+                            {Object.entries(salariesByCurrency).map(([currency, amount]) => {
+                              const numAmount = amount as number
+                              return (
                               <div key={currency}>
-                                {formatCurrency(amount, currency)}
+                                {formatCurrency(numAmount, currency)}
                               </div>
-                            ))}
+                            )
+                            })}
                           </div>
                         ) : (
                           formatCurrency(salariesByCurrency[primaryCurrency] || 0, primaryCurrency)

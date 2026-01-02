@@ -53,7 +53,7 @@ export default function ServicesSettingsPage() {
   const updateMutation = useUpdateService()
   const deleteMutation = useDeleteService()
 
-  const services = (data?.items && Array.isArray(data.items)) ? data.items : []
+  const services = ((data as any)?.items && Array.isArray((data as any).items)) ? (data as any).items : []
   const canCreateService = orgStats 
     ? canCreateResource(orgStats.current_usage.services, orgStats.limits.services)
     : true

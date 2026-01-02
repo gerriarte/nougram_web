@@ -114,7 +114,7 @@ export function TeamMembersTable({ defaultCurrency }: TeamMembersTableProps) {
   // ESTÁNDAR NOUGRAM: Calcular total usando dinero.js para precisión
   const totalMonthlySalaries = (() => {
     // Convertir salarios a Dinero (solo los que están en la moneda base)
-    const salariesInBaseCurrency: Dinero<number>[] = teamMembers
+    const salariesInBaseCurrency: Dinero[] = teamMembers
       .filter(member => (member.currency || defaultCurrency) === defaultCurrency)
       .map(member => fromAPI(member.salary, defaultCurrency));
     
