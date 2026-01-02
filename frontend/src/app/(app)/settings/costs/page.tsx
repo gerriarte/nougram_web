@@ -122,7 +122,7 @@ export default function CostsSettingsPage() {
   }
 
   // Group costs by currency for better display
-  const costsByCurrency = costs.reduce((acc, cost) => {
+  const costsByCurrency = costs.reduce((acc: Record<string, FixedCost[]>, cost: FixedCost) => {
     const currency = cost.currency || "USD"
     if (!acc[currency]) {
       acc[currency] = []
@@ -236,8 +236,8 @@ export default function CostsSettingsPage() {
                     })}
                     {hasMultipleCurrencies ? (
                       // Show totals by currency when multiple currencies exist
-                      Object.entries(costsByCurrency).map(([currency, currencyCosts]) => {
-                        const total = currencyCosts.reduce((sum, cost) => sum + cost.amount_monthly, 0)
+                      Object.entries(costsByCurrency).map(([currency, currencyCosts]: [string, FixedCost[]]) => {
+                        const total = currencyCosts.reduce((sum: number, cost: FixedCost) => sum + cost.amount_monthly, 0)
                         return (
                           <TableRow key={currency} className="font-semibold bg-muted/50">
                             <TableCell colSpan={2}>
@@ -269,7 +269,7 @@ export default function CostsSettingsPage() {
                       // Show single total when all costs are in the same currency
                       (() => {
                         const singleCurrency = costs[0]?.currency || "USD"
-                        const total = costs.reduce((sum, cost) => sum + cost.amount_monthly, 0)
+                        const total = costs.reduce((sum: number, cost: FixedCost) => sum + cost.amount_monthly, 0)
                         return (
                           <TableRow className="font-semibold">
                             <TableCell colSpan={3}>Total</TableCell>
@@ -306,7 +306,12 @@ export default function CostsSettingsPage() {
           }
         }}
         onSubmit={editingCost ? handleUpdate : handleCreate}
-        defaultValues={editingCost || undefined}
+        defaultValues={editingCost ? {
+          name: editingCost.name,
+          amount_monthly: editingCost.amount_monthly,
+          currency: (editingCost.currency || "USD") as "USD" | "COP" | "EUR" | "ARS",
+          category: editingCost.category,
+        } : undefined}
         mode={editingCost ? "edit" : "create"}
       />
 

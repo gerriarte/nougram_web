@@ -2,6 +2,7 @@
  * Unit tests for Money utilities using Dinero.js v2
  * ESTÁNDAR NOUGRAM: Validación de precisión financiera grado bancario
  */
+// @ts-ignore - Jest types
 import { describe, it, expect } from '@jest/globals';
 import {
   fromAPIString,

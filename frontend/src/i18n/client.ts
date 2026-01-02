@@ -4,7 +4,7 @@
  */
 'use client';
 
-import { useTranslations as useNextIntlTranslations } from 'next-intl';
+// import { useTranslations as useNextIntlTranslations } from 'next-intl';
 import { defaultLocale } from './config';
 
 /**
@@ -16,9 +16,10 @@ import { defaultLocale } from './config';
  *   <h1>{t('title')}</h1>
  */
 export function useTranslations(namespace?: string) {
-  try {
-    return useNextIntlTranslations(namespace);
-  } catch (error) {
+  // TODO: Enable when next-intl is properly configured
+  // try {
+  //   return useNextIntlTranslations(namespace);
+  // } catch (error) {
     // Fallback if next-intl is not configured in the app
     // This allows gradual migration
     return (key: string, params?: Record<string, any>) => {
@@ -38,7 +39,7 @@ export function useTranslations(namespace?: string) {
         return key;
       }
     };
-  }
+  // }
 }
 
 /**

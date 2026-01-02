@@ -167,10 +167,10 @@ export default function CurrencySettingsPage() {
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
-            ) : exchangeRates?.rates ? (
+            ) : (exchangeRates as any)?.rates ? (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {Object.entries(exchangeRates.rates).map(([currencyCode, rateInfo]: [string, any]) => {
+                  {Object.entries((exchangeRates as any).rates).map(([currencyCode, rateInfo]: [string, any]) => {
                     const currency = CURRENCIES.find(c => c.code === currencyCode)
                     if (!currency) return null
                     
@@ -209,10 +209,10 @@ export default function CurrencySettingsPage() {
                     )
                   })}
                 </div>
-                {exchangeRates.base_currency && (
+                {(exchangeRates as any).base_currency && (
                   <Alert>
                     <AlertDescription className="text-sm">
-                      <strong>Moneda base:</strong> {exchangeRates.base_currency} (USD)
+                      <strong>Moneda base:</strong> {(exchangeRates as any).base_currency} (USD)
                       <br />
                       Las cotizaciones se actualizan automáticamente una vez al día. Puedes actualizarlas manualmente usando el botón de actualizar.
                     </AlertDescription>

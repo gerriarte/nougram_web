@@ -163,7 +163,9 @@ export function ServiceForm({
             <input
               type="checkbox"
               id="is_active"
-              {...register("is_active", { valueAsBoolean: true })}
+              {...register("is_active", {
+                setValueAs: (value) => value === true || value === "true"
+              })}
               className="h-4 w-4 rounded border-gray-300"
             />
             <label htmlFor="is_active" className="text-sm font-medium cursor-pointer">

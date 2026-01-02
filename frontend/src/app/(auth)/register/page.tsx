@@ -123,9 +123,9 @@ export default function RegisterPage() {
         return
       }
       
-      if (response.data?.access_token) {
+      if ((response.data as any)?.access_token) {
         // Save token
-        localStorage.setItem("auth_token", response.data.access_token)
+        localStorage.setItem("auth_token", (response.data as any).access_token)
         
         // Fetch current user data to check onboarding status
         const userResponse = await apiRequest<CurrentUser>('/auth/me');

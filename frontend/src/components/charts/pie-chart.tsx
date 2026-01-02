@@ -4,10 +4,12 @@ import dynamic from "next/dynamic"
 import { Loader2 } from "lucide-react"
 
 // Lazy load recharts components
+// @ts-ignore - Recharts types have compatibility issues with dynamic imports
 const RechartsPieChart = dynamic(
   () => import("recharts").then((mod) => mod.PieChart),
   { ssr: false }
 )
+// @ts-ignore - Recharts types have compatibility issues with dynamic imports
 const RechartsPie = dynamic(
   () => import("recharts").then((mod) => mod.Pie),
   { ssr: false }
@@ -16,6 +18,7 @@ const RechartsCell = dynamic(
   () => import("recharts").then((mod) => mod.Cell),
   { ssr: false }
 )
+// @ts-ignore - Recharts types have compatibility issues with dynamic imports
 const RechartsTooltip = dynamic(
   () => import("recharts").then((mod) => mod.Tooltip),
   { ssr: false }

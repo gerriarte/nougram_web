@@ -62,7 +62,7 @@ export function useCreate<T>({
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey })
       relatedQueryKeys.forEach((key) => {
-        queryClient.invalidateQueries({ queryKey: key })
+        queryClient.invalidateQueries({ queryKey: Array.isArray(key) ? key : [key] })
       })
 
       // Show success toast
@@ -116,7 +116,7 @@ export function useUpdate<T>({
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey })
       relatedQueryKeys.forEach((key) => {
-        queryClient.invalidateQueries({ queryKey: key })
+        queryClient.invalidateQueries({ queryKey: Array.isArray(key) ? key : [key] })
       })
 
       // Show success toast
@@ -163,7 +163,7 @@ export function useDelete({
       // Invalidate queries
       queryClient.invalidateQueries({ queryKey })
       relatedQueryKeys.forEach((key) => {
-        queryClient.invalidateQueries({ queryKey: key })
+        queryClient.invalidateQueries({ queryKey: Array.isArray(key) ? key : [key] })
       })
 
       // Show success toast

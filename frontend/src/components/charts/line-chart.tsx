@@ -3,18 +3,22 @@
 import dynamic from "next/dynamic"
 
 // Lazy load recharts components
+// @ts-ignore - Recharts types have compatibility issues with dynamic imports
 const RechartsLineChart = dynamic(
   () => import("recharts").then((mod) => mod.LineChart),
   { ssr: false }
 )
+// @ts-ignore - Recharts types have compatibility issues with dynamic imports
 const RechartsLine = dynamic(
   () => import("recharts").then((mod) => mod.Line),
   { ssr: false }
 )
+// @ts-ignore - Recharts types have compatibility issues with dynamic imports
 const RechartsXAxis = dynamic(
   () => import("recharts").then((mod) => mod.XAxis),
   { ssr: false }
 )
+// @ts-ignore - Recharts types have compatibility issues with dynamic imports
 const RechartsYAxis = dynamic(
   () => import("recharts").then((mod) => mod.YAxis),
   { ssr: false }
@@ -23,10 +27,12 @@ const RechartsCartesianGrid = dynamic(
   () => import("recharts").then((mod) => mod.CartesianGrid),
   { ssr: false }
 )
+// @ts-ignore - Recharts types have compatibility issues with dynamic imports
 const RechartsTooltip = dynamic(
   () => import("recharts").then((mod) => mod.Tooltip),
   { ssr: false }
 )
+// @ts-ignore - Recharts types have compatibility issues with dynamic imports
 const RechartsLegend = dynamic(
   () => import("recharts").then((mod) => mod.Legend),
   { ssr: false }
@@ -70,11 +76,12 @@ export function LineChart({
     )
   }
 
-  const defaultFormatter = (value: number) => {
+  const defaultFormatter = (value: any) => {
+    const numValue = typeof value === 'number' ? value : 0
     if (currency && formatter) {
-      return formatter(value)
+      return formatter(numValue)
     }
-    return value.toLocaleString()
+    return numValue.toLocaleString()
   }
 
   return (
@@ -89,7 +96,7 @@ export function LineChart({
         />
         <RechartsYAxis />
         <RechartsTooltip 
-          formatter={formatter || defaultFormatter}
+          formatter={(value: any) => (formatter ? formatter(typeof value === 'number' ? value : 0) : defaultFormatter(value))}
         />
         <RechartsLegend />
         {dataKeys.map((key, index) => (

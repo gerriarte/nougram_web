@@ -91,7 +91,7 @@ export default function TeamSettingsPage() {
   }
 
   // Group salaries by currency
-  const salariesByCurrency = members.reduce((acc, member) => {
+  const salariesByCurrency = members.reduce((acc: Record<string, number>, member: TeamMember) => {
     const currency = member.currency || "USD"
     if (!acc[currency]) {
       acc[currency] = 0
@@ -100,7 +100,7 @@ export default function TeamSettingsPage() {
     return acc
   }, {} as Record<string, number>)
   
-  const totalHours = members.reduce((sum, member) => sum + member.billable_hours_per_week * 4.33, 0)
+  const totalHours = members.reduce((sum: number, member: TeamMember) => sum + member.billable_hours_per_week * 4.33, 0)
   
   // Get primary currency (most used) or first one
   const primaryCurrency = Object.keys(salariesByCurrency).length > 0 
@@ -197,7 +197,7 @@ export default function TeamSettingsPage() {
                       <TableCell className="text-right">
                         {Object.keys(salariesByCurrency).length > 1 ? (
                           <div className="space-y-1">
-                            {Object.entries(salariesByCurrency).map(([currency, amount]) => (
+                            {Object.entries(salariesByCurrency).map(([currency, amount]: [string, number]) => (
                               <div key={currency}>
                                 {formatCurrency(amount, currency)}
                               </div>
@@ -230,7 +230,13 @@ export default function TeamSettingsPage() {
           }
         }}
         onSubmit={editingMember ? handleUpdate : handleCreate}
-        defaultValues={editingMember || undefined}
+        defaultValues={editingMember ? {
+          name: editingMember.name,
+          role: editingMember.role,
+          salary_monthly_brute: editingMember.salary_monthly_brute,
+          currency: (editingMember.currency || "USD") as "USD" | "COP" | "EUR" | "ARS",
+          billable_hours_per_week: editingMember.billable_hours_per_week,
+        } : undefined}
         mode={editingMember ? "edit" : "create"}
       />
     </div>

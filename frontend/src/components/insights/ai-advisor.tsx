@@ -81,11 +81,11 @@ export function AIAdvisor() {
               <div className="flex-1">
                 <p className="text-sm font-medium mb-1">AI Response:</p>
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                  {mutation.data.answer || "No response received"}
+                  {(mutation.data as any)?.answer || "No response received"}
                 </p>
-                {mutation.data.provider && (
+                {(mutation.data as any)?.provider && (
                   <p className="text-xs text-muted-foreground mt-2">
-                    Powered by {mutation.data.provider}
+                    Powered by {(mutation.data as any).provider}
                   </p>
                 )}
               </div>

@@ -132,6 +132,7 @@ export function useCalculateQuote() {
       items: Array<{ service_id: number; estimated_hours?: number; pricing_type?: string; fixed_price?: number; quantity?: number; recurring_price?: number; billing_frequency?: string; project_value?: number }>;
       expenses?: Array<{ name: string; description?: string; cost: number; markup_percentage: number; category?: string; quantity?: number }>;
       tax_ids?: number[];
+      target_margin_percentage?: number;
       revisions_included?: number;
       revision_cost_per_additional?: number;
       revisions_count?: number;

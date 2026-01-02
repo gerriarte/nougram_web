@@ -510,7 +510,7 @@ export default function OrganizationDetailPage() {
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-primary-500" />
                 </div>
-              ) : orgUsers && orgUsers.items.length > 0 ? (
+              ) : orgUsers && (orgUsers as any).items && Array.isArray((orgUsers as any).items) && (orgUsers as any).items.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -522,7 +522,7 @@ export default function OrganizationDetailPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {orgUsers.items.map((user) => {
+                    {((orgUsers as any).items as any[]).map((user) => {
                       const getUserRoleLabel = (role: string) => {
                         const roleMap: Record<string, string> = {
                           'org_admin': tUsers('roles.admin'),

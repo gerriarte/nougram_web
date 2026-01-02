@@ -29,6 +29,7 @@ export default function ProjectDetailPage() {
 
   const { data: project, isLoading: projectLoading } = useGetProject(projectId)
   const { data: quotes, isLoading: quotesLoading } = useGetProjectQuotes(projectId)
+  const quotesArray = (quotes && Array.isArray(quotes)) ? quotes : []
   const { data: currentUser } = useGetCurrentUser()
   const canSendQuotesPermission = canSendQuotes(currentUser)
   const { toast } = useToast()
@@ -133,7 +134,7 @@ export default function ProjectDetailPage() {
             <div>
               <CardTitle>Quote Versions</CardTitle>
               <CardDescription>
-                {quotesLoading ? "Loading..." : `${quotes?.length || 0} version${quotes?.length !== 1 ? "s" : ""}`}
+                {quotesLoading ? "Loading..." : `${quotesArray.length} version${quotesArray.length !== 1 ? "s" : ""}`}
               </CardDescription>
             </div>
             <Button onClick={() => router.push(`/projects/${projectId}/quotes/new`)}>
@@ -147,7 +148,7 @@ export default function ProjectDetailPage() {
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
-          ) : !quotes || quotes.length === 0 ? (
+          ) : quotesArray.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Package className="h-12 w-12 text-muted-foreground mb-4" />
               <p className="text-sm text-muted-foreground text-center mb-4">
@@ -173,7 +174,7 @@ export default function ProjectDetailPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {quotes.map((quote: any) => (
+                  {quotesArray.map((quote: any) => (
                     <React.Fragment key={quote.id}>
                       <TableRow className={expandedQuoteId === quote.id ? "bg-grey-50" : ""}>
                         <TableCell className="font-medium">v{quote.version}</TableCell>

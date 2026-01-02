@@ -33,6 +33,19 @@ import { SendEmailDialog } from "@/components/quotes/send-email-dialog"
 import { ExpensesSection } from "@/components/quotes/expenses-section"
 import { useGetQuoteExpenses, type QuoteExpense } from "@/lib/queries"
 
+interface Service {
+  id: number
+  name: string
+  description?: string
+  default_margin_target: number
+  is_active: boolean
+  pricing_type?: string
+  fixed_price?: number
+  is_recurring?: boolean
+  billing_frequency?: string
+  recurring_price?: number
+}
+
 interface QuoteItem {
   service_id: number
   estimated_hours: number
@@ -265,7 +278,7 @@ export default function EditQuotePage() {
             Back
           </Button>
           <div>
-            <h1 className="text-3xl font-bold">Edit Quote v{quote.version}</h1>
+            <h1 className="text-3xl font-bold">Edit Quote v{(quote as any)?.version || 1}</h1>
             <p className="text-muted-foreground">Update quote items and pricing</p>
           </div>
         </div>
@@ -356,7 +369,7 @@ export default function EditQuotePage() {
             ) : (
               <>
                 {quoteItems.map((item, index) => {
-                  const service = services.find((s) => s.id === item.service_id)
+                  const service = services.find((s: Service) => s.id === item.service_id)
                   const calculatedItem = calculatedQuote?.items.find(
                     (ci: any) => ci.service_id === item.service_id
                   )
@@ -388,7 +401,7 @@ export default function EditQuotePage() {
                             <SelectValue placeholder="Select service" />
                           </SelectTrigger>
                           <SelectContent>
-                            {services.map((s) => (
+                            {services.map((s: Service) => (
                               <SelectItem key={s.id} value={s.id.toString()}>
                                 {s.name}
                               </SelectItem>

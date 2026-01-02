@@ -130,10 +130,10 @@ export default function IntegrationsPage() {
           description: response.error,
           variant: "destructive",
         })
-      } else if (response.data?.success) {
+      } else if ((response.data as any)?.success) {
         toast({
           title: "Éxito",
-          description: `Se sincronizaron ${response.data.records_synced || 0} registros desde Google Sheets`,
+          description: `Se sincronizaron ${(response.data as any).records_synced || 0} registros desde Google Sheets`,
         })
       }
     } catch (error) {

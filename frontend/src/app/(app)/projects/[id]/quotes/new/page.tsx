@@ -20,6 +20,19 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Textarea } from "@/components/ui/textarea"
 import { logger } from "@/lib/logger"
 
+interface Service {
+  id: number
+  name: string
+  description?: string
+  default_margin_target: number
+  is_active: boolean
+  pricing_type?: string
+  fixed_price?: number
+  is_recurring?: boolean
+  billing_frequency?: string
+  recurring_price?: number
+}
+
 interface QuoteItem {
   service_id: number
   estimated_hours: number
@@ -252,7 +265,7 @@ export default function NewQuoteVersionPage() {
             ) : (
               <>
                 {quoteItems.map((item, index) => {
-                  const service = services.find((s) => s.id === item.service_id)
+                  const service = services.find((s: Service) => s.id === item.service_id)
                   const calculatedItem = calculatedQuote?.items.find(
                     (ci: any) => ci.service_id === item.service_id
                   )
@@ -284,7 +297,7 @@ export default function NewQuoteVersionPage() {
                             <SelectValue placeholder="Select service" />
                           </SelectTrigger>
                           <SelectContent>
-                            {services.map((s) => (
+                            {services.map((s: Service) => (
                               <SelectItem key={s.id} value={s.id.toString()}>
                                 {s.name}
                               </SelectItem>

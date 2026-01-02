@@ -2,6 +2,7 @@
  * Unit tests for Money Transformer
  * ESTÁNDAR NOUGRAM: Validación de currency obligatorio
  */
+// @ts-ignore - Jest types
 import { describe, it, expect } from '@jest/globals';
 import { transformAPIResponse } from '../money-transformer';
 import { Dinero } from 'dinero.js';
@@ -16,12 +17,14 @@ describe('Money Transformer - Currency validation', () => {
       
       // En producción debería lanzar error
       const originalEnv = process.env.NODE_ENV;
+      // @ts-ignore - NODE_ENV is read-only but we need to test different environments
       process.env.NODE_ENV = 'production';
       
       expect(() => {
         transformAPIResponse(response);
       }).toThrow('Currency is required');
       
+      // @ts-ignore - NODE_ENV is read-only but we need to test different environments
       process.env.NODE_ENV = originalEnv;
     });
 
@@ -35,9 +38,10 @@ describe('Money Transformer - Currency validation', () => {
       process.env.NODE_ENV = 'development';
       
       // En desarrollo debería usar USD como fallback con warning
-      const transformed = transformAPIResponse(response);
+      const transformed = transformAPIResponse(response) as any;
       expect(transformed.total_client_price).toBeDefined();
       
+      // @ts-ignore - NODE_ENV is read-only but we need to test different environments
       process.env.NODE_ENV = originalEnv;
     });
 
@@ -47,7 +51,7 @@ describe('Money Transformer - Currency validation', () => {
         currency: 'COP',
       };
       
-      const transformed = transformAPIResponse(response);
+      const transformed = transformAPIResponse(response) as any;
       expect(transformed.total_client_price).toBeDefined();
       if (transformed.total_client_price instanceof Dinero) {
         expect(transformed.total_client_price.currency.code).toBe('COP');
@@ -60,7 +64,7 @@ describe('Money Transformer - Currency validation', () => {
         primary_currency: 'USD',
       };
       
-      const transformed = transformAPIResponse(response);
+      const transformed = transformAPIResponse(response) as any;
       expect(transformed.total_client_price).toBeDefined();
       if (transformed.total_client_price instanceof Dinero) {
         expect(transformed.total_client_price.currency.code).toBe('USD');
@@ -77,7 +81,7 @@ describe('Money Transformer - Currency validation', () => {
         // Sin currency en nivel superior
       };
       
-      const transformed = transformAPIResponse(response);
+      const transformed = transformAPIResponse(response) as any;
       expect(transformed.total_client_price).toBeDefined();
       if (transformed.total_client_price instanceof Dinero) {
         expect(transformed.total_client_price.currency.code).toBe('USD');
@@ -104,7 +108,7 @@ describe('Money Transformer - Currency validation', () => {
         currency: 'USD',
       };
       
-      const transformed = transformAPIResponse(response);
+      const transformed = transformAPIResponse(response) as any;
       expect(transformed.total_client_price).toBeDefined();
       expect(transformed.total_internal_cost).toBeDefined();
       
@@ -126,7 +130,7 @@ describe('Money Transformer - Currency validation', () => {
         currency: 'USD',
       };
       
-      const transformed = transformAPIResponse(response);
+      const transformed = transformAPIResponse(response) as any;
       expect(transformed.items).toBeDefined();
       expect(Array.isArray(transformed.items)).toBe(true);
       
@@ -141,7 +145,7 @@ describe('Money Transformer - Currency validation', () => {
         { total_client_price: '200.75', currency: 'USD' },
       ];
       
-      const transformed = transformAPIResponse(responses);
+      const transformed = transformAPIResponse(responses) as any;
       expect(Array.isArray(transformed)).toBe(true);
       expect(transformed.length).toBe(2);
     });
@@ -155,7 +159,7 @@ describe('Money Transformer - Currency validation', () => {
         status: 'draft',
       };
       
-      const transformed = transformAPIResponse(response);
+      const transformed = transformAPIResponse(response) as any;
       expect(transformed.id).toBe(1);
       expect(transformed.name).toBe('Test Quote');
       expect(transformed.status).toBe('draft');
@@ -168,7 +172,7 @@ describe('Money Transformer - Currency validation', () => {
         currency: 'USD',
       };
       
-      const transformed = transformAPIResponse(response);
+      const transformed = transformAPIResponse(response) as any;
       // No debería fallar, solo transformar campos válidos
       expect(transformed).toBeDefined();
     });
@@ -177,19 +181,19 @@ describe('Money Transformer - Currency validation', () => {
   describe('Edge cases', () => {
     it('handles empty object', () => {
       const response = {};
-      const transformed = transformAPIResponse(response);
+      const transformed = transformAPIResponse(response) as any;
       expect(transformed).toEqual({});
     });
 
     it('handles non-object values', () => {
       const response = 'not an object';
-      const transformed = transformAPIResponse(response);
+      const transformed = transformAPIResponse(response) as any;
       expect(transformed).toBe('not an object');
     });
 
     it('handles null response', () => {
       const response = null;
-      const transformed = transformAPIResponse(response);
+      const transformed = transformAPIResponse(response) as any;
       expect(transformed).toBeNull();
     });
 
@@ -205,6 +209,7 @@ describe('Money Transformer - Currency validation', () => {
       const transformed = transformAPIResponse(response, 'COP');
       expect(transformed.total_client_price).toBeDefined();
       
+      // @ts-ignore - NODE_ENV is read-only but we need to test different environments
       process.env.NODE_ENV = originalEnv;
     });
   });

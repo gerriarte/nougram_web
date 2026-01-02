@@ -3,18 +3,22 @@
 import dynamic from "next/dynamic"
 
 // Lazy load recharts components
+// @ts-ignore - Recharts types have compatibility issues with dynamic imports
 const RechartsAreaChart = dynamic(
   () => import("recharts").then((mod) => mod.AreaChart),
   { ssr: false }
 )
+// @ts-ignore - Recharts types have compatibility issues with dynamic imports
 const RechartsArea = dynamic(
   () => import("recharts").then((mod) => mod.Area),
   { ssr: false }
 )
+// @ts-ignore - Recharts types have compatibility issues with dynamic imports
 const RechartsXAxis = dynamic(
   () => import("recharts").then((mod) => mod.XAxis),
   { ssr: false }
 )
+// @ts-ignore - Recharts types have compatibility issues with dynamic imports
 const RechartsYAxis = dynamic(
   () => import("recharts").then((mod) => mod.YAxis),
   { ssr: false }
@@ -23,10 +27,12 @@ const RechartsCartesianGrid = dynamic(
   () => import("recharts").then((mod) => mod.CartesianGrid),
   { ssr: false }
 )
+// @ts-ignore - Recharts types have compatibility issues with dynamic imports
 const RechartsTooltip = dynamic(
   () => import("recharts").then((mod) => mod.Tooltip),
   { ssr: false }
 )
+// @ts-ignore - Recharts types have compatibility issues with dynamic imports
 const RechartsLegend = dynamic(
   () => import("recharts").then((mod) => mod.Legend),
   { ssr: false }

@@ -36,7 +36,7 @@ export function SalesProjection({ currency }: SalesProjectionProps) {
   const { data: servicesData, isLoading: servicesLoading } = useGetServices()
   const calculateProjection = useCalculateSalesProjection()
 
-  const services: Service[] = servicesData || []
+  const services: Service[] = (servicesData?.items && Array.isArray(servicesData.items)) ? servicesData.items : []
 
   const handleServiceToggle = (serviceId: number) => {
     setSelectedServices(prev => {
@@ -293,10 +293,8 @@ export function SalesProjection({ currency }: SalesProjectionProps) {
             <CardContent>
               <BarChart
                 data={serviceBreakdownData.map(item => ({
-                  name: item.name,
+                  service: item.name,
                   revenue: item.revenue,
-                  cost: item.cost,
-                  profit: item.profit,
                 }))}
                 height={300}
                 currency={currency}

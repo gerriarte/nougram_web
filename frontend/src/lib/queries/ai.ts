@@ -56,10 +56,9 @@ export interface OnboardingSuggestionResponse {
 export function useAISuggestions() {
   return useMutation({
     mutationFn: async (request: OnboardingSuggestionRequest): Promise<OnboardingSuggestionResponse> => {
-      const response = await apiRequest<OnboardingSuggestionResponse>({
-        endpoint: '/ai/suggest-config',
+      const response = await apiRequest<OnboardingSuggestionResponse>('/ai/suggest-config', {
         method: 'POST',
-        body: request,
+        body: JSON.stringify(request),
       });
 
       if (response.error) {
@@ -81,8 +80,7 @@ export function useAIStatus() {
   return useQuery({
     queryKey: queryKeys.ai.status(),
     queryFn: async () => {
-      const response = await apiRequest<{ available: boolean; message: string }>({
-        endpoint: '/ai/status',
+      const response = await apiRequest<{ available: boolean; message: string }>('/ai/status', {
         method: 'GET',
       });
 

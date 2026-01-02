@@ -164,7 +164,7 @@ export default function GeneralCostsPage() {
                                     {costs
                                         .sort((a: FixedCost, b: FixedCost) => b.amount_monthly - a.amount_monthly)
                                         .slice(0, 5)
-                                        .map((cost) => (
+                                        .map((cost: FixedCost) => (
                                             <div key={cost.id} className="flex items-center justify-between">
                                                 <div className="flex items-center gap-4">
                                                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
