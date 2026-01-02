@@ -78,16 +78,16 @@ export default function EditQuotePage() {
 
   // Load quote data when available
   useEffect(() => {
-    if (quote) {
-      const items = quote.items.map((item: any) => ({
+    if (quote && (quote as any).items) {
+      const items = ((quote as any).items as Array<{ service_id: number; estimated_hours?: number }>).map((item) => ({
         service_id: item.service_id,
-        estimated_hours: item.estimated_hours,
+        estimated_hours: item.estimated_hours || 0,
       }))
       setQuoteItems(items)
-      setNotes(quote.notes || "")
-      setRevisionsIncluded(quote.revisions_included ?? 2)
-      setRevisionCostPerAdditional(quote.revision_cost_per_additional ?? undefined)
-      setTargetMargin(quote.target_margin_percentage ?? 0.40) // Load target margin or default to 40%
+      setNotes((quote as any).notes || "")
+      setRevisionsIncluded((quote as any).revisions_included ?? 2)
+      setRevisionCostPerAdditional((quote as any).revision_cost_per_additional ?? undefined)
+      setTargetMargin((quote as any).target_margin_percentage ?? 0.40) // Load target margin or default to 40%
     }
   }, [quote])
 
@@ -109,9 +109,9 @@ export default function EditQuotePage() {
 
     setIsCalculating(true)
     try {
-      const taxIds = project?.tax_ids || []
+      const taxIds = (project as any)?.tax_ids || []
       // Convert expenses to format expected by API
-      const expensesForCalculation = expenses.map(exp => ({
+      const expensesForCalculation = expenses.map((exp: QuoteExpense) => ({
         name: exp.name,
         description: exp.description,
         cost: exp.cost,
@@ -267,8 +267,8 @@ export default function EditQuotePage() {
             variant="outline"
             onClick={async () => {
               try {
-                const safeProjectName = project?.name.replace(/[^a-z0-9]/gi, '_') || 'project'
-                const filename = `cotizacion_${safeProjectName}_v${quote.version}.pdf`
+                const safeProjectName = (project as any)?.name?.replace(/[^a-z0-9]/gi, '_') || 'project'
+                const filename = `cotizacion_${safeProjectName}_v${(quote as any)?.version || 1}.pdf`
                 await downloadPDF(`/projects/${projectId}/quotes/${quoteId}/pdf`, filename)
                 toast({
                   title: "PDF descargado",
@@ -290,8 +290,8 @@ export default function EditQuotePage() {
             variant="outline"
             onClick={async () => {
               try {
-                const safeProjectName = project?.name.replace(/[^a-z0-9]/gi, '_') || 'project'
-                const filename = `cotizacion_${safeProjectName}_v${quote.version}.docx`
+                const safeProjectName = (project as any)?.name?.replace(/[^a-z0-9]/gi, '_') || 'project'
+                const filename = `cotizacion_${safeProjectName}_v${(quote as any)?.version || 1}.docx`
                 await downloadDOCX(`/projects/${projectId}/quotes/${quoteId}/docx`, filename)
                 toast({
                   title: "DOCX descargado",
@@ -632,7 +632,7 @@ export default function EditQuotePage() {
         <ExpensesSection 
           projectId={projectId} 
           quoteId={quoteId} 
-          currency={project?.currency || "USD"}
+          currency={(project as any)?.currency || "USD"}
           onExpensesChange={setExpenses}
         />
       </div>
@@ -644,9 +644,9 @@ export default function EditQuotePage() {
           onOpenChange={setSendEmailDialogOpen}
           projectId={projectId}
           quoteId={quoteId}
-          projectName={project.name}
-          clientEmail={project.client_email}
-          quoteVersion={quote.version}
+          projectName={(project as any).name || ""}
+          clientEmail={(project as any).client_email || ""}
+          quoteVersion={(quote as any).version || 1}
         />
       )}
     </div>

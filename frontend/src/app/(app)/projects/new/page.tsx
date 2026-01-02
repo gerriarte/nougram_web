@@ -273,7 +273,24 @@ export default function NewQuotePage() {
     }
     
     try {
-      const projectData = {
+      const projectData: {
+        name: string
+        client_name: string
+        client_email?: string
+        currency: string
+        tax_ids: number[]
+        target_margin_percentage: number
+        quote_items: Array<{
+          service_id: number
+          estimated_hours?: number
+          pricing_type?: string
+          fixed_price?: number
+          quantity?: number
+          recurring_price?: number
+          billing_frequency?: string
+          project_value?: number
+        }>
+      } = {
         name: projectName.trim(),
         client_name: clientName.trim(),
         client_email: clientEmail.trim() || undefined,

@@ -185,7 +185,7 @@ export default function DashboardPage() {
   // Prepare data for charts
   const statusData = Object.entries(dashboardData?.projects_by_status || {}).map(([status, count]) => ({
     name: status,
-    value: count
+    value: count as number
   }))
 
   const revenueData = Object.entries(dashboardData?.revenue_by_service || {})
