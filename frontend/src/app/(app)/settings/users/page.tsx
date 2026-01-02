@@ -641,7 +641,7 @@ export default function UsersSettingsPage() {
                           year: 'numeric',
                           month: 'short',
                           day: 'numeric',
-                        })}
+                        }) : "-"}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
