@@ -197,14 +197,14 @@ export default function DashboardPage() {
     .slice(0, 10) // Top 10 services
 
   // Monthly trends data
-  const monthlyTrendsData = (dashboardData?.monthly_trends || []).map(trend => ({
+  const monthlyTrendsData = (dashboardData?.monthly_trends || []).map((trend: { month: string; revenue: number; projects: number }) => ({
     month: trend.month,
     revenue: trend.revenue,
     projects: trend.projects
   }))
 
   // Area chart data (revenue and costs over time)
-  const areaChartData = (dashboardData?.monthly_trends || []).map(trend => ({
+  const areaChartData = (dashboardData?.monthly_trends || []).map((trend: { month: string; revenue: number; projects: number }) => ({
     month: trend.month,
     revenue: trend.revenue,
     // Note: costs would need to be calculated per month in backend
