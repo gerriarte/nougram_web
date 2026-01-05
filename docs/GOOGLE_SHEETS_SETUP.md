@@ -34,7 +34,9 @@ Para que los leads del formulario se guarden automáticamente en una hoja de cá
     *   C: Email
     *   D: Profesión
     *   E: Teléfono
-    *   F: WhatsApp
+    *   F: País
+    *   G: WhatsApp
+    *   H: Dará Feedback
 5. Haz clic en el botón **Compartir** (Share) arriba a la derecha.
 6. Copia el `client_email` de tu archivo JSON (el correo raro que termina en `iam.gserviceaccount.com`) y pégalo allí. Dale permisos de **Editor**.
 

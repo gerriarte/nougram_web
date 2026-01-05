@@ -40,6 +40,7 @@ export const Hero: React.FC = () => {
     email: '',
     profession: '',
     phone: '',
+    country: '',
     whatsappConsent: false,
     _gotcha: '' // Honeypot field
   });
@@ -88,7 +89,7 @@ export const Hero: React.FC = () => {
       });
 
       if (response.ok) {
-        setFormData({ name: '', email: '', profession: '', phone: '', whatsappConsent: false, _gotcha: '' });
+        setFormData({ name: '', email: '', profession: '', phone: '', country: '', whatsappConsent: false, _gotcha: '' });
         setEmailError('');
         setIsEmailTouched(false);
       } else {
@@ -268,6 +269,21 @@ export const Hero: React.FC = () => {
                       onChange={handleChange}
                       className="w-full px-4 py-2.5 text-sm bg-dark-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/70"
                     />
+
+                    <select
+                      name="country"
+                      required
+                      value={formData.country}
+                      onChange={handleChange as any} // Cast needed if types are strict for select vs input
+                      className="w-full px-4 py-2.5 text-sm bg-dark-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/70 appearance-none"
+                    >
+                      <option value="" disabled className="bg-dark-900 text-slate-500">Selecciona tu país</option>
+                      <option value="Colombia" className="bg-dark-900">Colombia</option>
+                      <option value="Argentina" className="bg-dark-900">Argentina</option>
+                      <option value="Venezuela" className="bg-dark-900">Venezuela</option>
+                      <option value="Perú" className="bg-dark-900">Perú</option>
+                      <option value="Chile" className="bg-dark-900">Chile</option>
+                    </select>
 
                     <label className="flex items-start gap-3 cursor-pointer group">
                       <div className="relative flex items-center">

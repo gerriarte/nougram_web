@@ -25,7 +25,7 @@ export default async function handler(
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { name, email, profession, phone, whatsappConsent, feedbackConsent, _gotcha } = req.body;
+    const { name, email, profession, phone, country, whatsappConsent, feedbackConsent, _gotcha } = req.body;
 
     // Honeypot check: If _gotcha is filled, it's a bot. Fail silently.
     if (_gotcha) {
@@ -62,6 +62,8 @@ export default async function handler(
         Nombre: ${name}
         Email: ${email}
         Profesión: ${profession}
+        Profesión: ${profession}
+        País: ${country}
         Teléfono: ${phone || 'No especificado'}
         Teléfono: ${phone || 'No especificado'}
         WhatsApp Consent: ${whatsappConsent ? 'Sí' : 'No'}
@@ -72,6 +74,7 @@ export default async function handler(
         <p><strong>Nombre:</strong> ${name}</p>
         <p><strong>Email:</strong> ${email}</p>
         <p><strong>Profesión:</strong> ${profession}</p>
+        <p><strong>País:</strong> ${country}</p>
         <p><strong>Teléfono:</strong> ${phone || 'No especificado'}</p>
         <p><strong>Acepta WhatsApp:</strong> ${whatsappConsent ? 'Sí' : 'No'}</p>
         <p><strong>Dará Feedback:</strong> ${feedbackConsent ? 'Sí' : 'No'}</p>
@@ -105,7 +108,7 @@ export default async function handler(
                                 email,
                                 profession,
                                 phone || '',
-                                phone || '',
+                                country || '',
                                 whatsappConsent ? 'Sí' : 'No',
                                 feedbackConsent ? 'Sí' : 'No'
                             ]
