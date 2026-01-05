@@ -38,24 +38,28 @@ RATE_LIMITS_BY_PLAN: Dict[str, Dict[str, int]] = {
         "auth": 5,  # 5 login attempts per minute
         "create": 20,  # 20 create operations per minute
         "update": 30,  # 30 update operations per minute
+        "ai": 5,  # 5 AI requests per minute (to control API costs)
     },
     "starter": {
         "default": 120,  # 120 requests per minute
         "auth": 10,
         "create": 40,
         "update": 60,
+        "ai": 10,  # 10 AI requests per minute
     },
     "professional": {
         "default": 300,  # 300 requests per minute
         "auth": 20,
         "create": 100,
         "update": 150,
+        "ai": 30,  # 30 AI requests per minute
     },
     "enterprise": {
         "default": 1000,  # 1000 requests per minute
         "auth": 50,
         "create": 500,
         "update": 750,
+        "ai": 100,  # 100 AI requests per minute
     }
 }
 

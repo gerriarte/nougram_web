@@ -106,5 +106,8 @@ export * from './expenses';
 // Sales Projection
 export * from './salesProjection';
 
+// Annual Projection
+export * from './annualProjection';
+
 // AI
 export * from './ai';

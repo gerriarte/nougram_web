@@ -73,7 +73,8 @@ export default function UsersSettingsPage() {
   
   const { data: usersData, isLoading, error } = useGetOrganizationUsers(organizationId ?? 0)
   const { data: orgStats } = useGetOrganizationStats(organizationId ?? 0)
-  const { data: invitationsData } = useGetInvitations(organizationId ?? 0)
+  const [invitationStatusFilter, setInvitationStatusFilter] = useState<string | undefined>(undefined)
+  const { data: invitationsData } = useGetInvitations(organizationId ?? 0, invitationStatusFilter)
   const updateRoleMutation = useUpdateUserRoleInOrganization()
   const addUserMutation = useAddUserToOrganization()
   const removeUserMutation = useRemoveUserFromOrganization()
@@ -242,8 +243,9 @@ export default function UsersSettingsPage() {
       })
       
       toast({
-        title: "Invitación enviada",
-        description: `Se ha enviado un email de invitación a ${inviteData.email}`,
+        title: "✅ Invitación enviada",
+        description: `Se ha enviado un email de invitación a ${inviteData.email}. El usuario recibirá un enlace para unirse a la organización.`,
+        duration: 5000,
       })
       setInviteDialogOpen(false)
       setInviteData({
@@ -602,10 +604,25 @@ export default function UsersSettingsPage() {
       {canInvite && (
         <Card>
           <CardHeader>
-            <CardTitle>Invitaciones Pendientes</CardTitle>
-            <CardDescription>
-              Gestiona las invitaciones enviadas a usuarios para unirse a tu organización
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Invitaciones</CardTitle>
+                <CardDescription>
+                  Gestiona las invitaciones enviadas a usuarios para unirse a tu organización
+                </CardDescription>
+              </div>
+              <Select value={invitationStatusFilter || "all"} onValueChange={(value) => setInvitationStatusFilter(value === "all" ? undefined : value)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filtrar por estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas</SelectItem>
+                  <SelectItem value="pending">Pendientes</SelectItem>
+                  <SelectItem value="accepted">Aceptadas</SelectItem>
+                  <SelectItem value="expired">Expiradas</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </CardHeader>
           <CardContent>
             {invitationsData && (invitationsData as any).items && Array.isArray((invitationsData as any).items) && (invitationsData as any).items.length > 0 ? (

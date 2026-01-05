@@ -1,7 +1,7 @@
 """
 AI-powered financial analysis endpoints
 """
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import Optional
@@ -13,6 +13,7 @@ from app.core.tenant import get_tenant_context, TenantContext
 from app.core.logging import get_logger
 from app.core.error_codes import ErrorCode
 from app.core.translations import translate_error
+from app.core.rate_limiting import limiter, get_tenant_identifier
 from app.models.user import User
 from app.services.ai_service import ai_service
 from app.schemas.ai import (
@@ -27,6 +28,12 @@ from pydantic import BaseModel
 
 logger = get_logger(__name__)
 router = APIRouter()
+
+# Rate limits for AI endpoints (requests per minute)
+# These are conservative limits to control API costs
+# Free: 5/min, Starter: 10/min, Professional: 30/min, Enterprise: 100/min
+# Using fixed conservative limit for now (can be made dynamic later)
+AI_RATE_LIMIT = "10/minute"  # Conservative limit for all plans (can be adjusted per plan later)
 
 
 class AIAnalysisRequest(BaseModel):
@@ -151,8 +158,10 @@ async def demo_analysis(
 
 
 @router.post("/suggest-config", response_model=OnboardingSuggestionResponse, summary="Get AI-powered onboarding suggestions")
+@limiter.limit(AI_RATE_LIMIT, key_func=get_tenant_identifier)  # Rate limit: 10 requests per minute per tenant
 async def suggest_onboarding_config(
-    request: OnboardingSuggestionRequest,
+    request: Request,
+    payload: OnboardingSuggestionRequest,
     tenant: TenantContext = Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
@@ -223,7 +232,7 @@ async def suggest_onboarding_config(
             )
             
             logger.info(
-                f"AI suggestions generated for industry={request.industry}, region={request.region}",
+                f"AI suggestions generated for industry={payload.industry}, region={payload.region}",
                 extra={
                     "organization_id": tenant.organization_id,
                     "user_id": current_user.id,
@@ -247,6 +256,317 @@ async def suggest_onboarding_config(
         raise
     except Exception as e:
         logger.error(f"Unexpected error in suggest_onboarding_config: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=translate_error(ErrorCode.UNKNOWN_ERROR)
+        )
+
+
+@router.post("/parse-document", response_model=DocumentParseResponse, summary="Parse unstructured document data")
+@limiter.limit(AI_RATE_LIMIT, key_func=get_tenant_identifier)  # Rate limit: 10 requests per minute per tenant
+async def parse_document(
+    request: Request,
+    payload: DocumentParseRequest,
+    tenant: TenantContext = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Parse unstructured document data (payroll, expenses, etc.) into structured format.
+    
+    This endpoint uses OpenAI to extract structured data from unstructured text documents
+    (PDFs, CSVs, etc.) and classify them into:
+    - Team members (with salaries)
+    - Fixed costs
+    - Subscriptions
+    
+    **Permissions:**
+    - All authenticated users can parse documents for their organization
+    
+    **Request Body:**
+    - `text`: Text content from document (PDF, CSV, etc.) - can be copied/pasted
+    - `document_type`: Optional type hint ('payroll', 'expenses', 'mixed') - helps AI classify better
+    
+    **Returns:**
+    - `200 OK`: Document parsed successfully
+    - `503 Service Unavailable`: AI service not configured
+    - `500 Internal Server Error`: Error processing request
+    
+    **Response includes:**
+    - `team_members`: List of extracted team members with salaries
+    - `fixed_costs`: List of extracted fixed costs
+    - `subscriptions`: List of extracted subscriptions
+    - `confidence_scores`: Confidence scores for each category (0-1)
+    - `warnings`: List of warnings about ambiguous or incomplete data
+    
+    **Important:**
+    - All extracted data requires human review before saving
+    - Confidence scores help identify which data is most reliable
+    - Warnings indicate potential issues with the extraction
+    """
+    if not ai_service.is_available():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=translate_error(ErrorCode.AI_SERVICE_UNAVAILABLE)
+        )
+    
+    # Validate text is not empty
+    if not payload.text or not payload.text.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Text content is required and cannot be empty"
+        )
+    
+    # Limit text length to prevent excessive API costs
+    MAX_TEXT_LENGTH = 10000  # characters
+    if len(payload.text) > MAX_TEXT_LENGTH:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Text content is too long. Maximum {MAX_TEXT_LENGTH} characters allowed."
+        )
+    
+    try:
+        # Call AI service
+        result = await ai_service.parse_unstructured_data(
+            text=payload.text,
+            document_type=payload.document_type
+        )
+        
+        if not result.get('success'):
+            error_msg = result.get('error', 'Unknown error')
+            logger.error(f"AI service error: {error_msg}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=translate_error(ErrorCode.AI_PROCESSING_ERROR, detail=error_msg)
+            )
+        
+        # Extract data from result
+        data = result.get('data', {})
+        
+        # Convert AI response to Pydantic schemas
+        # AI returns floats, but schemas expect Decimal for monetary values
+        from decimal import Decimal
+        
+        # Convert team members
+        team_members_data = []
+        for member in data.get('team_members', []):
+            member_dict = dict(member)
+            # Convert salary to Decimal
+            if 'salary_monthly_brute' in member_dict:
+                member_dict['salary_monthly_brute'] = Decimal(str(member_dict['salary_monthly_brute']))
+            # Ensure required fields have defaults
+            if 'currency' not in member_dict:
+                member_dict['currency'] = 'USD'
+            if 'billable_hours_per_week' not in member_dict:
+                member_dict['billable_hours_per_week'] = 32
+            if 'is_active' not in member_dict:
+                member_dict['is_active'] = True
+            team_members_data.append(member_dict)
+        
+        # Convert fixed costs
+        fixed_costs_data = []
+        for cost in data.get('fixed_costs', []):
+            cost_dict = dict(cost)
+            # Convert amount to Decimal
+            if 'amount_monthly' in cost_dict:
+                cost_dict['amount_monthly'] = Decimal(str(cost_dict['amount_monthly']))
+            # Ensure required fields have defaults
+            if 'currency' not in cost_dict:
+                cost_dict['currency'] = 'USD'
+            fixed_costs_data.append(cost_dict)
+        
+        # Validate and convert to Pydantic schema
+        try:
+            parse_response = DocumentParseResponse(
+                team_members=team_members_data,
+                fixed_costs=fixed_costs_data,
+                subscriptions=data.get('subscriptions', []),
+                confidence_scores=data.get('confidence_scores', {}),
+                warnings=data.get('warnings', [])
+            )
+            
+            logger.info(
+                f"Document parsed successfully",
+                extra={
+                    "organization_id": tenant.organization_id,
+                    "user_id": current_user.id,
+                    "document_type": payload.document_type,
+                    "team_members_count": len(parse_response.team_members),
+                    "fixed_costs_count": len(parse_response.fixed_costs),
+                    "subscriptions_count": len(parse_response.subscriptions),
+                    "text_length": len(payload.text),
+                    "usage": result.get('usage', {})
+                }
+            )
+            
+            return parse_response
+            
+        except Exception as validation_error:
+            logger.error(f"Error validating AI response: {validation_error}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=translate_error(ErrorCode.AI_PROCESSING_ERROR, detail="Invalid response format from AI service")
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in parse_document: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=translate_error(ErrorCode.UNKNOWN_ERROR)
+        )
+
+
+@router.post("/process-command", response_model=NaturalLanguageCommandResponse, summary="Process natural language configuration commands")
+@limiter.limit(AI_RATE_LIMIT, key_func=get_tenant_identifier)  # Rate limit: 10 requests per minute per tenant
+async def process_command(
+    request: Request,
+    payload: NaturalLanguageCommandRequest,
+    tenant: TenantContext = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Process natural language configuration commands and convert them to structured actions.
+    
+    This endpoint uses OpenAI to interpret commands in natural language (Spanish or English)
+    and convert them into structured actions like:
+    - Adding team members
+    - Adding services
+    - Adding fixed costs
+    - Updating team members
+    - Deleting team members
+    
+    **Permissions:**
+    - All authenticated users can process commands for their organization
+    - Actual execution of actions requires appropriate permissions (e.g., `can_modify_costs`)
+    
+    **Request Body:**
+    - `command`: Natural language command (e.g., "Añade un Senior Designer que gana 45k anuales")
+    - `context`: Optional current configuration context (helps AI understand current state)
+    
+    **Returns:**
+    - `200 OK`: Command processed successfully
+    - `503 Service Unavailable`: AI service not configured
+    - `500 Internal Server Error`: Error processing request
+    
+    **Response includes:**
+    - `action_type`: Type of action to execute
+    - `action_data`: Structured data for the action
+    - `confidence`: Confidence score (0-1) for the parsed command
+    - `requires_confirmation`: Whether user confirmation is required before executing
+    - `reasoning`: AI explanation of how the command was interpreted
+    
+    **Important:**
+    - All actions require user confirmation before execution
+    - Low confidence scores indicate ambiguous commands
+    - The endpoint only parses the command; actual execution must be done separately
+    """
+    if not ai_service.is_available():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=translate_error(ErrorCode.AI_SERVICE_UNAVAILABLE)
+        )
+    
+    # Validate command is not empty
+    if not payload.command or not payload.command.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Command is required and cannot be empty"
+        )
+    
+    try:
+        # Build context from current organization state (optional, helps AI)
+        context = None
+        if payload.context:
+            context = payload.context
+        else:
+            # Optionally build context from current organization data
+            # This helps AI understand what already exists
+            try:
+                from app.models.team import TeamMember
+                from app.models.service import Service
+                from app.models.cost import CostFixed
+                
+                # Get current team members (names and roles only, no sensitive data)
+                # Anonymize names before sending to OpenAI
+                from app.services.data_anonymizer import anonymize_name
+                team_result = await db.execute(
+                    select(TeamMember.name, TeamMember.role)
+                    .where(TeamMember.organization_id == tenant.organization_id, TeamMember.is_active == True)
+                    .limit(10)
+                )
+                team_members = [{"name": anonymize_name(r.name), "role": r.role} for r in team_result.all()]
+                
+                # Get current services (names only)
+                services_result = await db.execute(
+                    select(Service.name)
+                    .where(Service.organization_id == tenant.organization_id, Service.is_active == True, Service.deleted_at.is_(None))
+                    .limit(10)
+                )
+                services = [{"name": r.name} for r in services_result.all()]
+                
+                context = {
+                    "existing_team_members": team_members,
+                    "existing_services": services,
+                }
+            except Exception as e:
+                logger.warning(f"Could not build context for command: {e}")
+                context = None
+        
+        # Call AI service
+        result = await ai_service.process_natural_language_command(
+            command=payload.command,
+            context=context
+        )
+        
+        if not result.get('success'):
+            error_msg = result.get('error', 'Unknown error')
+            logger.error(f"AI service error: {error_msg}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=translate_error(ErrorCode.AI_PROCESSING_ERROR, detail=error_msg)
+            )
+        
+        # Extract data from result
+        data = result.get('data', {})
+        
+        # Validate and convert to Pydantic schema
+        try:
+            command_response = NaturalLanguageCommandResponse(
+                action_type=data.get('action_type', 'unknown'),
+                action_data=data.get('action_data', {}),
+                confidence=data.get('confidence', 0.0),
+                requires_confirmation=data.get('requires_confirmation', True),
+                reasoning=data.get('reasoning')
+            )
+            
+            logger.info(
+                f"Command processed successfully",
+                extra={
+                    "organization_id": tenant.organization_id,
+                    "user_id": current_user.id,
+                    "command": payload.command[:100],  # Log first 100 chars
+                    "action_type": command_response.action_type,
+                    "confidence": command_response.confidence,
+                    "usage": result.get('usage', {})
+                }
+            )
+            
+            return command_response
+            
+        except Exception as validation_error:
+            logger.error(f"Error validating AI response: {validation_error}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=translate_error(ErrorCode.AI_PROCESSING_ERROR, detail="Invalid response format from AI service")
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in process_command: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=translate_error(ErrorCode.UNKNOWN_ERROR)

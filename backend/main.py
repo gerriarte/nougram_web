@@ -33,9 +33,47 @@ async def lifespan(app: FastAPI):
 # Create FastAPI application
 app = FastAPI(
     title="Nougram API",
-    description="Backend API for Agency Profitability and Operations Platform",
+    description="""
+    Backend API for Agency Profitability and Operations Platform.
+    
+    ## Features
+    
+    * **Multi-tenant SaaS**: Support for multiple organizations with tenant isolation
+    * **Cost Management**: Track fixed costs, team salaries, and calculate blended cost rates
+    * **Service Catalog**: Manage services with pricing strategies (hourly, fixed, recurring, project value)
+    * **Project & Quote Management**: Create projects, calculate quotes with multiple pricing types
+    * **Financial Projections**: Annual sales projections and break-even analysis
+    * **Dashboard & Analytics**: KPIs, revenue analysis, and utilization metrics
+    * **AI-Powered Features**: Onboarding suggestions, document parsing, natural language configuration
+    * **Billing & Subscriptions**: Stripe integration for subscription management
+    * **Role-Based Access Control**: Granular permissions for different user roles
+    
+    ## Authentication
+    
+    All endpoints require authentication via JWT Bearer token, except:
+    * `/api/v1/auth/login`
+    * `/api/v1/auth/register`
+    * `/api/v1/organizations/register`
+    
+    ## Getting Started
+    
+    1. Register an organization at `/api/v1/organizations/register`
+    2. Login at `/api/v1/auth/login` to get your access token
+    3. Use the token in the Authorization header: `Authorization: Bearer <token>`
+    4. Start managing your costs, services, and projects!
+    
+    ## Rate Limiting
+    
+    AI endpoints have rate limits based on subscription plan:
+    * Free: 5 requests/minute
+    * Starter: 10 requests/minute
+    * Professional: 30 requests/minute
+    * Enterprise: 100 requests/minute
+    """,
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
 # Configure CORS

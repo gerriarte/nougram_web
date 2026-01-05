@@ -10,6 +10,7 @@ from app.repositories.user_repository import UserRepository
 from app.repositories.tax_repository import TaxRepository
 from app.repositories.settings_repository import SettingsRepository
 from app.repositories.invitation_repository import InvitationRepository
+from app.repositories.annual_sales_projection_repository import AnnualSalesProjectionRepository
 
 __all__ = [
     "BaseRepository",
@@ -21,6 +22,7 @@ __all__ = [
     "TaxRepository",
     "SettingsRepository",
     "InvitationRepository",
+    "AnnualSalesProjectionRepository",
 ]
 
 

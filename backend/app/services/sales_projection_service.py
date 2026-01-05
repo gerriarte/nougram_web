@@ -95,19 +95,20 @@ async def calculate_sales_projection(
             continue
         
         # ESTÁNDAR NOUGRAM: Calcular cost usando Money
-        cost_money = bcr_money.multiply(estimated_hours)
+        cost_money = bcr_money.multiply(Decimal(str(estimated_hours)))
         
         # ESTÁNDAR NOUGRAM: Calcular price con margen usando Money
-        margin_target = float(service.default_margin_target or 0)
-        if margin_target > 0 and margin_target < 1:
-            price_money = cost_money.apply_margin(margin_target * 100)  # apply_margin espera porcentaje
+        margin_target_decimal = Decimal(str(service.default_margin_target or 0))
+        if margin_target_decimal > 0 and margin_target_decimal < 1:
+            # apply_margin espera porcentaje (40.0 = 40%)
+            price_money = cost_money.apply_margin(float(margin_target_decimal * 100))
         else:
             # Default 40% margin
             price_money = cost_money.apply_margin(40.0)
         
         # ESTÁNDAR NOUGRAM: Aplicar win rate usando Money
-        projected_revenue_money = price_money.multiply(effective_win_rate)
-        projected_cost_money = cost_money.multiply(effective_win_rate)  # Only cost for won projects
+        projected_revenue_money = price_money.multiply(Decimal(str(effective_win_rate)))
+        projected_cost_money = cost_money.multiply(Decimal(str(effective_win_rate)))  # Only cost for won projects
         
         # Calcular profit y margin
         projected_profit_money = projected_revenue_money.subtract(projected_cost_money)
@@ -133,8 +134,8 @@ async def calculate_sales_projection(
     
     # ESTÁNDAR NOUGRAM: Calcular breakdown mensual usando Money
     monthly_projections = []
-    revenue_per_month_money = total_projected_revenue_money.divide(period_months)
-    cost_per_month_money = total_projected_cost_money.divide(period_months)
+    revenue_per_month_money = total_projected_revenue_money.divide(Decimal(str(period_months)))
+    cost_per_month_money = total_projected_cost_money.divide(Decimal(str(period_months)))
     
     for month in range(1, period_months + 1):
         profit_per_month_money = revenue_per_month_money.subtract(cost_per_month_money)

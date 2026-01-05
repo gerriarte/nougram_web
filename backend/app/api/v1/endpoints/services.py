@@ -30,7 +30,7 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
-@router.get("/", response_model=ServiceListResponse)
+@router.get("/", response_model=ServiceListResponse, summary="List all services")
 async def list_services(
     tenant: TenantContext = Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),
@@ -82,7 +82,7 @@ async def list_services(
     )
 
 
-@router.post("/", response_model=ServiceResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=ServiceResponse, status_code=status.HTTP_201_CREATED, summary="Create a new service")
 async def create_service(
     service_data: ServiceCreate,
     tenant: TenantContext = Depends(get_tenant_context),
@@ -124,11 +124,16 @@ async def create_service(
         status="success"
     )
     
+    # Invalidate dashboard cache (services affect revenue_by_service)
+    from app.core.cache import get_cache
+    cache = get_cache()
+    cache.invalidate_pattern(f"dashboard:{tenant.organization_id}")
+    
     logger.info("Service created successfully", service_id=new_service.id, user_id=current_user.id)
     return ServiceResponse.model_validate(new_service)
 
 
-@router.get("/{service_id}", response_model=ServiceResponse)
+@router.get("/{service_id}", response_model=ServiceResponse, summary="Get service by ID")
 async def get_service(
     service_id: int,
     tenant: TenantContext = Depends(get_tenant_context),
@@ -149,7 +154,7 @@ async def get_service(
     return ServiceResponse.model_validate(service)
 
 
-@router.put("/{service_id}", response_model=ServiceResponse)
+@router.put("/{service_id}", response_model=ServiceResponse, summary="Update service")
 async def update_service(
     service_id: int,
     service_data: ServiceUpdate,
@@ -184,6 +189,11 @@ async def update_service(
         
         service = await service_repo.update(service)
         
+        # Invalidate dashboard cache (services affect revenue_by_service)
+        from app.core.cache import get_cache
+        cache = get_cache()
+        cache.invalidate_pattern(f"dashboard:{tenant.organization_id}")
+        
         logger.info("Service updated successfully", service_id=service_id, user_id=current_user.id)
         return ServiceResponse.model_validate(service)
     except HTTPException:
@@ -204,7 +214,7 @@ async def update_service(
         )
 
 
-@router.delete("/{service_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{service_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Delete service (soft delete)")
 async def delete_service(
     service_id: int,
     tenant: TenantContext = Depends(get_tenant_context),

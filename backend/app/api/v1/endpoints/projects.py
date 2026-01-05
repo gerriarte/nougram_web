@@ -45,7 +45,7 @@ from app.schemas.quote import QuoteEmailRequest, QuoteEmailResponse, QuoteExpens
 router = APIRouter()
 
 
-@router.get("/", response_model=ProjectListResponse)
+@router.get("/", response_model=ProjectListResponse, summary="List all projects")
 async def list_projects(
     tenant: TenantContext = Depends(get_tenant_context),
     current_user: User = Depends(get_current_user),
@@ -135,7 +135,7 @@ async def list_projects(
     )
 
 
-@router.post("/", response_model=QuoteResponseWithItems, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=QuoteResponseWithItems, status_code=status.HTTP_201_CREATED, summary="Create a new project with initial quote")
 async def create_project(
     project_data: ProjectCreateWithQuote,
     tenant: TenantContext = Depends(get_tenant_context),
@@ -175,6 +175,11 @@ async def create_project(
             status="success"
         )
         
+        # Invalidate dashboard cache (projects affect dashboard metrics)
+        from app.core.cache import get_cache
+        cache = get_cache()
+        cache.invalidate_pattern(f"dashboard:{tenant.organization_id}")
+        
         return result
     except HTTPException:
         await db.rollback()
@@ -188,7 +193,7 @@ async def create_project(
         )
 
 
-@router.get("/{project_id}", response_model=ProjectResponse)
+@router.get("/{project_id}", response_model=ProjectResponse, summary="Get project by ID")
 async def get_project(
     project_id: int,
     tenant: TenantContext = Depends(get_tenant_context),
@@ -226,7 +231,7 @@ async def get_project(
     return ProjectResponse.model_validate(project_dict)
 
 
-@router.put("/{project_id}", response_model=ProjectResponse)
+@router.put("/{project_id}", response_model=ProjectResponse, summary="Update project")
 async def update_project(
     project_id: int,
     project_data: ProjectUpdate,
@@ -639,6 +644,9 @@ async def update_quote(
         revisions_included = quote_data.revisions_included if quote_data.revisions_included is not None else (quote.revisions_included if quote.revisions_included else 2)
         revision_cost_per_additional = quote_data.revision_cost_per_additional if hasattr(quote_data, 'revision_cost_per_additional') else quote.revision_cost_per_additional
         target_margin_percentage = getattr(quote_data, 'target_margin_percentage', None)
+        # Convert Decimal to float for target_margin_percentage (function expects float)
+        from decimal import Decimal
+        target_margin_float = float(target_margin_percentage) if target_margin_percentage is not None and isinstance(target_margin_percentage, Decimal) else target_margin_percentage
         
         totals = await calculate_quote_totals_enhanced(
             db, 
@@ -646,7 +654,7 @@ async def update_quote(
             blended_rate, 
             tax_ids,
             expenses=None,  # Expenses are managed separately
-            target_margin_percentage=target_margin_percentage,  # Pass target margin
+            target_margin_percentage=target_margin_float,  # Pass target margin as float
             revisions_included=revisions_included,
             revision_cost_per_additional=revision_cost_per_additional,
             revisions_count=None,
@@ -732,6 +740,11 @@ async def update_quote(
                 client_price=item.client_price,
                 margin_percentage=item.margin_percentage
             ))
+        
+        # Invalidate dashboard cache (quotes affect dashboard metrics)
+        from app.core.cache import get_cache
+        cache = get_cache()
+        cache.invalidate_pattern(f"dashboard:{tenant.organization_id}")
         
         return QuoteResponseWithItems(
             id=updated_quote.id,

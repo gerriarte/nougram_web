@@ -214,7 +214,8 @@ async def validate_team_member_limit(
     
     result = await db.execute(
         select(func.count(TeamMember.id)).where(
-            TeamMember.organization_id == organization_id
+            TeamMember.organization_id == organization_id,
+            TeamMember.is_active == True  # Only count active team members
         )
     )
     current_count = result.scalar() or 0

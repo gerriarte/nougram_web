@@ -34,6 +34,7 @@ export const PERM_CREATE_PROJECTS = 'can_create_projects';
 export const PERM_CREATE_SERVICES = 'can_create_services';
 export const PERM_DELETE_RESOURCES = 'can_delete_resources';
 export const PERM_VIEW_ANALYTICS = 'can_view_analytics';
+export const PERM_VIEW_FINANCIAL_PROJECTIONS = 'can_view_financial_projections';
 
 // Permission matrix: role -> set of permissions
 const PERMISSION_MATRIX: Record<string, Set<string>> = {
@@ -49,6 +50,7 @@ const PERMISSION_MATRIX: Record<string, Set<string>> = {
     PERM_CREATE_SERVICES,
     PERM_DELETE_RESOURCES,
     PERM_VIEW_ANALYTICS,
+    PERM_VIEW_FINANCIAL_PROJECTIONS,
   ]),
   support_manager: new Set([
     PERM_VIEW_ANALYTICS,
@@ -69,6 +71,7 @@ const PERMISSION_MATRIX: Record<string, Set<string>> = {
     PERM_CREATE_SERVICES,
     PERM_DELETE_RESOURCES,
     PERM_VIEW_ANALYTICS,
+    PERM_VIEW_FINANCIAL_PROJECTIONS,
   ]),
   admin_financiero: new Set([
     PERM_VIEW_SENSITIVE_DATA,
@@ -78,6 +81,7 @@ const PERMISSION_MATRIX: Record<string, Set<string>> = {
     PERM_CREATE_PROJECTS,
     PERM_CREATE_SERVICES,
     PERM_VIEW_ANALYTICS,
+    PERM_VIEW_FINANCIAL_PROJECTIONS,
   ]),
   product_manager: new Set([
     PERM_CREATE_QUOTES,
@@ -196,6 +200,13 @@ export function isSupportRole(user: User | null | undefined): boolean {
 export function isTenantRole(user: User | null | undefined): boolean {
   if (!user) return false;
   return user.role_type === 'tenant' || hasRole(user, ['owner', 'admin_financiero', 'product_manager', 'collaborator']);
+}
+
+/**
+ * Check if user can view financial projections
+ */
+export function canViewFinancialProjections(user: User | null | undefined): boolean {
+  return hasPermission(user, PERM_VIEW_FINANCIAL_PROJECTIONS);
 }
 
 

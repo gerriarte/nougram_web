@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { COPY } from '../constants';
 import { Button } from './Button';
+import { FeedbackModal } from './FeedbackModal';
 import { CheckCircle2, TrendingUp, ShieldCheck, AlertCircle, Sparkles } from 'lucide-react';
 
 const Counter = ({ end, suffix = '', label }: { end: number; suffix?: string; label: string }) => {
@@ -44,6 +45,7 @@ export const Hero: React.FC = () => {
   });
   const [emailError, setEmailError] = useState('');
   const [isEmailTouched, setIsEmailTouched] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     setLoaded(true);
@@ -66,32 +68,37 @@ export const Hero: React.FC = () => {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateEmail(formData.email)) {
       setEmailError('Por favor, ingresa un correo válido.');
       return;
     }
+    // Open modal to ask for feedback consent before submitting
+    setIsModalOpen(true);
+  };
 
+  const handleFinalSubmit = async (feedbackConsent: boolean) => {
     setIsSubmitting(true);
     try {
       const response = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, feedbackConsent }),
       });
 
       if (response.ok) {
-        alert(`¡Gracias ${formData.name}! Te hemos añadido a la lista de espera.`);
-        setFormData({ name: '', email: '', profession: '', phone: '', whatsappConsent: false });
+        setFormData({ name: '', email: '', profession: '', phone: '', whatsappConsent: false, _gotcha: '' });
         setEmailError('');
         setIsEmailTouched(false);
       } else {
         alert('Hubo un error al enviar tus datos. Por favor intenta de nuevo.');
+        setIsModalOpen(false); // Close modal if error
       }
     } catch (error) {
       console.error("Submission error:", error);
       alert('Hubo un error de conexión. Por favor intenta de nuevo.');
+      setIsModalOpen(false);
     } finally {
       setIsSubmitting(false);
     }
@@ -308,6 +315,13 @@ export const Hero: React.FC = () => {
 
         </div >
       </div >
+
+      <FeedbackModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onDecision={handleFinalSubmit}
+        isSubmitting={isSubmitting}
+      />
     </section >
   );
 };

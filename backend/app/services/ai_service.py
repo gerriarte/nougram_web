@@ -4,8 +4,10 @@ AI Service for financial analysis and configuration assistance using OpenAI GPT-
 from typing import Dict, List, Optional
 from openai import AsyncOpenAI
 from app.core.config import settings
+from app.core.cache import get_cache
 import logging
 import json
+import hashlib
 
 logger = logging.getLogger(__name__)
 
@@ -204,6 +206,39 @@ Por favor proporciona:
             return {
                 "error": "AI service not configured. Please set OPENAI_API_KEY.",
                 "success": False
+            }
+        
+        # Build cache key
+        # Normalize industry name for cache key (lowercase, strip spaces)
+        industry_normalized = industry.lower().strip()
+        region_normalized = region.upper().strip()
+        currency_normalized = currency.upper().strip()
+        
+        # If custom_context is provided, include a hash of it in the cache key
+        # Otherwise, use a generic cache key for better hit rate
+        if custom_context:
+            # Hash custom_context to keep key manageable
+            context_hash = hashlib.md5(custom_context.encode()).hexdigest()[:8]
+            cache_key = f"ai_suggestion:{industry_normalized}:{region_normalized}:{currency_normalized}:ctx_{context_hash}"
+        else:
+            # Standard cache key without custom context (better hit rate)
+            cache_key = f"ai_suggestion:{industry_normalized}:{region_normalized}:{currency_normalized}"
+        
+        # Check cache first (24 hours TTL for industry suggestions)
+        cache = get_cache()
+        cached_result = cache.get(cache_key)
+        if cached_result is not None:
+            logger.info(f"AI suggestion cache hit for industry={industry}, region={region}, currency={currency}")
+            return {
+                "success": True,
+                "data": cached_result,
+                "usage": {
+                    "prompt_tokens": 0,
+                    "completion_tokens": 0,
+                    "total_tokens": 0,
+                    "estimated_cost": 0.0,
+                    "cached": True
+                }
             }
         
         try:

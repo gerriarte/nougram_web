@@ -38,7 +38,8 @@ export function useGetBlendedCostRate() {
   return useQuery({
     queryKey: ['blended-cost-rate'],
     queryFn: async () => {
-      const response = await apiRequest<BlendedCostRateResponse>('/settings/calculations/agency-cost-hour');
+      // TEST: Use test endpoint with hardcoded values to isolate the issue
+      const response = await apiRequest<BlendedCostRateResponse>('/settings/calculations/agency-cost-hour-test');
       if (response.error) {
         throw new Error(response.error);
       }

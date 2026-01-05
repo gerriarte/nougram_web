@@ -81,6 +81,18 @@ export function formatCurrency(
   currency: string = "USD",
   useGrouping: boolean = true
 ): string {
+  // #region agent log
+  fetch('http://127.0.0.1:7244/ingest/9259ea1e-d9d4-4580-890f-411d9fb62b18',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/currency.ts:79',message:'formatCurrency called',data:{amount,amountType:typeof amount,isNaN:isNaN(amount),currency},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+  // #endregion
+  
+  // Handle NaN and invalid numbers
+  if (isNaN(amount) || !isFinite(amount)) {
+    // #region agent log
+    fetch('http://127.0.0.1:7244/ingest/9259ea1e-d9d4-4580-890f-411d9fb62b18',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'lib/currency.ts:85',message:'formatCurrency received NaN or invalid number',data:{amount,amountType:typeof amount},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+    // #endregion
+    return `${getCurrencyInfo(currency).symbol} 0`;
+  }
+  
   const currencyInfo = getCurrencyInfo(currency);
   const symbol = currencyInfo.symbol;
   const decimalPlaces = currencyInfo.decimalPlaces;

@@ -90,17 +90,35 @@ export default function TeamSettingsPage() {
     setIsFormOpen(true)
   }
 
-  // Group salaries by currency
+  // #region agent log
+  const firstMember = members[0] as any
+  fetch('http://127.0.0.1:7244/ingest/9259ea1e-d9d4-4580-890f-411d9fb62b18',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'settings/team/page.tsx:93',message:'Team members data from API',data:{membersCount:members.length,firstMember:firstMember ? {id:firstMember.id,name:firstMember.name,salary_monthly_brute:firstMember.salary_monthly_brute,salary_type:typeof firstMember.salary_monthly_brute,billable_hours_per_week:firstMember.billable_hours_per_week} : null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
+
+  // Group salaries by currency - convert salary_monthly_brute to number if it's a string
   const salariesByCurrency = members.reduce((acc: Record<string, number>, member: TeamMember) => {
     const currency = member.currency || "USD"
     if (!acc[currency]) {
       acc[currency] = 0
     }
-    acc[currency] += member.salary_monthly_brute
+    // Convert salary_monthly_brute to number if it's a string (Decimal serialized as string)
+    const salary = typeof member.salary_monthly_brute === 'string' 
+      ? parseFloat(member.salary_monthly_brute) || 0
+      : (member.salary_monthly_brute || 0)
+    acc[currency] += salary
     return acc
   }, {} as Record<string, number>)
   
-  const totalHours = members.reduce((sum: number, member: TeamMember) => sum + member.billable_hours_per_week * 4.33, 0)
+  // #region agent log
+  fetch('http://127.0.0.1:7244/ingest/9259ea1e-d9d4-4580-890f-411d9fb62b18',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'settings/team/page.tsx:110',message:'Salaries by currency after calculation',data:{salariesByCurrency,keys:Object.keys(salariesByCurrency)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
+  
+  const totalHours = members.reduce((sum: number, member: TeamMember) => {
+    const hours = typeof member.billable_hours_per_week === 'string'
+      ? parseFloat(member.billable_hours_per_week) || 0
+      : (member.billable_hours_per_week || 0)
+    return sum + hours * 4.33
+  }, 0)
   
   // Get primary currency (most used) or first one
   const primaryCurrency = Object.keys(salariesByCurrency).length > 0 
@@ -169,7 +187,12 @@ export default function TeamSettingsPage() {
                         <TableCell className="font-medium">{member.name}</TableCell>
                         <TableCell>{member.role}</TableCell>
                         <TableCell className="text-right font-medium">
-                          {formatCurrency(member.salary_monthly_brute, member.currency || "USD")}
+                          {formatCurrency(
+                            typeof member.salary_monthly_brute === 'string' 
+                              ? parseFloat(member.salary_monthly_brute) || 0
+                              : (member.salary_monthly_brute || 0),
+                            member.currency || "USD"
+                          )}
                         </TableCell>
                         <TableCell className="text-right">{member.billable_hours_per_week}h</TableCell>
                         <TableCell className="text-right">

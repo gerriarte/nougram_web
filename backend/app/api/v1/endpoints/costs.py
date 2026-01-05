@@ -10,6 +10,7 @@ from app.core.database import get_db
 from app.core.security import get_current_user
 from app.core.tenant import get_tenant_context, TenantContext
 from app.core.calculations import calculate_blended_cost_rate
+from app.core.money import Money
 from app.core.exceptions import ResourceNotFoundError, BusinessLogicError
 from app.core.permissions import can_create, can_edit, can_delete, PermissionError, PERM_VIEW_SENSITIVE_DATA, PERM_MODIFY_COSTS, PERM_DELETE_RESOURCES
 from app.core.permission_middleware import require_view_sensitive_data, require_modify_costs, require_delete_resources
@@ -34,7 +35,7 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
-@router.get("/costs/fixed", response_model=CostFixedListResponse)
+@router.get("/costs/fixed", response_model=CostFixedListResponse, summary="List all fixed costs")
 async def list_fixed_costs(
     tenant: TenantContext = Depends(get_tenant_context),
     current_user: User = Depends(require_view_sensitive_data),  # Require permission to view sensitive data (costs)
@@ -85,7 +86,7 @@ async def list_fixed_costs(
     )
 
 
-@router.post("/costs/fixed", response_model=CostFixedResponse, status_code=status.HTTP_201_CREATED)
+@router.post("/costs/fixed", response_model=CostFixedResponse, status_code=status.HTTP_201_CREATED, summary="Create a new fixed cost")
 async def create_fixed_cost(
     cost_data: CostFixedCreate,
     tenant: TenantContext = Depends(get_tenant_context),
@@ -384,6 +385,36 @@ async def permanently_delete_fixed_cost(
     return None
 
 
+@router.get("/calculations/agency-cost-hour-test", response_model=BlendedCostRateResponse)
+async def test_calculate_agency_cost_hour(
+    tenant: TenantContext = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+) -> BlendedCostRateResponse:
+    """
+    TEST ENDPOINT: Returns hardcoded values to isolate BCR display issue.
+    ESTÁNDAR NOUGRAM: Decimal serializado como string
+    """
+    from decimal import Decimal
+    from datetime import datetime
+    
+    # Hardcoded test values
+    test_response = BlendedCostRateResponse(
+        blended_cost_rate=Decimal("50.00"),
+        total_monthly_costs=Decimal("10000.00"),
+        total_fixed_overhead=Decimal("3000.00"),
+        total_tools_costs=Decimal("2000.00"),
+        total_salaries=Decimal("5000.00"),
+        total_monthly_hours=200.0,
+        active_team_members=3,
+        primary_currency="USD",
+        currencies_used=[],
+        exchange_rates_date=datetime.now().isoformat()
+    )
+    
+    return test_response
+
+
 @router.get("/calculations/agency-cost-hour", response_model=BlendedCostRateResponse)
 async def calculate_agency_cost_hour(
     tenant: TenantContext = Depends(get_tenant_context),
@@ -421,12 +452,41 @@ async def calculate_agency_cost_hour(
             social_charges_config=social_config
         )
         
+        # #region agent log
+        import json
+        import os
+        try:
+            log_data = {
+                "location": "costs.py:423",
+                "message": "Blended rate calculated",
+                "data": {
+                    "blended_rate": str(blended_rate),
+                    "blended_rate_type": str(type(blended_rate).__name__),
+                    "primary_currency": primary_currency,
+                    "tenant_id": tenant.organization_id
+                },
+                "timestamp": __import__("time").time() * 1000,
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "C"
+            }
+            log_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), ".cursor", "debug.log")
+            os.makedirs(os.path.dirname(log_path), exist_ok=True)
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(log_data) + "\n")
+        except:
+            pass
+        # #endregion
+        
         # Get additional details for response (normalized to primary currency)
         # Exclude soft-deleted costs from calculations
+        # ESTÁNDAR NOUGRAM: Usar Decimal para precisión
+        from decimal import Decimal
+        
         cost_repo = RepositoryFactory.create_cost_repository(db, tenant.organization_id)
         fixed_costs = await cost_repo.get_all_active(include_deleted=False)
-        total_fixed_overhead = 0.0
-        total_tools_costs = 0.0
+        total_fixed_overhead = Decimal('0')
+        total_tools_costs = Decimal('0')
         
         for cost in fixed_costs:
             normalized = normalize_to_primary_currency(
@@ -434,6 +494,13 @@ async def calculate_agency_cost_hour(
                 cost.currency or "USD",
                 primary_currency
             )
+            # ESTÁNDAR NOUGRAM: normalize_to_primary_currency puede retornar Money o float
+            # Convertir a Decimal para cálculos
+            if isinstance(normalized, Money):
+                normalized_decimal = normalized.amount
+            else:
+                normalized_decimal = Decimal(str(normalized))
+            
             # Categorize: 'Software', 'SaaS', 'Herramientas', 'Tools' go to tools
             # 'Overhead', 'Infrastructure', 'Office', 'Rent', 'General' go to overhead
             category_lower = (cost.category or "").lower()
@@ -444,9 +511,9 @@ async def calculate_agency_cost_hour(
             is_overhead = any(keyword in category_lower for keyword in overhead_keywords)
             
             if is_tool:
-                total_tools_costs += normalized
+                total_tools_costs += normalized_decimal
             elif is_overhead or not is_tool:  # Por defecto es overhead si no coincide con ninguna
-                total_fixed_overhead += normalized
+                total_fixed_overhead += normalized_decimal
         
         total_fixed_costs = total_fixed_overhead + total_tools_costs
         
@@ -454,8 +521,28 @@ async def calculate_agency_cost_hour(
         team_repo = RepositoryFactory.create_team_repository(db, tenant.organization_id)
         team_members = await team_repo.get_all_active()
         
+        # #region agent log
+        try:
+            log_data = {
+                "location": "costs.py:467",
+                "message": "Team members retrieved",
+                "data": {
+                    "team_members_count": len(team_members),
+                    "tenant_id": tenant.organization_id
+                },
+                "timestamp": __import__("time").time() * 1000,
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "C"
+            }
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(log_data) + "\n")
+        except:
+            pass
+        # #endregion
+        
         # Get organization settings for social charges (Sprint 18)
-        social_charges_multiplier = 1.0
+        social_charges_multiplier = Decimal('1.0')
         if org_settings and org_settings.get('social_charges_config'):
             social_config = org_settings.get('social_charges_config', {})
             if social_config.get('enable_social_charges', False):
@@ -469,12 +556,32 @@ async def calculate_agency_cost_hour(
                 total_percentage += social_config.get('int_cesantias_percentage', 0) or 0
                 total_percentage += social_config.get('vacations_percentage', 0) or 0
                 
-                social_charges_multiplier = 1 + (total_percentage / 100)
+                social_charges_multiplier = Decimal('1') + (Decimal(str(total_percentage)) / Decimal('100'))
         
-        total_salaries = 0.0
+        total_salaries = Decimal('0')
         currency_counts = {}
         for currency in ["USD", "COP", "ARS", "EUR"]:
             currency_counts[currency] = {"count": 0, "total_amount": 0.0, "exchange_rate_to_primary": 0.0}
+        
+        # #region agent log
+        try:
+            log_data = {
+                "location": "costs.py:490",
+                "message": "Before salary calculation loop",
+                "data": {
+                    "team_members_count": len(team_members),
+                    "social_charges_multiplier": str(social_charges_multiplier)
+                },
+                "timestamp": __import__("time").time() * 1000,
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "C"
+            }
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(log_data) + "\n")
+        except:
+            pass
+        # #endregion
         
         for member in team_members:
             # Normalize first, then apply social charges multiplier (consistent with calculate_blended_cost_rate)
@@ -483,9 +590,41 @@ async def calculate_agency_cost_hour(
                 member.currency or "USD",
                 primary_currency
             )
+            # ESTÁNDAR NOUGRAM: normalize_to_primary_currency puede retornar Money o float
+            # Convertir a Decimal para cálculos
+            if isinstance(normalized, Money):
+                normalized_decimal = normalized.amount
+            else:
+                normalized_decimal = Decimal(str(normalized))
+            
             # Apply social charges multiplier after normalization
-            real_monthly_cost = normalized * social_charges_multiplier
+            real_monthly_cost = normalized_decimal * social_charges_multiplier
             total_salaries += real_monthly_cost
+            
+            # #region agent log
+            try:
+                log_data = {
+                    "location": "costs.py:506",
+                    "message": "Team member salary processed",
+                    "data": {
+                        "member_id": member.id,
+                        "member_name": member.name,
+                        "salary_monthly_brute": str(member.salary_monthly_brute),
+                        "member_currency": member.currency or "USD",
+                        "normalized_decimal": str(normalized_decimal),
+                        "real_monthly_cost": str(real_monthly_cost),
+                        "total_salaries_so_far": str(total_salaries)
+                    },
+                    "timestamp": __import__("time").time() * 1000,
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "C"
+                }
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps(log_data) + "\n")
+            except:
+                pass
+            # #endregion
         
         # Calculate total billable hours per month across all members
         # Consider non_billable_hours_percentage (consistent with calculate_blended_cost_rate)
@@ -495,53 +634,84 @@ async def calculate_agency_cost_hour(
         )
         
         # Collect currency distribution info
-        # Count fixed costs currencies
+        # ESTÁNDAR NOUGRAM: Usar Decimal para total_amount
         for cost in fixed_costs:
             cost_currency = cost.currency or "USD"
             if cost_currency not in currency_counts:
-                currency_counts[cost_currency] = {"count": 0, "total_amount": 0.0, "exchange_rate_to_primary": 0.0}
+                currency_counts[cost_currency] = {"count": 0, "total_amount": Decimal('0'), "exchange_rate_to_primary": Decimal('0')}
             currency_counts[cost_currency]["count"] += 1
-            currency_counts[cost_currency]["total_amount"] += cost.amount_monthly
+            currency_counts[cost_currency]["total_amount"] += Decimal(str(cost.amount_monthly))
         
         # Count currencies in team member salaries
         for member in team_members:
             member_currency = member.currency or "USD"
             if member_currency not in currency_counts:
-                currency_counts[member_currency] = {"count": 0, "total_amount": 0.0, "exchange_rate_to_primary": 0.0}
+                currency_counts[member_currency] = {"count": 0, "total_amount": Decimal('0'), "exchange_rate_to_primary": Decimal('0')}
             currency_counts[member_currency]["count"] += 1
-            currency_counts[member_currency]["total_amount"] += member.salary_monthly_brute
+            currency_counts[member_currency]["total_amount"] += Decimal(str(member.salary_monthly_brute))
         
         # Build currency info list
+        # ESTÁNDAR NOUGRAM: Usar Decimal para cálculos de tasas de cambio
         currencies_used = []
-        primary_rate = EXCHANGE_RATES_TO_USD.get(primary_currency, 1.0)
+        primary_rate = Decimal(str(EXCHANGE_RATES_TO_USD.get(primary_currency, 1.0)))
         
         for currency_code, info in currency_counts.items():
             if currency_code in EXCHANGE_RATES_TO_USD:
-                currency_rate = EXCHANGE_RATES_TO_USD[currency_code]
+                currency_rate = Decimal(str(EXCHANGE_RATES_TO_USD[currency_code]))
                 
                 # Calculate exchange rate to primary currency
                 # EXCHANGE_RATES_TO_USD stores: 1 USD = X currency
                 # So: 1 currency = 1/currency_rate USD
                 # Then: 1 currency = (1/currency_rate) * primary_rate primary_currency
                 if currency_code == primary_currency:
-                    exchange_rate_to_primary = 1.0
+                    exchange_rate_to_primary = Decimal('1')
                 else:
-                    exchange_rate_to_primary = (1.0 / currency_rate) * primary_rate
+                    exchange_rate_to_primary = (Decimal('1') / currency_rate) * primary_rate
                 
                 if info["count"] > 0:
                     currencies_used.append({
                         "code": currency_code,
                         "count": info["count"],
-                        "exchange_rate_to_primary": round(exchange_rate_to_primary, 4),
-                        "total_amount": round(info["total_amount"], 2)
+                        "exchange_rate_to_primary": exchange_rate_to_primary,
+                        "total_amount": info["total_amount"]
                     })
+        
+        # ESTÁNDAR NOUGRAM: Construir respuesta con Decimal
+        total_monthly_costs_final = total_fixed_costs + total_salaries
+        
+        # #region agent log
+        try:
+            log_data = {
+                "location": "costs.py:559",
+                "message": "BCR response values before serialization",
+                "data": {
+                    "blended_rate": str(blended_rate),
+                    "total_fixed_costs": str(total_fixed_costs),
+                    "total_salaries": str(total_salaries),
+                    "total_monthly_costs_final": str(total_monthly_costs_final),
+                    "total_fixed_overhead": str(total_fixed_overhead),
+                    "total_tools_costs": str(total_tools_costs),
+                    "total_hours": total_hours,
+                    "active_team_members": len(team_members),
+                    "primary_currency": primary_currency
+                },
+                "timestamp": __import__("time").time() * 1000,
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "C"
+            }
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(log_data) + "\n")
+        except:
+            pass
+        # #endregion
         
         return BlendedCostRateResponse(
             blended_cost_rate=blended_rate,
-            total_monthly_costs=round(total_fixed_costs + total_salaries, 2),
-            total_fixed_overhead=round(total_fixed_overhead, 2),
-            total_tools_costs=round(total_tools_costs, 2),
-            total_salaries=round(total_salaries, 2),
+            total_monthly_costs=total_monthly_costs_final,
+            total_fixed_overhead=total_fixed_overhead,
+            total_tools_costs=total_tools_costs,
+            total_salaries=total_salaries,
             total_monthly_hours=round(total_hours, 2),
             active_team_members=len(team_members),
             primary_currency=primary_currency,
@@ -550,10 +720,12 @@ async def calculate_agency_cost_hour(
         )
     except Exception as e:
         # Log error and return default values
+        # ESTÁNDAR NOUGRAM: Usar Decimal para valores por defecto
+        from decimal import Decimal
         logger.error("Error calculating blended cost rate", error=str(e), user_id=current_user.id, exc_info=True)
         return BlendedCostRateResponse(
-            blended_cost_rate=0.0,
-            total_monthly_costs=0.0,
+            blended_cost_rate=Decimal('0'),
+            total_monthly_costs=Decimal('0'),
             total_monthly_hours=0.0,
             active_team_members=0,
             primary_currency="USD",

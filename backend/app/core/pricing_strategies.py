@@ -3,6 +3,7 @@ Pricing strategies for different pricing types using Strategy Pattern
 """
 from abc import ABC, abstractmethod
 from typing import Dict, Optional
+from decimal import Decimal
 from app.models.service import Service
 
 
@@ -59,12 +60,16 @@ class HourlyPricingStrategy(PricingStrategy):
         if estimated_hours <= 0:
             return {"internal_cost": 0.0, "client_price": 0.0}
         
-        internal_cost = blended_cost_rate * estimated_hours
+        # Convert estimated_hours to float if it's Decimal to avoid type mixing
+        estimated_hours_float = float(estimated_hours) if isinstance(estimated_hours, Decimal) else estimated_hours
+        internal_cost = blended_cost_rate * estimated_hours_float
         
         # Calculate client price with service margin (fallback if no quote-level margin)
         # This will be overridden at quote level if target_margin_percentage is provided
-        if service.default_margin_target > 0 and service.default_margin_target < 1:
-            client_price = internal_cost / (1 - service.default_margin_target)
+        if service.default_margin_target and float(service.default_margin_target) > 0 and float(service.default_margin_target) < 1:
+            # Convert Decimal to float to avoid type mixing in division
+            margin_target_float = float(service.default_margin_target)
+            client_price = internal_cost / (1 - margin_target_float)
         else:
             client_price = internal_cost  # Fallback if margin is invalid
         

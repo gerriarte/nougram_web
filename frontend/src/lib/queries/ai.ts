@@ -94,6 +94,70 @@ export function useAIStatus() {
   });
 }
 
+// Types for document parsing
+export interface DocumentParseRequest {
+  text: string;
+  document_type?: 'payroll' | 'expenses' | 'mixed';
+}
+
+export interface ParsedTeamMember {
+  name: string;
+  role: string;
+  salary_monthly_brute: string; // Decimal as string from API
+  currency: string;
+  billable_hours_per_week: number;
+  is_active?: boolean;
+}
+
+export interface ParsedFixedCost {
+  name: string;
+  amount_monthly: string; // Decimal as string from API
+  currency: string;
+  category: string;
+  description?: string;
+}
+
+export interface ParsedSubscription {
+  name: string;
+  amount_monthly: number;
+  currency: string;
+}
+
+export interface DocumentParseResponse {
+  team_members: ParsedTeamMember[];
+  fixed_costs: ParsedFixedCost[];
+  subscriptions: ParsedSubscription[];
+  confidence_scores: {
+    team_members?: number;
+    fixed_costs?: number;
+    subscriptions?: number;
+  };
+  warnings: string[];
+}
+
+/**
+ * Hook to parse unstructured document data
+ */
+export function useParseDocument() {
+  return useMutation({
+    mutationFn: async (request: DocumentParseRequest): Promise<DocumentParseResponse> => {
+      const response = await apiRequest<DocumentParseResponse>('/ai/parse-document', {
+        method: 'POST',
+        body: JSON.stringify(request),
+      });
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      return response.data!;
+    },
+    onError: (error) => {
+      console.error('Error parsing document:', error);
+    },
+  });
+}
+
 
 
 

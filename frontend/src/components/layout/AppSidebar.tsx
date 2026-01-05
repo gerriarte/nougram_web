@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, FolderKanban, Settings, DollarSign, Users, Package, Receipt, ChevronDown, ChevronRight, UserCog, CreditCard, LifeBuoy, BarChart3 } from 'lucide-react'
+import { LayoutDashboard, FolderKanban, Settings, DollarSign, Users, Package, Receipt, ChevronDown, ChevronRight, UserCog, CreditCard, LifeBuoy, BarChart3, TrendingUp } from 'lucide-react'
 import { useGetCurrentUser } from '@/lib/queries'
-import { canViewSensitiveData, canManageSubscription, canInviteUsers, isSupportRole } from '@/lib/permissions'
+import { canViewSensitiveData, canManageSubscription, canInviteUsers, isSupportRole, canViewFinancialProjections } from '@/lib/permissions'
 
 interface AppSidebarProps {
   currentOrgId?: string | number
@@ -16,12 +16,18 @@ export function AppSidebar({ currentOrgId }: AppSidebarProps) {
   const { data: currentUser } = useGetCurrentUser()
   const [settingsOpen, setSettingsOpen] = useState(pathname?.startsWith('/settings') || false)
 
-  const navItems = [
+  const allNavItems = [
     { id: 'dashboard', label: 'Panel', icon: LayoutDashboard, path: '/dashboard' },
     { id: 'projects', label: 'Proyectos', icon: FolderKanban, path: '/projects' },
     { id: 'credits', label: 'Créditos', icon: CreditCard, path: '/credits' },
     { id: 'general-costs', label: 'Resumen de Costos', icon: BarChart3, path: '/general-costs' },
-  ]
+    { id: 'annual-projection', label: 'Proyección Anual', icon: TrendingUp, path: '/projections/annual', requiresPermission: () => canViewFinancialProjections(currentUser) },
+  ];
+  
+  const navItems = allNavItems.filter(item => {
+    if (!item.requiresPermission) return true;
+    return item.requiresPermission();
+  })
 
   // Business Structure Settings (in sidebar)
   // These are core business configuration items

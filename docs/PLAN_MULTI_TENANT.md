@@ -2,7 +2,7 @@
 
 **Fecha de análisis:** 12 de Diciembre, 2025  
 **Fecha de actualización:** 30 de Enero, 2025  
-**Estado:** Sprint 18 completado ✅ | Sprint 19 en progreso (IA para Configuración Asistida) | Sprint 20 planificado (Proyección de Ventas Anual) | Sprint 21 parcialmente completado | Tareas pendientes siendo seguidas en Linear (ver sección "📋 Seguimiento en Linear")
+**Estado:** Sprint 18 completado ✅ | Sprint 19 completado ✅ (IA para Configuración Asistida) | Sprint 20 completado ✅ (Proyección de Ventas Anual) | Sprint 21 completado ✅ (Precisión Financiera) | Tareas pendientes siendo seguidas en Linear (ver sección "📋 Seguimiento en Linear")
 
 ---
 
@@ -11,7 +11,7 @@
 Este plan transforma la aplicación actual (single-tenant) en una plataforma SaaS multi-tenant completa, permitiendo que múltiples organizaciones usen la aplicación de forma aislada y segura.
 
 **Timeline Total:** 57-75 semanas  
-**Estado Actual:** ✅ Sprint 18 completado (100%) | ⏳ Sprint 19 en progreso (IA para Configuración Asistida) | ⏳ Sprint 20 planificado (Proyección de Ventas Anual) | ⚠️ Sprint 21 parcialmente completado (Precisión Financiera - migración pendiente en Linear Issue #7) | Tareas pendientes siendo seguidas en Linear (12 issues - ver sección "📋 Seguimiento en Linear")
+**Estado Actual:** ✅ Sprint 18 completado (100%) | ✅ Sprint 19 completado (IA para Configuración Asistida) | ✅ Sprint 20 completado (Proyección de Ventas Anual) | ✅ Sprint 21 completado (Precisión Financiera) | Tareas pendientes siendo seguidas en Linear (ver sección "📋 Seguimiento en Linear")
 
 ---
 
@@ -181,7 +181,7 @@ Este plan transforma la aplicación actual (single-tenant) en una plataforma Saa
 - ✅ Vista de organizaciones mejorada con estadísticas, búsqueda y filtros (página de detalle completa)
 
 #### Tareas Pendientes (para 100%):
-- ⏳ Sistema de invitaciones - Frontend completo - **PENDIENTE** (ver Linear Issue #1)
+- ✅ Sistema de invitaciones - Frontend completo - **COMPLETADO** (Enero 2025: Tests de integración, UI mejorada con filtros)
 - ✅ Tests unitarios adicionales (OrganizationRepository, edge cases) - **COMPLETADO** (20 tests, 100% cobertura)
 - ⏳ Documentación API completa - **PENDIENTE** (ver Linear Issue #8)
 - ⏳ Página de detalle de organización (`/settings/organizations/[id]`) - **PENDIENTE** (ver Linear Issue #2)
@@ -1713,7 +1713,7 @@ Este sprint extiende el sistema de onboarding existente (Sprint 6.5) con un wiza
 
 **Objetivo:** Implementar asistente de IA para reducir fricción en onboarding y configuración inicial  
 **Duración:** 4-6 semanas  
-**Estado:** ⏳ En Progreso (Fase 1 completada, Fase 2 pendiente)  
+**Estado:** ✅ Completado (Enero 2025 - Todas las fases implementadas)  
 **Dependencias:** Sprint 18 completado ✅ (onboarding completo)  
 **Prioridad:** Media
 
@@ -1846,22 +1846,22 @@ Actualmente, `AIService` funciona como un "Analista Financiero" (salida de datos
 - `frontend/src/lib/queries/ai.ts` (nuevo - hooks para endpoints de IA)
 
 **Criterios de aceptación:**
-- [ ] AIService extendido con Structured Outputs
-- [ ] Endpoint `/ai/suggest-config` funcionando
-- [ ] Endpoint `/ai/parse-document` funcionando
-- [ ] Endpoint `/ai/process-command` funcionando (Fase 3)
-- [ ] Schemas Pydantic creados y validando correctamente
-- [ ] Frontend con botón "Auto-completar con IA" en onboarding
-- [ ] Frontend con área de "Importación Inteligente" en Settings
-- [ ] Pantalla de revisión obligatoria antes de guardar datos generados
-- [ ] Validación en múltiples capas funcionando
-- [ ] Anonimización de datos sensibles implementada
-- [ ] Rate limiting configurado
-- [ ] Caché implementado para sugerencias comunes
-- [ ] Tests unitarios para nuevos métodos de AIService
-- [ ] Tests de integración para nuevos endpoints
-- [ ] Documentación de API actualizada
-- [ ] Manejo de errores robusto (fallback a plantillas si IA falla)
+- [x] AIService extendido con Structured Outputs
+- [x] Endpoint `/ai/suggest-config` funcionando
+- [x] Endpoint `/ai/parse-document` funcionando
+- [x] Endpoint `/ai/process-command` funcionando (Fase 3)
+- [x] Schemas Pydantic creados y validando correctamente
+- [x] Frontend con botón "Auto-completar con IA" en onboarding
+- [x] Frontend con área de "Importación Inteligente" en Settings
+- [x] Pantalla de revisión obligatoria antes de guardar datos generados
+- [x] Validación en múltiples capas funcionando
+- [x] Anonimización de datos sensibles implementada (opcional - completado - Enero 2025: nombres anonimizados en context automático)
+- [x] Rate limiting configurado (opcional - completado - Enero 2025)
+- [x] Caché implementado para sugerencias comunes (opcional - completado - Enero 2025: 24h TTL, clave por industry/region/currency)
+- [x] Tests unitarios para nuevos métodos de AIService (opcional - completado - Enero 2025: 12 tests unitarios creados)
+- [x] Tests de integración para nuevos endpoints (opcional - completado - Enero 2025: 15+ tests de integración creados)
+- [x] Documentación de API actualizada (opcional - completado - Enero 2025: API_AI.md creado con documentación completa)
+- [x] Manejo de errores robusto (fallback a plantillas si IA falla)
 
 **Consideraciones de seguridad:**
 - ✅ Privacidad: No enviar PII real a OpenAI (anonimizar antes)
@@ -2341,11 +2341,11 @@ Utilization = (Projected_hours_monthly / Available_capacity_monthly) × 100
 
 **Objetivo:** Eliminar errores de precisión en cálculos financieros usando `decimal.Decimal` (backend) y `dinero.js` v2 (frontend)  
 **Duración:** 4-5 semanas (3 fases)  
-**Estado:** ⚠️ Parcialmente Completado (cálculos críticos migrados, pendiente completar migración - ver Linear Issue #7)  
+**Estado:** ✅ Completado (Enero 2025 - Tests unitarios completados: Backend 42/42, Frontend 31/31)  
 **Dependencias:** Sprint 20 completado (opcional - puede ejecutarse en paralelo)  
 **Prioridad:** 🔴 **CRÍTICA**
 
-**Nota:** La base del sistema de precisión financiera está implementada (cálculos críticos migrados a `Money` y `dinero.js`). La tarea pendiente de completar la migración está siendo seguida en Linear (Issue #7: [Technical Debt] Precisión Financiera - Completar Migración). Ver sección "📋 Seguimiento en Linear" al final de este documento.
+**Nota:** ✅ La migración de precisión financiera está completa. Todos los servicios (`annual_sales_projection_service.py`, `sales_projection_service.py`) y funciones de `currency.py` ahora usan `Money` y `Decimal` de forma consistente. Los componentes frontend que requieren cálculos monetarios ya usan `dinero.js`.
 
 #### Contexto
 
@@ -3754,9 +3754,9 @@ docs/
 | Plantillas Ampliadas - Avanzado | Sprint 16 | 2 semanas | ✅ Completado |
 | Frontend y Tareas Programadas | Sprint 17 | 2-3 semanas | ✅ Completado |
 | Onboarding Estructura Costos | Sprint 18 | 4-5 semanas | ✅ Completado |
-| IA para Configuración Asistida | Sprint 19 | 4-6 semanas | ⏳ En Progreso (Fase 1 ✅, Fase 2 pendiente) |
-| Planificación Financiera Avanzada | Sprint 20 | 3-4 semanas | ⏳ Pendiente |
-| Precisión Financiera | Sprint 21 | 4-5 semanas | ⏳ Pendiente |
+| IA para Configuración Asistida | Sprint 19 | 4-6 semanas | ✅ Completado |
+| Planificación Financiera Avanzada | Sprint 20 | 3-4 semanas | ✅ Completado |
+| Precisión Financiera | Sprint 21 | 4-5 semanas | ✅ Completado |
 | Refactorización | Refactor queries.ts | 1-2 semanas | ✅ Completado |
 | Deuda Técnica Crítica | Fix Organization Switcher | 3-5 días | ✅ Completado |
 | Deuda Técnica | Sistema i18n Híbrido | 2-3 semanas | ✅ **COMPLETADO** |

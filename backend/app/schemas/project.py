@@ -74,9 +74,6 @@ class QuoteResponse(BaseModel):
     
     model_config = DECIMAL_CONFIG
 
-    class Config:
-        from_attributes = True
-
 
 class ProjectListResponse(BaseModel):
     """Schema for list of projects"""
@@ -88,15 +85,25 @@ class ProjectListResponse(BaseModel):
 
 
 class QuoteItemCreate(BaseModel):
-    """Schema for creating a quote item (Sprint 14: supports multiple pricing types)"""
+    """Schema for creating a quote item (Sprint 14: supports multiple pricing types)
+    ESTÁNDAR NOUGRAM: Campos monetarios usan Decimal serializado como string
+    """
     service_id: int = Field(..., description="Service ID", gt=0)
     estimated_hours: Optional[float] = Field(None, description="Estimated hours (required for hourly pricing)", ge=0)
     pricing_type: Optional[str] = Field(None, description="Pricing type: 'hourly', 'fixed', 'recurring', 'project_value' (overrides service default)")
-    fixed_price: Optional[float] = Field(None, description="Fixed price (required for fixed pricing)", ge=0)
-    quantity: Optional[float] = Field(1.0, description="Quantity for fixed/recurring pricing", ge=0)
-    recurring_price: Optional[float] = Field(None, description="Recurring price (required for recurring pricing)", ge=0)
+    fixed_price: Optional[Decimal] = Field(None, description="Fixed price (required for fixed pricing)", ge=0)
+    quantity: Optional[Decimal] = Field(Decimal('1.0'), description="Quantity for fixed/recurring pricing", ge=0)
+    recurring_price: Optional[Decimal] = Field(None, description="Recurring price (required for recurring pricing)", ge=0)
     billing_frequency: Optional[str] = Field(None, description="Billing frequency: 'monthly', 'annual' (for recurring pricing)")
-    project_value: Optional[float] = Field(None, description="Project value (for project_value pricing)", ge=0)
+    project_value: Optional[Decimal] = Field(None, description="Project value (for project_value pricing)", ge=0)
+    
+    # ESTÁNDAR NOUGRAM: Serializar Decimal como string
+    @field_serializer('fixed_price', 'quantity', 'recurring_price', 'project_value')
+    def serialize_decimal(self, value: Optional[Decimal]) -> Optional[str]:
+        """Serializa Decimal como string para mantener precisión"""
+        return str(value) if value is not None else None
+    
+    model_config = DECIMAL_CONFIG
 
 
 class QuoteItemResponse(BaseModel):
@@ -119,15 +126,13 @@ class QuoteItemResponse(BaseModel):
     
     model_config = DECIMAL_CONFIG
 
-    class Config:
-        from_attributes = True
-
 
 class ProjectCreateWithQuote(ProjectCreate):
     """Schema for creating a project with initial quote - Sprint 16: includes revision fields"""
     quote_items: List[QuoteItemCreate] = Field(..., description="List of quote items", min_items=1)
     revisions_included: Optional[int] = Field(default=2, description="Number of included revisions", ge=0)
     revision_cost_per_additional: Optional[float] = Field(None, description="Cost per additional revision", ge=0)
+    allow_low_margin: Optional[bool] = Field(False, description="Allow creating quote even if margin is below threshold")
 
 
 class QuoteResponseWithItems(QuoteResponse):
@@ -136,18 +141,40 @@ class QuoteResponseWithItems(QuoteResponse):
 
 
 class QuoteUpdate(BaseModel):
-    """Schema for updating a quote - Sprint 16: includes revision fields"""
+    """Schema for updating a quote - Sprint 16: includes revision fields
+    ESTÁNDAR NOUGRAM: Campos monetarios y porcentajes usan Decimal serializado como string
+    """
     items: List[QuoteItemCreate] = Field(..., description="List of quote items", min_items=1)
     notes: Optional[str] = Field(None, description="Notes for the quote")
-    target_margin_percentage: Optional[float] = Field(None, ge=0, le=1, description="Target margin for the quote (0-1, e.g., 0.40 = 40%)")
+    target_margin_percentage: Optional[Decimal] = Field(None, ge=0, le=1, description="Target margin for the quote (0-1, e.g., 0.40 = 40%)")
     revisions_included: Optional[int] = Field(None, description="Number of included revisions", ge=0)
-    revision_cost_per_additional: Optional[float] = Field(None, description="Cost per additional revision", ge=0)
+    revision_cost_per_additional: Optional[Decimal] = Field(None, description="Cost per additional revision", ge=0)
+    allow_low_margin: Optional[bool] = Field(False, description="Allow creating quote even if margin is below threshold")
+    
+    # ESTÁNDAR NOUGRAM: Serializar Decimal como string
+    @field_serializer('target_margin_percentage', 'revision_cost_per_additional')
+    def serialize_decimal(self, value: Optional[Decimal]) -> Optional[str]:
+        """Serializa Decimal como string para mantener precisión"""
+        return str(value) if value is not None else None
+    
+    model_config = DECIMAL_CONFIG
 
 
 class QuoteCreateNewVersion(BaseModel):
-    """Schema for creating a new version of a quote - Sprint 16: includes revision fields"""
+    """Schema for creating a new version of a quote - Sprint 16: includes revision fields
+    ESTÁNDAR NOUGRAM: Campos monetarios y porcentajes usan Decimal serializado como string
+    """
     items: List[QuoteItemCreate] = Field(..., description="List of quote items", min_items=1)
     notes: Optional[str] = Field(None, description="Notes for the new version")
-    target_margin_percentage: Optional[float] = Field(None, ge=0, le=1, description="Target margin for the quote (0-1, e.g., 0.40 = 40%)")
+    target_margin_percentage: Optional[Decimal] = Field(None, ge=0, le=1, description="Target margin for the quote (0-1, e.g., 0.40 = 40%)")
     revisions_included: Optional[int] = Field(None, description="Number of included revisions", ge=0)
-    revision_cost_per_additional: Optional[float] = Field(None, description="Cost per additional revision", ge=0)
+    revision_cost_per_additional: Optional[Decimal] = Field(None, description="Cost per additional revision", ge=0)
+    allow_low_margin: Optional[bool] = Field(False, description="Allow creating quote even if margin is below threshold")
+    
+    # ESTÁNDAR NOUGRAM: Serializar Decimal como string
+    @field_serializer('target_margin_percentage', 'revision_cost_per_additional')
+    def serialize_decimal(self, value: Optional[Decimal]) -> Optional[str]:
+        """Serializa Decimal como string para mantener precisión"""
+        return str(value) if value is not None else None
+    
+    model_config = DECIMAL_CONFIG

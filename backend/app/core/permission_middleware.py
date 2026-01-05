@@ -28,6 +28,7 @@ from app.core.permissions import (
     PERM_CREATE_SERVICES,
     PERM_DELETE_RESOURCES,
     PERM_VIEW_ANALYTICS,
+    PERM_VIEW_FINANCIAL_PROJECTIONS,
 )
 from app.core.logging import get_logger
 
@@ -164,6 +165,7 @@ require_create_projects = require_permission_decorator(PERM_CREATE_PROJECTS)
 require_create_services = require_permission_decorator(PERM_CREATE_SERVICES)
 require_delete_resources = require_permission_decorator(PERM_DELETE_RESOURCES)
 require_view_analytics = require_permission_decorator(PERM_VIEW_ANALYTICS)
+require_view_financial_projections = require_permission_decorator(PERM_VIEW_FINANCIAL_PROJECTIONS)
 require_access_all_tenants = require_permission_decorator(PERM_ACCESS_ALL_TENANTS)
 
 # Convenience dependencies for common role checks

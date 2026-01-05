@@ -129,10 +129,61 @@ async def calculate_blended_cost_rate(
         # Apply social charges multiplier (Sprint 18)
         salary_with_charges = salary_money.multiply(social_charges_multiplier)
         salary_amounts.append(salary_with_charges)
+        
+        # #region agent log
+        import json
+        import os
+        try:
+            log_data = {
+                "location": "calculations.py:131",
+                "message": "Team member salary in calculate_blended_cost_rate",
+                "data": {
+                    "member_id": member.id,
+                    "member_name": member.name,
+                    "salary_monthly_brute": str(member.salary_monthly_brute),
+                    "member_currency": member_currency,
+                    "normalized": str(normalized) if not isinstance(normalized, Money) else str(normalized.amount),
+                    "salary_with_charges": str(salary_with_charges.amount),
+                    "social_charges_multiplier": str(social_charges_multiplier)
+                },
+                "timestamp": __import__("time").time() * 1000,
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "D"
+            }
+            log_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ".cursor", "debug.log")
+            os.makedirs(os.path.dirname(log_path), exist_ok=True)
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(log_data) + "\n")
+        except:
+            pass
+        # #endregion
     
     # Sum all costs using Money
     all_costs = fixed_costs_money + salary_amounts
     total_monthly_costs_money = sum_money(all_costs)
+    
+    # #region agent log
+    try:
+        log_data = {
+            "location": "calculations.py:135",
+            "message": "Total costs calculated",
+            "data": {
+                "fixed_costs_count": len(fixed_costs_money),
+                "salary_amounts_count": len(salary_amounts),
+                "total_monthly_costs_money": str(total_monthly_costs_money.amount) if total_monthly_costs_money else "None",
+                "total_monthly_costs_money_currency": total_monthly_costs_money.currency if total_monthly_costs_money else "None"
+            },
+            "timestamp": __import__("time").time() * 1000,
+            "sessionId": "debug-session",
+            "runId": "run1",
+            "hypothesisId": "D"
+        }
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(log_data) + "\n")
+    except:
+        pass
+    # #endregion
     
     if total_monthly_costs_money is None:
         return Decimal('0')
@@ -150,8 +201,50 @@ async def calculate_blended_cost_rate(
     if hours_per_month > 0:
         cost_per_hour_money = total_monthly_costs_money.divide(float(hours_per_month))
         cost_per_hour = cost_per_hour_money.amount  # Return Decimal
+        
+        # #region agent log
+        try:
+            log_data = {
+                "location": "calculations.py:152",
+                "message": "BCR calculated",
+                "data": {
+                    "hours_per_month": str(hours_per_month),
+                    "cost_per_hour": str(cost_per_hour),
+                    "cost_per_hour_money_amount": str(cost_per_hour_money.amount),
+                    "cost_per_hour_money_currency": cost_per_hour_money.currency
+                },
+                "timestamp": __import__("time").time() * 1000,
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "D"
+            }
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(log_data) + "\n")
+        except:
+            pass
+        # #endregion
     else:
         cost_per_hour = Decimal('0')
+        
+        # #region agent log
+        try:
+            log_data = {
+                "location": "calculations.py:154",
+                "message": "BCR is zero (no hours)",
+                "data": {
+                    "hours_per_month": str(hours_per_month),
+                    "cost_per_hour": "0"
+                },
+                "timestamp": __import__("time").time() * 1000,
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "D"
+            }
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(log_data) + "\n")
+        except:
+            pass
+        # #endregion
     
     # Cache the result (5 minutes TTL) - cache as float for compatibility
     if use_cache:
@@ -360,7 +453,36 @@ async def calculate_quote_totals_enhanced(
         # Si no, usar el client_price del strategy (que usa margen del servicio)
         if target_margin_percentage is not None and 0 < target_margin_percentage < 1:
             # Aplicar margen objetivo a este item
-            client_price_money = internal_cost_money.apply_margin(target_margin_percentage * 100)  # Convert to percentage
+            # Convertir a float si es Decimal para evitar problemas de tipo
+            margin_percent_float = float(target_margin_percentage) if isinstance(target_margin_percentage, Decimal) else target_margin_percentage
+            # #region agent log
+            try:
+                import json
+                import os
+                log_data = {
+                    "location": "calculations.py:365",
+                    "message": "before apply_margin (per item)",
+                    "data": {
+                        "target_margin_percentage": str(target_margin_percentage),
+                        "target_margin_percentage_type": str(type(target_margin_percentage).__name__),
+                        "margin_percent_float": str(margin_percent_float),
+                        "margin_percent_float_type": str(type(margin_percent_float).__name__),
+                        "margin_percent_float_x_100": str(margin_percent_float * 100),
+                        "margin_percent_float_x_100_type": str(type(margin_percent_float * 100).__name__)
+                    },
+                    "timestamp": __import__("time").time() * 1000,
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "B"
+                }
+                log_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".cursor", "debug.log")
+                os.makedirs(os.path.dirname(log_path), exist_ok=True)
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps(log_data) + "\n")
+            except:
+                pass
+            # #endregion
+            client_price_money = internal_cost_money.apply_margin(margin_percent_float * 100)  # Convert to percentage
         
         total_client_price_money = total_client_price_money.add(client_price_money)
         
@@ -422,7 +544,36 @@ async def calculate_quote_totals_enhanced(
     # Si no, usar client_price de items + expenses_client_price
     if target_margin_percentage is not None and 0 < target_margin_percentage < 1:
         # Aplicar margen objetivo a toda la propuesta (incluyendo expenses)
-        total_client_price_money = total_internal_cost_money.apply_margin(target_margin_percentage * 100)  # Convert to percentage
+        # Convertir a float si es Decimal para evitar problemas de tipo
+        margin_percent_float = float(target_margin_percentage) if isinstance(target_margin_percentage, Decimal) else target_margin_percentage
+        # #region agent log
+        try:
+            import json
+            import os
+            log_data = {
+                "location": "calculations.py:439",
+                "message": "before apply_margin (total)",
+                "data": {
+                    "target_margin_percentage": str(target_margin_percentage),
+                    "target_margin_percentage_type": str(type(target_margin_percentage).__name__),
+                    "margin_percent_float": str(margin_percent_float),
+                    "margin_percent_float_type": str(type(margin_percent_float).__name__),
+                    "margin_percent_float_x_100": str(margin_percent_float * 100),
+                    "margin_percent_float_x_100_type": str(type(margin_percent_float * 100).__name__)
+                },
+                "timestamp": __import__("time").time() * 1000,
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "C"
+            }
+            log_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".cursor", "debug.log")
+            os.makedirs(os.path.dirname(log_path), exist_ok=True)
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(log_data) + "\n")
+        except:
+            pass
+        # #endregion
+        total_client_price_money = total_internal_cost_money.apply_margin(margin_percent_float * 100)  # Convert to percentage
     else:
         # Usar client_price calculado de items + expenses_client_price
         total_client_price_money = total_client_price_money.add(total_expenses_client_price_money)
@@ -454,7 +605,9 @@ async def calculate_quote_totals_enhanced(
         
         for tax in taxes:
             # ESTÁNDAR NOUGRAM: Aplicar porcentaje usando Money
-            tax_amount_money = total_client_price_money.apply_percentage(tax.percentage)
+            # Convertir tax.percentage a float si es Decimal para evitar problemas de tipo
+            tax_percentage = float(tax.percentage) if isinstance(tax.percentage, Decimal) else tax.percentage
+            tax_amount_money = total_client_price_money.apply_percentage(tax_percentage)
             total_taxes_money = total_taxes_money.add(tax_amount_money)
             
             taxes_breakdown.append({

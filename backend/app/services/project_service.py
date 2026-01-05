@@ -11,6 +11,7 @@ import logging
 from app.core.calculations import calculate_blended_cost_rate, calculate_quote_totals_enhanced
 from app.core.plan_limits import validate_project_limit
 from app.core.permissions import get_user_role
+from app.core.exceptions import BusinessLogicError
 from app.repositories.factory import RepositoryFactory
 from app.models.project import Project, Quote, QuoteItem, QuoteExpense, project_taxes
 from app.models.service import Service
@@ -48,7 +49,8 @@ class ProjectService:
         self,
         project_data: ProjectCreateWithQuote,
         current_user: User,
-        subscription_plan: str
+        subscription_plan: str,
+        allow_low_margin: bool = False
     ) -> QuoteResponseWithItems:
         """
         Create a new project with initial quote
@@ -127,19 +129,26 @@ class ProjectService:
         revisions_included = project_data.revisions_included if hasattr(project_data, 'revisions_included') and project_data.revisions_included is not None else 2
         revision_cost_per_additional = getattr(project_data, 'revision_cost_per_additional', None)
         target_margin_percentage = getattr(project_data, 'target_margin_percentage', None)
-        logger.info(f"Calculating quote totals (enhanced) with {len(tax_ids)} taxes, revisions_included={revisions_included}, target_margin={target_margin_percentage}...")
+        # Convert Decimal to float for target_margin_percentage (function expects float)
+        from decimal import Decimal
+        target_margin_float = float(target_margin_percentage) if target_margin_percentage is not None and isinstance(target_margin_percentage, Decimal) else target_margin_percentage
+        logger.info(f"Calculating quote totals (enhanced) with {len(tax_ids)} taxes, revisions_included={revisions_included}, target_margin={target_margin_float}...")
         totals = await calculate_quote_totals_enhanced(
             self.db, 
             items_dict, 
             blended_rate, 
             tax_ids,
             expenses=None,  # Expenses are added separately via expenses endpoints
-            target_margin_percentage=target_margin_percentage,  # Pass target margin
+            target_margin_percentage=target_margin_float,  # Pass target margin as float
             revisions_included=revisions_included,
             revision_cost_per_additional=revision_cost_per_additional,
             revisions_count=None  # Only used when calculating additional revision costs
         )
         logger.info(f"Quote totals calculated: {totals}")
+        
+        # Validate profitability before creating quote
+        allow_low_margin_flag = getattr(project_data, 'allow_low_margin', False) or allow_low_margin
+        await self._validate_quote_profitability(totals, current_user, allow_low_margin=allow_low_margin_flag)
         
         # Create project
         logger.info("Creating project...")
@@ -233,7 +242,8 @@ class ProjectService:
         project_id: int,
         quote_id: int,
         quote_data: QuoteCreateNewVersion,
-        current_user: User
+        current_user: User,
+        allow_low_margin: bool = False
     ) -> QuoteResponseWithItems:
         """
         Create a new version of an existing quote
@@ -331,6 +341,10 @@ class ProjectService:
             revision_cost_per_additional=revision_cost_per_additional,
             revisions_count=None
         )
+        
+        # Validate profitability before creating new quote version
+        allow_low_margin_flag = getattr(quote_data, 'allow_low_margin', False) or allow_low_margin
+        await self._validate_quote_profitability(totals, current_user, allow_low_margin=allow_low_margin_flag)
         
         # Create new quote version
         new_quote = Quote(
@@ -512,6 +526,88 @@ class ProjectService:
             )
     
     # Helper methods
+    
+    async def _get_minimum_margin_threshold(self) -> float:
+        """
+        Get minimum margin threshold from organization settings.
+        Defaults to 0.15 (15%) if not configured.
+        """
+        from app.models.organization import Organization
+        result = await self.db.execute(
+            select(Organization).where(Organization.id == self.organization_id)
+        )
+        org = result.scalar_one_or_none()
+        
+        if org and org.settings:
+            # Get minimum margin threshold from settings (0-1 range, e.g., 0.15 = 15%)
+            min_margin = org.settings.get('minimum_margin_threshold')
+            if min_margin is not None:
+                # Ensure it's between 0 and 1
+                return max(0.0, min(1.0, float(min_margin)))
+        
+        # Default to 15% if not configured
+        return 0.15
+    
+    async def _validate_quote_profitability(self, totals: Dict, current_user: User, allow_low_margin: bool = False):
+        """
+        Validate that the quote meets minimum profitability requirements.
+        Raises BusinessLogicError if margin is too low (unless allow_low_margin=True).
+        """
+        margin_percentage = totals.get("margin_percentage", 0.0)
+        total_client_price = totals.get("total_client_price", 0.0)
+        total_internal_cost = totals.get("total_internal_cost", 0.0)
+        
+        # Skip validation if quote has zero or negative price
+        if total_client_price <= 0:
+            logger.warning(f"Quote has zero or negative client price, skipping profitability validation")
+            return
+        
+        # Get minimum margin threshold from organization settings
+        min_margin_threshold = await self._get_minimum_margin_threshold()
+        
+        # Check if margin is below threshold
+        if margin_percentage < min_margin_threshold:
+            margin_pct_display = margin_percentage * 100
+            min_margin_display = min_margin_threshold * 100
+            
+            # Calculate how much more revenue is needed to meet threshold
+            if margin_percentage < 0:
+                # Negative margin - calculate break-even point
+                required_price = total_internal_cost / (1 - min_margin_threshold)
+                additional_needed = required_price - total_client_price
+                error_msg = (
+                    f"La propuesta tiene un margen negativo ({margin_pct_display:.1f}%). "
+                    f"El margen mínimo configurado es {min_margin_display:.1f}%. "
+                    f"Se necesita aumentar el precio en al menos {additional_needed:.2f} para alcanzar el margen mínimo."
+                )
+            else:
+                # Low but positive margin
+                required_price = total_internal_cost / (1 - min_margin_threshold)
+                additional_needed = required_price - total_client_price
+                error_msg = (
+                    f"La propuesta tiene un margen muy bajo ({margin_pct_display:.1f}%). "
+                    f"El margen mínimo configurado es {min_margin_display:.1f}%. "
+                    f"Se necesita aumentar el precio en al menos {additional_needed:.2f} para alcanzar el margen mínimo. "
+                    f"Considera ajustar los precios, las horas estimadas o revisar los costos del servicio."
+                )
+            
+            if not allow_low_margin:
+                logger.warning(
+                    f"Quote profitability validation failed: margin={margin_pct_display:.1f}%, "
+                    f"threshold={min_margin_display:.1f}%, user_id={current_user.id}"
+                )
+                raise BusinessLogicError(error_msg)
+            else:
+                # Log a warning if allowed but low margin
+                logger.warning(
+                    f"Quote created with low margin (allowed): margin={margin_pct_display:.1f}%, "
+                    f"threshold={min_margin_display:.1f}%, user_id={current_user.id}"
+                )
+        
+        logger.info(
+            f"Quote profitability validation passed: margin={margin_percentage*100:.1f}%, "
+            f"threshold={min_margin_threshold*100:.1f}%"
+        )
     
     async def _associate_taxes(self, project_id: int, tax_ids: List[int]):
         """Associate taxes with a project"""

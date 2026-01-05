@@ -5,8 +5,11 @@ Implements role-based access control with two levels:
 - Support roles: Multi-tenant managers
 - Tenant roles: Client users within organizations
 """
-from typing import Dict, Set, Optional, Tuple
-from fastapi import HTTPException, status
+from typing import Dict, Set, Optional, Tuple, TYPE_CHECKING
+from fastapi import HTTPException, status, Depends
+
+if TYPE_CHECKING:
+    from app.core.security import get_current_user
 
 from app.core.roles import (
     is_support_role,
@@ -59,6 +62,7 @@ PERM_CREATE_PROJECTS = "can_create_projects"
 PERM_CREATE_SERVICES = "can_create_services"
 PERM_DELETE_RESOURCES = "can_delete_resources"
 PERM_VIEW_ANALYTICS = "can_view_analytics"
+PERM_VIEW_FINANCIAL_PROJECTIONS = "can_view_financial_projections"
 
 # Permission matrix: role -> set of permissions
 PERMISSION_MATRIX: Dict[str, Set[str]] = {
@@ -75,6 +79,7 @@ PERMISSION_MATRIX: Dict[str, Set[str]] = {
         PERM_CREATE_SERVICES,
         PERM_DELETE_RESOURCES,
         PERM_VIEW_ANALYTICS,
+        PERM_VIEW_FINANCIAL_PROJECTIONS,  # Super admin should have access to all features
     },
     "support_manager": {
         PERM_ACCESS_ALL_TENANTS,
@@ -99,6 +104,7 @@ PERMISSION_MATRIX: Dict[str, Set[str]] = {
         PERM_CREATE_SERVICES,
         PERM_DELETE_RESOURCES,
         PERM_VIEW_ANALYTICS,
+        PERM_VIEW_FINANCIAL_PROJECTIONS,
     },
     "admin_financiero": {
         PERM_VIEW_SENSITIVE_DATA,
@@ -108,6 +114,7 @@ PERMISSION_MATRIX: Dict[str, Set[str]] = {
         PERM_CREATE_PROJECTS,
         PERM_CREATE_SERVICES,
         PERM_VIEW_ANALYTICS,
+        PERM_VIEW_FINANCIAL_PROJECTIONS,
         # Cannot manage subscription or invite users
     },
     "product_manager": {
@@ -116,6 +123,7 @@ PERMISSION_MATRIX: Dict[str, Set[str]] = {
         PERM_CREATE_PROJECTS,
         # Cannot view costs or manage services
         PERM_VIEW_ANALYTICS,
+        # Cannot view financial projections (only owner and admin_financiero)
     },
     "collaborator": {
         PERM_CREATE_QUOTES,
@@ -367,6 +375,36 @@ def require_super_admin(user: User) -> None:
     role = get_user_role(user)
     if role != "super_admin":
         raise PermissionError(f"Operation requires super_admin role. Current role: {role}")
+
+
+def require_view_financial_projections(user: User) -> User:
+    """
+    Dependency function to require financial projections permission
+    
+    This function should be used as a dependency in FastAPI endpoints:
+    ```python
+    @router.get("/projections")
+    async def get_projections(
+        user: User = Depends(require_view_financial_projections)
+    ):
+        ...
+    ```
+    
+    Args:
+        user: Current user (from dependency)
+        
+    Returns:
+        User instance if permission granted
+        
+    Raises:
+        HTTPException: If user lacks permission
+    """
+    if not has_permission(user, PERM_VIEW_FINANCIAL_PROJECTIONS):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to view financial projections. Required roles: owner, admin_financiero"
+        )
+    return user
 
 
 def requires_credits(permission: str) -> bool:

@@ -7,7 +7,7 @@
  * - Importar monedas desde `@dinero.js/currencies`
  * - Tipo `Dinero<number>` en lugar de `Dinero.Dinero`
  */
-import { dinero, type Dinero } from 'dinero.js';
+import { dinero, add, multiply, type Dinero } from 'dinero.js';
 import { USD, COP, EUR, ARS } from '@dinero.js/currencies';
 
 // Configuración de monedas con objetos de Dinero.js v2
@@ -75,10 +75,13 @@ export function fromAPI(
  * ESTÁNDAR NOUGRAM: Backend espera strings Decimal
  */
 export function toAPIString(dinero: Dinero): string {
-  const currencyCode = dinero.currency.code;
+  // Dinero.js v2: usar toJSON() para obtener amount y currency
+  const json = dinero.toJSON();
+  const amount = json.amount;
+  const currencyCode = json.currency.code;
   const config = CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.USD;
   const factor = Math.pow(10, config.precision);
-  const value = dinero.amount / factor;
+  const value = amount / factor;
   
   return value.toFixed(config.precision);
 }
@@ -87,11 +90,14 @@ export function toAPIString(dinero: Dinero): string {
  * Obtiene el valor numérico de Dinero (para compatibilidad)
  */
 export function toAPI(dinero: Dinero): number {
-  const currencyCode = dinero.currency.code;
+  // Dinero.js v2: usar toJSON() para obtener amount
+  const json = dinero.toJSON();
+  const amount = json.amount;
+  const currencyCode = json.currency.code;
   const config = CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.USD;
   const factor = Math.pow(10, config.precision);
   
-  return dinero.amount / factor;
+  return amount / factor;
 }
 
 /**
@@ -101,34 +107,45 @@ export function sumMoney(amounts: Dinero[]): Dinero | null {
   if (amounts.length === 0) return null;
   
   return amounts.reduce((total, amount) => {
-    // Dinero.js v2: usar add() method
-    return total.add(amount);
+    // Dinero.js v2: usar función add() importada directamente
+    return add(total, amount);
   });
 }
 
 /**
  * Multiplica Dinero por un escalar
  */
-export function multiplyMoney(dinero: Dinero, multiplier: number): Dinero {
-  return dinero.multiply(multiplier);
+export function multiplyMoney(dineroObj: Dinero, multiplier: number): Dinero {
+  // Dinero.js v2: usar toJSON() para obtener amount, luego crear Dinero con multiplicador
+  const json = dineroObj.toJSON();
+  const newAmount = Math.round(json.amount * multiplier);
+  const config = CURRENCY_CONFIG[json.currency.code] || CURRENCY_CONFIG.USD;
+  // Crear nuevo Dinero con el amount multiplicado usando dinero()
+  return dinero({ amount: newAmount, currency: config.currency });
 }
 
 /**
  * Divide Dinero por un escalar
  */
-export function divideMoney(dinero: Dinero, divisor: number): Dinero {
+export function divideMoney(dineroObj: Dinero, divisor: number): Dinero {
   if (divisor === 0) {
     throw new Error('Cannot divide by zero');
   }
-  return dinero.divide(divisor);
+  // Dinero.js v2: usar toJSON() para obtener amount, luego crear Dinero con divisor
+  const json = dineroObj.toJSON();
+  const newAmount = Math.round(json.amount / divisor);
+  const config = CURRENCY_CONFIG[json.currency.code] || CURRENCY_CONFIG.USD;
+  // Crear nuevo Dinero con el amount dividido usando dinero()
+  return dinero({ amount: newAmount, currency: config.currency });
 }
 
 /**
  * Aplica un porcentaje a Dinero (ej: 19% de IVA)
  */
-export function applyPercentage(dinero: Dinero, percentage: number): Dinero {
+export function applyPercentage(dineroObj: Dinero, percentage: number): Dinero {
+  // Aplicar porcentaje: amount * (percentage / 100)
   const multiplier = percentage / 100;
-  return dinero.multiply(multiplier);
+  return multiplyMoney(dineroObj, multiplier);
 }
 
 /**
@@ -147,8 +164,8 @@ export function applyMargin(
   const divisor = 1 - marginDecimal;
   const multiplier = 1 / divisor;
   
-  // Dinero.js v2: usar multiply() method
-  return cost.multiply(multiplier);
+  // Dinero.js v2: usar multiplyMoney helper
+  return multiplyMoney(cost, multiplier);
 }
 
 /**
@@ -160,13 +177,15 @@ export function formatCurrency(
   locale: string = 'es-CO',
   options?: { showSymbol?: boolean }
 ): string {
-  const currency = dinero.currency.code;
+  // Dinero.js v2: usar toJSON() para obtener currency y amount
+  const json = dinero.toJSON();
+  const currency = json.currency.code;
   const showSymbol = options?.showSymbol !== false;
   
   // Formato específico por moneda
   if (currency === 'COP') {
     // COP: sin decimales, punto como separador de miles
-    const amount = dinero.amount; // Ya está en unidades enteras
+    const amount = json.amount; // Ya está en unidades enteras
     const formatted = amount.toLocaleString('es-CO', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
@@ -174,16 +193,24 @@ export function formatCurrency(
     return showSymbol ? `$${formatted}` : formatted;
   } else {
     // Otras monedas: con decimales
-    const currencyCode = dinero.currency.code;
+    const currencyCode = json.currency.code;
     const config = CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.USD;
     const factor = Math.pow(10, config.precision);
-    const value = dinero.amount / factor;
-    return value.toLocaleString(locale, {
-      style: 'currency',
-      currency: currency,
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+    const value = json.amount / factor;
+    if (showSymbol) {
+      return value.toLocaleString(locale, {
+        style: 'currency',
+        currency: currency,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    } else {
+      return value.toLocaleString(locale, {
+        style: 'decimal',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+    }
   }
 }
 

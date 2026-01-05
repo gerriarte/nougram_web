@@ -14,7 +14,8 @@ import {
   Plug,
   CheckCircle,
   CreditCard,
-  UserCog
+  UserCog,
+  FileText
 } from "lucide-react"
 import { useGetCurrentUser } from "@/lib/queries"
 import { canViewSensitiveData, canManageSubscription, canInviteUsers } from "@/lib/permissions"
@@ -63,6 +64,14 @@ export default function SettingsPage() {
       description: 'Configura tasas y reglas de impuestos',
       icon: Receipt,
       path: '/settings/taxes',
+      requiresPermission: null
+    },
+    {
+      id: 'import',
+      title: 'Importación Inteligente',
+      description: 'Extrae datos de documentos usando IA',
+      icon: FileText,
+      path: '/settings/import',
       requiresPermission: null
     }
   ]

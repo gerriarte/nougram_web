@@ -9,15 +9,25 @@ from app.core.pydantic_config import DECIMAL_CONFIG
 
 
 class QuoteItemBase(BaseModel):
-    """Base schema for quote items (Sprint 14: supports multiple pricing types)"""
+    """Base schema for quote items (Sprint 14: supports multiple pricing types)
+    ESTÁNDAR NOUGRAM: Campos monetarios usan Decimal serializado como string
+    """
     service_id: int = Field(..., description="Service ID", gt=0)
     estimated_hours: Optional[float] = Field(None, description="Estimated hours (required for hourly pricing)", ge=0)
     pricing_type: Optional[str] = Field(None, description="Pricing type: 'hourly', 'fixed', 'recurring', 'project_value' (overrides service default)")
-    fixed_price: Optional[float] = Field(None, description="Fixed price (required for fixed pricing)", ge=0)
-    quantity: Optional[float] = Field(1.0, description="Quantity for fixed/recurring pricing", ge=0)
-    recurring_price: Optional[float] = Field(None, description="Recurring price (required for recurring pricing)", ge=0)
+    fixed_price: Optional[Decimal] = Field(None, description="Fixed price (required for fixed pricing)", ge=0)
+    quantity: Optional[Decimal] = Field(Decimal('1.0'), description="Quantity for fixed/recurring pricing", ge=0)
+    recurring_price: Optional[Decimal] = Field(None, description="Recurring price (required for recurring pricing)", ge=0)
     billing_frequency: Optional[str] = Field(None, description="Billing frequency: 'monthly', 'annual' (for recurring pricing)")
-    project_value: Optional[float] = Field(None, description="Project value (for project_value pricing)", ge=0)
+    project_value: Optional[Decimal] = Field(None, description="Project value (for project_value pricing)", ge=0)
+    
+    # ESTÁNDAR NOUGRAM: Serializar Decimal como string
+    @field_serializer('fixed_price', 'quantity', 'recurring_price', 'project_value')
+    def serialize_decimal(self, value: Optional[Decimal]) -> Optional[str]:
+        """Serializa Decimal como string para mantener precisión"""
+        return str(value) if value is not None else None
+    
+    model_config = DECIMAL_CONFIG
 
 
 class QuoteItemCreate(QuoteItemBase):
@@ -38,13 +48,23 @@ class QuoteItemResponse(QuoteItemBase):
 
 
 class QuoteExpenseBase(BaseModel):
-    """Base schema for quote expenses (Sprint 15: third-party costs with markup)"""
+    """Base schema for quote expenses (Sprint 15: third-party costs with markup)
+    ESTÁNDAR NOUGRAM: Campos monetarios usan Decimal serializado como string
+    """
     name: str = Field(..., description="Expense name", min_length=1)
     description: Optional[str] = Field(None, description="Expense description")
-    cost: float = Field(..., description="Real cost", ge=0)
-    markup_percentage: float = Field(0.0, description="Mark-up percentage (0.10 = 10%)", ge=0, le=10)
+    cost: Decimal = Field(..., description="Real cost", ge=0)
+    markup_percentage: Decimal = Field(Decimal('0.0'), description="Mark-up percentage (0.10 = 10%)", ge=0, le=10)
     category: Optional[str] = Field(None, description="Category: 'Third Party', 'Materials', 'Licenses'")
-    quantity: float = Field(1.0, description="Quantity", ge=0)
+    quantity: Decimal = Field(Decimal('1.0'), description="Quantity", ge=0)
+    
+    # ESTÁNDAR NOUGRAM: Serializar Decimal como string
+    @field_serializer('cost', 'markup_percentage', 'quantity')
+    def serialize_decimal(self, value: Optional[Decimal]) -> Optional[str]:
+        """Serializa Decimal como string para mantener precisión"""
+        return str(value) if value is not None else None
+    
+    model_config = DECIMAL_CONFIG
 
 
 class QuoteExpenseCreate(QuoteExpenseBase):
@@ -69,19 +89,26 @@ class QuoteExpenseResponse(QuoteExpenseBase):
     
     model_config = DECIMAL_CONFIG
 
-    class Config:
-        from_attributes = True
-
 
 class QuoteCalculateRequest(BaseModel):
-    """Schema for quote calculation request (Sprint 16: includes expenses and revisions)"""
+    """Schema for quote calculation request (Sprint 16: includes expenses and revisions)
+    ESTÁNDAR NOUGRAM: Campos monetarios y porcentajes usan Decimal serializado como string
+    """
     items: List[QuoteItemBase] = Field(..., description="List of quote items")
     expenses: Optional[List[QuoteExpenseBase]] = Field(default_factory=list, description="List of quote expenses (third-party costs)")
     tax_ids: Optional[List[int]] = Field(default_factory=list, description="List of tax IDs to apply")
-    target_margin_percentage: Optional[float] = Field(None, ge=0, le=1, description="Target margin for the quote (0-1, e.g., 0.40 = 40%). If not provided, uses service default margins.")
+    target_margin_percentage: Optional[Decimal] = Field(None, ge=0, le=1, description="Target margin for the quote (0-1, e.g., 0.40 = 40%). If not provided, uses service default margins.")
     revisions_included: Optional[int] = Field(default=2, description="Number of included revisions", ge=0)
-    revision_cost_per_additional: Optional[float] = Field(None, description="Cost per additional revision", ge=0)
+    revision_cost_per_additional: Optional[Decimal] = Field(None, description="Cost per additional revision", ge=0)
     revisions_count: Optional[int] = Field(None, description="Actual number of revisions requested (for calculation)", ge=0)
+    
+    # ESTÁNDAR NOUGRAM: Serializar Decimal como string
+    @field_serializer('target_margin_percentage', 'revision_cost_per_additional')
+    def serialize_decimal(self, value: Optional[Decimal]) -> Optional[str]:
+        """Serializa Decimal como string para mantener precisión"""
+        return str(value) if value is not None else None
+    
+    model_config = DECIMAL_CONFIG
 
 
 class QuoteCalculateResponse(BaseModel):
@@ -115,25 +142,45 @@ class QuoteCalculateResponse(BaseModel):
 
 
 class CurrencyInfo(BaseModel):
-    """Schema for currency information"""
+    """Schema for currency information
+    ESTÁNDAR NOUGRAM: Campos monetarios usan Decimal serializado como string
+    """
     code: str = Field(..., description="Currency code")
     count: int = Field(..., description="Number of costs/team members using this currency")
-    exchange_rate_to_primary: float = Field(..., description="Exchange rate to primary currency")
-    total_amount: float = Field(..., description="Total amount in this currency")
+    exchange_rate_to_primary: Decimal = Field(..., description="Exchange rate to primary currency")
+    total_amount: Decimal = Field(..., description="Total amount in this currency")
+    
+    # ESTÁNDAR NOUGRAM: Serializar Decimal como string
+    @field_serializer('exchange_rate_to_primary', 'total_amount')
+    def serialize_decimal(self, value: Decimal) -> str:
+        """Serializa Decimal como string para mantener precisión"""
+        return str(value) if value is not None else None
+    
+    model_config = DECIMAL_CONFIG
 
 
 class BlendedCostRateResponse(BaseModel):
-    """Schema for blended cost rate response"""
-    blended_cost_rate: float = Field(..., description="Blended cost rate per hour")
-    total_monthly_costs: float = Field(..., description="Total monthly costs (normalized to primary currency)")
-    total_fixed_overhead: float = Field(0.0, description="Total fixed overhead (Rent, Utilities, etc.)")
-    total_tools_costs: float = Field(0.0, description="Total software and tools costs")
-    total_salaries: float = Field(0.0, description="Total salaries (Resources) with social charges")
+    """Schema for blended cost rate response
+    ESTÁNDAR NOUGRAM: Campos monetarios usan Decimal serializado como string
+    """
+    blended_cost_rate: Decimal = Field(..., description="Blended cost rate per hour")
+    total_monthly_costs: Decimal = Field(..., description="Total monthly costs (normalized to primary currency)")
+    total_fixed_overhead: Decimal = Field(Decimal('0'), description="Total fixed overhead (Rent, Utilities, etc.)")
+    total_tools_costs: Decimal = Field(Decimal('0'), description="Total software and tools costs")
+    total_salaries: Decimal = Field(Decimal('0'), description="Total salaries (Resources) with social charges")
     total_monthly_hours: float = Field(..., description="Total monthly billable hours")
     active_team_members: int = Field(..., description="Number of active team members")
     primary_currency: str = Field(..., description="Primary currency code")
     currencies_used: List[CurrencyInfo] = Field(default_factory=list, description="List of currencies used in costs")
     exchange_rates_date: Optional[str] = Field(None, description="Date of exchange rates (ISO format)")
+    
+    # ESTÁNDAR NOUGRAM: Serializar Decimal como string
+    @field_serializer('blended_cost_rate', 'total_monthly_costs', 'total_fixed_overhead', 'total_tools_costs', 'total_salaries')
+    def serialize_decimal(self, value: Decimal) -> str:
+        """Serializa Decimal como string para mantener precisión"""
+        return str(value) if value is not None else None
+    
+    model_config = DECIMAL_CONFIG
 
 
 class QuoteEmailRequest(BaseModel):
@@ -154,22 +201,42 @@ class QuoteEmailResponse(BaseModel):
 
 
 class RentabilityCategory(BaseModel):
-    """Schema for a rentability category breakdown"""
+    """Schema for a rentability category breakdown
+    ESTÁNDAR NOUGRAM: Campos monetarios y porcentajes usan Decimal serializado como string
+    """
     category: str = Field(..., description="Category name (e.g., 'Operating Costs', 'Net Profit')")
     concept: str = Field(..., description="Concept/Sub-category (e.g., 'Talent', 'Taxes')")
-    amount: float = Field(..., description="Amount in primary currency")
-    percentage: float = Field(..., description="Percentage relative to total client price")
+    amount: Decimal = Field(..., description="Amount in primary currency")
+    percentage: Decimal = Field(..., description="Percentage relative to total client price")
     description: Optional[str] = Field(None, description="Optional description or detail")
+    
+    # ESTÁNDAR NOUGRAM: Serializar Decimal como string
+    @field_serializer('amount', 'percentage')
+    def serialize_decimal(self, value: Decimal) -> str:
+        """Serializa Decimal como string para mantener precisión"""
+        return str(value) if value is not None else None
+    
+    model_config = DECIMAL_CONFIG
 
 
 class RentabilitySummaryResponse(BaseModel):
-    """Schema for the full profitability summary response"""
+    """Schema for the full profitability summary response
+    ESTÁNDAR NOUGRAM: Campos monetarios y porcentajes usan Decimal serializado como string
+    """
     quote_id: int
-    total_client_price: float
-    total_internal_cost: float
-    total_taxes: float
-    net_profit_amount: float
-    net_profit_margin: float
+    total_client_price: Decimal = Field(..., description="Total client price")
+    total_internal_cost: Decimal = Field(..., description="Total internal cost")
+    total_taxes: Decimal = Field(..., description="Total taxes")
+    net_profit_amount: Decimal = Field(..., description="Net profit amount")
+    net_profit_margin: Decimal = Field(..., description="Net profit margin (0-1)")
     categories: List[RentabilityCategory] = Field(default_factory=list, description="Detailed breakdown categories")
     status: str = Field(..., description="Profitability status: healthy (>30%), warning (15-30%), critical (<15%)")
+    
+    # ESTÁNDAR NOUGRAM: Serializar Decimal como string
+    @field_serializer('total_client_price', 'total_internal_cost', 'total_taxes', 'net_profit_amount', 'net_profit_margin')
+    def serialize_decimal(self, value: Decimal) -> str:
+        """Serializa Decimal como string para mantener precisión"""
+        return str(value) if value is not None else None
+    
+    model_config = DECIMAL_CONFIG
 

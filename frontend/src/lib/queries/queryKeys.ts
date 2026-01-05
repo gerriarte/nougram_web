@@ -33,6 +33,7 @@ export const queryKeys = {
   ai: {
     status: () => ['ai', 'status'],
     suggestions: () => ['ai', 'suggestions'],
+    parseDocument: () => ['ai', 'parse-document'],
   },
 };
 

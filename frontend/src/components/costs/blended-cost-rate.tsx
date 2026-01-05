@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useGetBlendedCostRate } from "@/lib/queries"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { formatCurrency } from "@/lib/currency"
+import { toAPI, type Dinero, CURRENCY_CONFIG } from "@/lib/money"
 import { Loader2, Coins, Calendar, Info } from "lucide-react"
 import { useGetCurrencySettings } from "@/lib/queries"
 import { Badge } from "@/components/ui/badge"
@@ -60,13 +61,46 @@ export function BlendedCostRate() {
     )
   }
 
-  const costRate = data?.blended_cost_rate || 0
-  const totalCosts = data?.total_monthly_costs || 0
-  const totalFixedOverhead = data?.total_fixed_overhead || 0
-  const totalToolsCosts = data?.total_tools_costs || 0
-  const totalSalaries = data?.total_salaries || 0
+  // Helper function to convert value to number (handles string, number, or Dinero)
+  // ESTÁNDAR NOUGRAM: Maneja objetos Dinero correctamente usando toAPI
+  const toNumber = (value: any): number => {
+    if (value == null) return 0
+    if (typeof value === 'number') return value
+    if (typeof value === 'string') return parseFloat(value) || 0
+    // Check if it's a Dinero object (has toJSON method or amount property)
+    if (typeof value === 'object' && value !== null) {
+      // Dinero.js v2: puede tener toJSON() o estructura {amount, currency, scale}
+      if (typeof value.toJSON === 'function') {
+        try {
+          return toAPI(value as Dinero)
+        } catch {
+          return 0
+        }
+      }
+      // Si tiene estructura {amount, currency} pero no es Dinero válido, extraer amount directamente
+      if ('amount' in value && typeof value.amount === 'number') {
+        const currencyCode = (value.currency?.code || primaryCurrency || 'USD')
+        const config = CURRENCY_CONFIG[currencyCode] || CURRENCY_CONFIG.USD
+        const factor = Math.pow(10, config.precision)
+        return value.amount / factor
+      }
+    }
+    return 0
+  }
+
+  // #region agent log
+  fetch('http://127.0.0.1:7244/ingest/9259ea1e-d9d4-4580-890f-411d9fb62b18',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'costs/blended-cost-rate.tsx:63',message:'BCR data from API',data:{hasData:!!data,blended_cost_rate:data?.blended_cost_rate,blended_cost_rate_type:typeof data?.blended_cost_rate,blended_cost_rate_isObject:typeof data?.blended_cost_rate === 'object',total_monthly_costs:data?.total_monthly_costs,total_monthly_costs_type:typeof data?.total_monthly_costs},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+  // #endregion
+  const costRate = toNumber(data?.blended_cost_rate)
+  const totalCosts = toNumber(data?.total_monthly_costs)
+  const totalFixedOverhead = toNumber(data?.total_fixed_overhead)
+  const totalToolsCosts = toNumber(data?.total_tools_costs)
+  const totalSalaries = toNumber(data?.total_salaries)
   const totalHours = data?.total_monthly_hours || 0
   const activeMembers = data?.active_team_members || 0
+  // #region agent log
+  fetch('http://127.0.0.1:7244/ingest/9259ea1e-d9d4-4580-890f-411d9fb62b18',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'costs/blended-cost-rate.tsx:71',message:'BCR values after conversion',data:{costRate,isNaN_costRate:isNaN(costRate),totalCosts,isNaN_totalCosts:isNaN(totalCosts),totalFixedOverhead,isNaN_totalFixedOverhead:isNaN(totalFixedOverhead)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+  // #endregion
   const currenciesUsed: CurrencyInfo[] = data?.currencies_used || []
   const exchangeRatesDate = data?.exchange_rates_date
 
