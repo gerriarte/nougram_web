@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
 import { BLOG_POSTS } from '../data/blog-posts';
 import { FooterCTA } from '../components/FooterCTA';
 import { ArrowLeft, Calendar, User, Tag, Share2 } from 'lucide-react';
@@ -42,22 +41,20 @@ export const BlogPost: React.FC = () => {
 
     return (
         <>
-            <Helmet>
-                <title>{post.title} | Blog Nougram</title>
-                <meta name="description" content={post.excerpt} />
-                <link rel="canonical" href={`https://nougram.co/blog/${post.slug}`} />
+            <title>{post.title} | Blog Nougram</title>
+            <meta name="description" content={post.excerpt} />
+            <link rel="canonical" href={`https://nougram.co/blog/${post.slug}`} />
 
-                {/* Open Graph specific for articles */}
-                <meta property="og:type" content="article" />
-                <meta property="og:title" content={post.title} />
-                <meta property="og:description" content={post.excerpt} />
-                <meta property="article:published_time" content={post.date} />
+            {/* Open Graph specific for articles */}
+            <meta property="og:type" content="article" />
+            <meta property="og:title" content={post.title} />
+            <meta property="og:description" content={post.excerpt} />
+            <meta property="article:published_time" content={post.date} />
 
-                {/* Inject Schema */}
-                <script type="application/ld+json">
-                    {JSON.stringify(schema)}
-                </script>
-            </Helmet>
+            {/* Inject Schema */}
+            <script type="application/ld+json">
+                {JSON.stringify(schema)}
+            </script>
 
             <div className="bg-slate-50 min-h-screen">
                 {/* Header Spacer - simplified since main header is fixed */}

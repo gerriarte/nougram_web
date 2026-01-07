@@ -1,6 +1,5 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-import { HelmetProvider } from 'react-helmet-async';
 
 // Components
 import { Header } from './components/Header';
@@ -21,19 +20,17 @@ const ScrollToTop = () => {
 
 function App() {
   return (
-    <HelmetProvider>
-      <Router>
-        <ScrollToTop />
-        <div className="min-h-screen bg-slate-50 font-sans selection:bg-brand-500 selection:text-white">
-          <Header />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/blog/:slug" element={<BlogPost />} />
-          </Routes>
-        </div>
-      </Router>
-    </HelmetProvider>
+    <Router>
+      <ScrollToTop />
+      <div className="min-h-screen bg-slate-50 font-sans selection:bg-brand-500 selection:text-white">
+        <Header />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
+        </Routes>
+      </div>
+    </Router>
   );
 }
 

@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
 import { BLOG_POSTS } from '../data/blog-posts';
 import { ArrowRight, User, Calendar, Tag } from 'lucide-react';
 import { FooterCTA } from '../components/FooterCTA';
@@ -8,11 +7,9 @@ import { FooterCTA } from '../components/FooterCTA';
 export const Blog: React.FC = () => {
     return (
         <>
-            <Helmet>
-                <title>Blog | Nougram - Rentabilidad para Freelancers</title>
-                <meta name="description" content="Artículos sobre pricing, finanzas para freelancers y estrategias para vender servicios de conocimiento. Aprende a cobrar lo que vales." />
-                <link rel="canonical" href="https://nougram.co/blog" />
-            </Helmet>
+            <title>Blog | Nougram - Rentabilidad para Freelancers</title>
+            <meta name="description" content="Artículos sobre pricing, finanzas para freelancers y estrategias para vender servicios de conocimiento. Aprende a cobrar lo que vales." />
+            <link rel="canonical" href="https://nougram.co/blog" />
 
             <section className="relative min-h-[50vh] pt-32 pb-20 bg-dark-900 overflow-hidden">
                 {/* Background Elements from Hero */}
