@@ -1,31 +1,39 @@
-import React from 'react';
-import { Countdown } from './components/Countdown';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
+
+// Components
 import { Header } from './components/Header';
-import { Hero } from './components/Hero';
-import { TargetAudience } from './components/TargetAudience';
-import { Problem } from './components/Problem';
-import { Solution } from './components/Solution';
-import { Pricing } from './components/Pricing';
-import { Credibility } from './components/Credibility';
-import { FAQ } from './components/FAQ';
-import { FooterCTA } from './components/FooterCTA';
+
+// Pages
+import { Home } from './pages/Home';
+import { Blog } from './pages/Blog';
+import { BlogPost } from './pages/BlogPost';
+
+// Scroll to top on route change
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+};
 
 function App() {
   return (
-    <div className="min-h-screen bg-slate-50 font-sans selection:bg-brand-500 selection:text-white">
-      <Header />
-      <main>
-        <Hero />
-        <TargetAudience />
-        <Problem />
-        <Solution />
-        <Pricing />
-        <Credibility />
-        <FAQ />
-      </main>
-      <FooterCTA />
-      <Countdown targetDate={new Date('2026-02-01T00:00:00')} />
-    </div>
+    <HelmetProvider>
+      <Router>
+        <ScrollToTop />
+        <div className="min-h-screen bg-slate-50 font-sans selection:bg-brand-500 selection:text-white">
+          <Header />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
+          </Routes>
+        </div>
+      </Router>
+    </HelmetProvider>
   );
 }
 
