@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { BLOG_POSTS } from '../data/blog-posts';
 import { ArrowRight, User, Calendar, Tag } from 'lucide-react';
-import { FooterCTA } from '../components/FooterCTA';
+import { FooterCTA } from '../../components/FooterCTA';
 
 export const Blog: React.FC = () => {
     return (

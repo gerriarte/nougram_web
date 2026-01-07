@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useParams, Navigate, Link } from 'react-router-dom';
 import { BLOG_POSTS } from '../data/blog-posts';
-import { FooterCTA } from '../components/FooterCTA';
+import { FooterCTA } from '../../components/FooterCTA';
 import { ArrowLeft, Calendar, User, Tag, Share2 } from 'lucide-react';
 
 export const BlogPost: React.FC = () => {

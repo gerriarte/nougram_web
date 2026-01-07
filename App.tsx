@@ -5,9 +5,9 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-route
 import { Header } from './components/Header';
 
 // Pages
-import { Home } from './pages/Home';
-import { Blog } from './pages/Blog';
-import { BlogPost } from './pages/BlogPost';
+import { Home } from './src/pages/Home';
+import { Blog } from './src/pages/Blog';
+import { BlogPost } from './src/pages/BlogPost';
 
 // Scroll to top on route change
 const ScrollToTop = () => {
