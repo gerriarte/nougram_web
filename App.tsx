@@ -18,7 +18,11 @@ const ScrollToTop = () => {
   return null;
 };
 
+// Hooks
+import { useDynamicFavicon } from './hooks/useDynamicFavicon';
+
 function App() {
+  useDynamicFavicon();
   return (
     <Router>
       <ScrollToTop />
