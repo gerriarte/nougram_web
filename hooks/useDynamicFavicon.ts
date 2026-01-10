@@ -70,7 +70,7 @@ export const useDynamicFavicon = () => {
         const handleVisibilityChange = () => {
             if (document.hidden) {
                 setDynamicFavicon();
-                document.title = '(1) Nuevo Mensaje'; // Optional: change title to grab attention too? User didn't ask but "notification" implies it. Stick to favicon for now as requested.
+                document.title = '(1) Nueva Cotización'; // Optional: change title to grab attention too? User didn't ask but "notification" implies it. Stick to favicon for now as requested.
             } else {
                 restoreFavicon();
                 // document.title = originalTitle; // If we changed title
