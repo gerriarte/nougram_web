@@ -1,8 +1,10 @@
 import React from 'react';
-import { COPY } from '../constants';
+import { useLanguage } from '../context/LanguageContext';
 import { Button } from './Button';
 
 export const FooterCTA: React.FC = () => {
+  const { t } = useLanguage();
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -17,10 +19,10 @@ export const FooterCTA: React.FC = () => {
 
           <div className="relative z-10">
             <h2 className="text-2xl md:text-5xl font-bold text-white mb-4 lg:mb-6 leading-tight">
-              {COPY.finalCta.title}
+              {t.finalCta.title}
             </h2>
             <p className="text-base md:text-xl text-slate-300 mb-8 lg:mb-10 max-w-3xl mx-auto">
-              {COPY.finalCta.description}
+              {t.finalCta.description}
             </p>
             <Button
               variant="primary"
@@ -28,7 +30,7 @@ export const FooterCTA: React.FC = () => {
               onClick={scrollToTop}
               icon
             >
-              {COPY.finalCta.button}
+              {t.finalCta.button}
             </Button>
           </div>
         </div>
@@ -38,12 +40,12 @@ export const FooterCTA: React.FC = () => {
             <img src="/logo-nougram.webp" alt="Nougram" className="h-8 w-auto object-contain" />
           </div>
           <div>
-            &copy; {new Date().getFullYear()} Nougram. Todos los derechos reservados.
+            &copy; {new Date().getFullYear()} Nougram. {t.finalCta.footer.rights}
           </div>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-brand-600 transition-colors">Privacidad</a>
-            <a href="#" className="hover:text-brand-600 transition-colors">Términos</a>
-            <a href="#" className="hover:text-brand-600 transition-colors">Contacto</a>
+            <a href="#" className="hover:text-brand-600 transition-colors">{t.finalCta.footer.privacy}</a>
+            <a href="#" className="hover:text-brand-600 transition-colors">{t.finalCta.footer.terms}</a>
+            <a href="#" className="hover:text-brand-600 transition-colors">{t.finalCta.footer.contact}</a>
           </div>
         </div>
       </div>

@@ -1,40 +1,31 @@
-import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
-
-// Components
+import React from 'react';
+import { Countdown } from './components/Countdown';
 import { Header } from './components/Header';
-
-// Pages
-import { Home } from './src/pages/Home';
-import { Blog } from './src/pages/Blog';
-import { BlogPost } from './src/pages/BlogPost';
-
-// Scroll to top on route change
-const ScrollToTop = () => {
-  const { pathname } = useLocation();
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
-  return null;
-};
-
-// Hooks
-import { useDynamicFavicon } from './hooks/useDynamicFavicon';
+import { Hero } from './components/Hero';
+import { TargetAudience } from './components/TargetAudience';
+import { Problem } from './components/Problem';
+import { Solution } from './components/Solution';
+import { Pricing } from './components/Pricing';
+import { Credibility } from './components/Credibility';
+import { FAQ } from './components/FAQ';
+import { FooterCTA } from './components/FooterCTA';
 
 function App() {
-  useDynamicFavicon();
   return (
-    <Router>
-      <ScrollToTop />
-      <div className="min-h-screen bg-slate-50 font-sans selection:bg-brand-500 selection:text-white">
-        <Header />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:slug" element={<BlogPost />} />
-        </Routes>
-      </div>
-    </Router>
+    <div className="min-h-screen bg-slate-50 font-sans selection:bg-brand-500 selection:text-white">
+      <Header />
+      <main>
+        <Hero />
+        <TargetAudience />
+        <Problem />
+        <Solution />
+        <Pricing />
+        <Credibility />
+        <FAQ />
+      </main>
+      <FooterCTA />
+      <Countdown targetDate={new Date('2026-02-01T00:00:00')} />
+    </div>
   );
 }
 

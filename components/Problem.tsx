@@ -1,8 +1,10 @@
 import React from 'react';
-import { COPY } from '../constants';
+import { useLanguage } from '../context/LanguageContext';
 import { AlertTriangle, Clock, Calculator } from 'lucide-react';
 
 export const Problem: React.FC = () => {
+  const { t } = useLanguage();
+
   return (
     <section className="py-12 lg:py-24 bg-slate-50 relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -15,8 +17,8 @@ export const Problem: React.FC = () => {
                   <AlertTriangle className="h-5 w-5 lg:h-6 lg:w-6" />
                 </div>
                 <div>
-                  <h3 className="text-base lg:text-lg font-semibold text-slate-900">El Ciclo de la Duda</h3>
-                  <p className="text-sm lg:text-base text-slate-600 mt-1">¿Cuanto cobro? ¿Es mucho? ¿Es muy poco?</p>
+                  <h3 className="text-base lg:text-lg font-semibold text-slate-900">{t.problem.card.tag}</h3>
+                  <p className="text-sm lg:text-base text-slate-600 mt-1">{t.problem.card.text}</p>
                 </div>
               </div>
               <div className="space-y-4">
@@ -27,29 +29,29 @@ export const Problem: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-lg border border-slate-100">
                   <Calculator className="h-4 w-4 lg:h-5 lg:w-5 text-slate-600" />
-                  <span className="text-sm lg:text-base text-slate-700 font-medium">Calculando horas manuales...</span>
+                  <span className="text-sm lg:text-base text-slate-700 font-medium">{t.problem.card.calculating}</span>
                 </div>
                 <div className="h-px bg-slate-100 w-full my-4"></div>
                 <p className="text-xs lg:text-sm text-slate-500 italic">
-                  "Pasas más tiempo cotizando que creando."
+                  {t.problem.card.quote}
                 </p>
               </div>
             </div>
           </div>
 
           <div className="order-1 lg:order-2">
-            <p className="text-sm lg:text-base font-semibold text-brand-600 uppercase tracking-wide mb-2 lg:mb-3">
-              El Problema
-            </p>
-            <h2 className="text-2xl md:text-4xl font-bold text-slate-900 mb-4 lg:mb-6 leading-tight">
-              {COPY.problem.title}
+            <h2 className="text-sm lg:text-base font-semibold text-brand-600 uppercase tracking-wide mb-2 lg:mb-3">
+              {t.problem.tag}
             </h2>
+            <h3 className="text-2xl md:text-4xl font-bold text-slate-900 mb-4 lg:mb-6 leading-tight">
+              {t.problem.title}
+            </h3>
             <p className="text-base lg:text-lg text-slate-600 mb-6 leading-relaxed">
-              {COPY.problem.description}
+              {t.problem.description}
             </p>
             <div className="pl-4 lg:pl-6 border-l-4 border-brand-500">
               <p className="text-base lg:text-lg text-slate-800 font-medium italic leading-relaxed">
-                {COPY.problem.implication}
+                {t.problem.implication}
               </p>
             </div>
           </div>

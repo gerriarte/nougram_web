@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { COPY } from '../constants';
+import { useLanguage } from '../context/LanguageContext';
 import { BrainCircuit, Target, Users } from 'lucide-react';
 
 export const Solution: React.FC = () => {
+  const { t } = useLanguage();
   const icons = [Target, BrainCircuit, Users];
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
@@ -33,19 +34,19 @@ export const Solution: React.FC = () => {
             }`}
         >
           <span className="inline-block px-4 py-1.5 bg-brand-50 text-brand-600 font-semibold text-xs lg:text-sm rounded-full mb-4">
-            La Solución
+            {t.solution.tag}
           </span>
           <h2 className="text-2xl md:text-5xl font-bold text-slate-900 mb-4 lg:mb-6">
-            Nougram: Entiende el Valor de lo Intangible
+            {t.solution.headline}
           </h2>
           <p className="text-base lg:text-xl text-slate-600 leading-relaxed">
-            {COPY.solution.subheadline}{' '}
+            {t.solution.subheadline}{' '}
             <span className="block mt-4 lg:mt-6 md:inline md:mt-0">
-              La herramienta definitiva para{' '}
+              {t.solution.targetText}{' '}
               <span className="relative inline-block px-2 py-1 mx-1 whitespace-normal md:whitespace-nowrap">
                 <span className="absolute inset-0 bg-brand-100/60 -skew-y-1 rounded-lg border border-brand-200/50 shadow-sm" aria-hidden="true"></span>
                 <span className="relative font-bold text-brand-700">
-                  consultores, diseñadores, fotógrafos y líderes de marketing
+                  {t.solution.targetRoles}
                 </span>
               </span>.
             </span>
@@ -53,7 +54,7 @@ export const Solution: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-10">
-          {COPY.solution.benefits.map((benefit, index) => {
+          {t.solution.benefits.map((benefit, index) => {
             const Icon = icons[index];
             return (
               <div

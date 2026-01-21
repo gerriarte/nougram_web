@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { COPY } from '../constants';
 import { Button } from './Button';
 import { FeedbackModal } from './FeedbackModal';
 import { CheckCircle2, TrendingUp, ShieldCheck, AlertCircle, Sparkles } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
 
 const Counter = ({ end, suffix = '', label }: { end: number; suffix?: string; label: string }) => {
   const [count, setCount] = useState(0);
@@ -34,13 +34,13 @@ const Counter = ({ end, suffix = '', label }: { end: number; suffix?: string; la
 };
 
 export const Hero: React.FC = () => {
+  const { t } = useLanguage();
   const [loaded, setLoaded] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     profession: '',
     phone: '',
-    country: '',
     whatsappConsent: false,
     _gotcha: '' // Honeypot field
   });
@@ -63,7 +63,7 @@ export const Hero: React.FC = () => {
 
     if (name === 'email') {
       if (!isEmailTouched) setIsEmailTouched(true);
-      setEmailError(value && !validateEmail(value) ? 'Correo inválido' : '');
+      setEmailError(value && !validateEmail(value) ? t.hero.form.errors.email : '');
     }
   };
 
@@ -72,7 +72,7 @@ export const Hero: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateEmail(formData.email)) {
-      setEmailError('Por favor, ingresa un correo válido.');
+      setEmailError(t.hero.form.errors.required);
       return;
     }
     // Open modal to ask for feedback consent before submitting
@@ -89,16 +89,16 @@ export const Hero: React.FC = () => {
       });
 
       if (response.ok) {
-        setFormData({ name: '', email: '', profession: '', phone: '', country: '', whatsappConsent: false, _gotcha: '' });
+        setFormData({ name: '', email: '', profession: '', phone: '', whatsappConsent: false, _gotcha: '' });
         setEmailError('');
         setIsEmailTouched(false);
       } else {
-        alert('Hubo un error al enviar tus datos. Por favor intenta de nuevo.');
+        alert(t.hero.form.errors.generic);
         setIsModalOpen(false); // Close modal if error
       }
     } catch (error) {
       console.error("Submission error:", error);
-      alert('Hubo un error de conexión. Por favor intenta de nuevo.');
+      alert(t.hero.form.errors.connection);
       setIsModalOpen(false);
     } finally {
       setIsSubmitting(false);
@@ -143,7 +143,7 @@ export const Hero: React.FC = () => {
             <div className={`fade-in-up ${loaded ? 'visible' : ''}`} style={{ transitionDelay: '0ms' }}>
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-900/40 border border-brand-500/30 text-brand-300 text-[10px] md:text-xs font-semibold tracking-wide backdrop-blur-md mb-6 hover:bg-brand-900/60 transition-colors cursor-default">
                 <Sparkles className="w-3 h-3 text-brand-400" />
-                <span>ACCESO BETA LIMITADO</span>
+                <span>{t.hero.tag}</span>
               </div>
             </div>
 
@@ -151,18 +151,18 @@ export const Hero: React.FC = () => {
               className={`text-4xl lg:text-7xl font-bold text-white tracking-tight leading-[1.1] mb-4 fade-in-up ${loaded ? 'visible' : ''}`}
               style={{ transitionDelay: '100ms' }}
             >
-              {COPY.hero.headline.includes(':') ? (
+              {t.hero.headline.includes(':') ? (
                 <>
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-indigo-300 to-sky-400 bg-[length:200%_auto] animate-[gradient_8s_ease_infinite]">
-                    {COPY.hero.headline.split(':')[0]}
+                    {t.hero.headline.split(':')[0]}
                   </span>
                   <span className="block text-2xl lg:text-4xl mt-4 text-slate-200 font-normal leading-snug">
-                    {COPY.hero.headline.split(':')[1]}
+                    {t.hero.headline.split(':')[1]}
                   </span>
                 </>
               ) : (
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-indigo-300 to-sky-400 bg-[length:200%_auto] animate-[gradient_8s_ease_infinite]">
-                  {COPY.hero.headline}
+                  {t.hero.headline}
                 </span>
               )}
             </h1>
@@ -171,25 +171,25 @@ export const Hero: React.FC = () => {
               className={`text-base lg:text-lg text-slate-300/90 mb-8 leading-relaxed max-w-2xl mx-auto lg:mx-0 fade-in-up ${loaded ? 'visible' : ''}`}
               style={{ transitionDelay: '200ms' }}
             >
-              {COPY.hero.subheadline}
+              {t.hero.subheadline}
             </p>
 
             <div
               className={`grid grid-cols-3 divide-x divide-white/10 border-t border-b border-white/10 py-4 mb-8 fade-in-up ${loaded ? 'visible' : ''}`}
               style={{ transitionDelay: '300ms' }}
             >
-              <Counter end={98} suffix="%" label="Precisión" />
-              <Counter end={50} suffix="%" label="Ahorro" />
-              <Counter end={35} suffix="%" label="Margen" />
+              <Counter end={t.hero.stats.accuracy.val} suffix="%" label={t.hero.stats.accuracy.label} />
+              <Counter end={t.hero.stats.savings.val} suffix="%" label={t.hero.stats.savings.label} />
+              <Counter end={t.hero.stats.margin.val} suffix="%" label={t.hero.stats.margin.label} />
             </div>
 
             <div
               className={`flex flex-wrap justify-center lg:justify-start gap-4 lg:gap-6 text-xs font-medium text-slate-400 fade-in-up ${loaded ? 'visible' : ''}`}
               style={{ transitionDelay: '400ms' }}
             >
-              <div className="flex items-center gap-1.5"><TrendingUp className="w-3.5 h-3.5 text-brand-400" /> Datos Reales</div>
-              <div className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-brand-400" /> 100% Privado</div>
-              <div className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-brand-400" /> Machine Learning</div>
+              <div className="flex items-center gap-1.5"><TrendingUp className="w-3.5 h-3.5 text-brand-400" /> {t.hero.badges.realData}</div>
+              <div className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5 text-brand-400" /> {t.hero.badges.private}</div>
+              <div className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-brand-400" /> {t.hero.badges.ml}</div>
             </div>
 
 
@@ -205,8 +205,8 @@ export const Hero: React.FC = () => {
               <div className="absolute -top-10 -right-10 w-32 h-32 bg-brand-500/20 rounded-full blur-2xl pointer-events-none"></div>
 
               <div className="relative">
-                <h3 className="text-lg lg:text-xl font-semibold text-white mb-1">Asegura tu lugar</h3>
-                <p className="text-xs lg:text-sm text-slate-400 mb-5">Únete a la lista de espera exclusiva.</p>
+                <h3 className="text-lg lg:text-xl font-semibold text-white mb-1">{t.hero.form.title}</h3>
+                <p className="text-xs lg:text-sm text-slate-400 mb-5">{t.hero.form.subtitle}</p>
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-3">
                   {/* Honeypot field for bots */}
@@ -223,7 +223,7 @@ export const Hero: React.FC = () => {
                     <input
                       name="name"
                       type="text"
-                      placeholder="Tu Nombre"
+                      placeholder={t.hero.form.placeholders.name}
                       required
                       value={formData.name}
                       onChange={handleChange}
@@ -233,7 +233,7 @@ export const Hero: React.FC = () => {
                     <input
                       name="profession"
                       type="text"
-                      placeholder="Tu Profesión"
+                      placeholder={t.hero.form.placeholders.profession}
                       required
                       value={formData.profession}
                       onChange={handleChange}
@@ -244,7 +244,7 @@ export const Hero: React.FC = () => {
                       <input
                         name="email"
                         type="email"
-                        placeholder="tu@email.com"
+                        placeholder={t.hero.form.placeholders.email}
                         required
                         value={formData.email}
                         onChange={handleChange}
@@ -263,27 +263,12 @@ export const Hero: React.FC = () => {
                     <input
                       name="phone"
                       type="tel"
-                      placeholder="Tu Teléfono"
+                      placeholder={t.hero.form.placeholders.phone}
                       required
                       value={formData.phone}
                       onChange={handleChange}
                       className="w-full px-4 py-2.5 text-sm bg-dark-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/70"
                     />
-
-                    <select
-                      name="country"
-                      required
-                      value={formData.country}
-                      onChange={handleChange as any} // Cast needed if types are strict for select vs input
-                      className="w-full px-4 py-2.5 text-sm bg-dark-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/70 appearance-none"
-                    >
-                      <option value="" disabled className="bg-dark-900 text-slate-500">Selecciona tu país</option>
-                      <option value="Colombia" className="bg-dark-900">Colombia</option>
-                      <option value="Argentina" className="bg-dark-900">Argentina</option>
-                      <option value="Venezuela" className="bg-dark-900">Venezuela</option>
-                      <option value="Perú" className="bg-dark-900">Perú</option>
-                      <option value="Chile" className="bg-dark-900">Chile</option>
-                    </select>
 
                     <label className="flex items-start gap-3 cursor-pointer group">
                       <div className="relative flex items-center">
@@ -306,7 +291,7 @@ export const Hero: React.FC = () => {
                         </svg>
                       </div>
                       <span className="text-xs text-slate-400 group-hover:text-slate-300 transition-colors pt-0.5 leading-tight">
-                        Acepto ser agregado al grupo de WhatsApp de Nougram para recibir actualizaciones.
+                        {t.hero.form.whatsapp}
                       </span>
                     </label>
                   </div>
@@ -318,12 +303,12 @@ export const Hero: React.FC = () => {
                     className={`mt-2 py-3 lg:py-4 text-sm lg:text-base shadow-lg shadow-brand-500/20 hover:shadow-brand-500/40 border-t border-white/10 ${emailError || isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                     disabled={!!emailError || isSubmitting}
                   >
-                    {isSubmitting ? 'Enviando...' : 'Obtener Acceso Anticipado'}
+                    {isSubmitting ? t.hero.form.loading : t.hero.form.cta}
                   </Button>
                 </form>
 
                 <p className="mt-4 text-center text-[10px] text-slate-500 font-medium tracking-wide uppercase">
-                  Sin Spam • Acceso Gratuito • Cupos Limitados
+                  {t.hero.form.subtext}
                 </p>
               </div>
             </div>
