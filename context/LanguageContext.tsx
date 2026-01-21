@@ -13,7 +13,16 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [language, setLanguage] = useState<Language>('es');
+    const [language, setLanguage] = useState<Language>(() => {
+        if (typeof window !== 'undefined') {
+            const browserLang = navigator.language || (navigator as any).userLanguage;
+            if (browserLang && browserLang.startsWith('es')) {
+                return 'es';
+            }
+            return 'en';
+        }
+        return 'es';
+    });
 
     const value = {
         language,
