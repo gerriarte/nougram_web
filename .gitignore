@@ -51,3 +51,13 @@ dist/
 
 # Alembic
 *.pyc
+
+# Machine Learning & Data
+*.h5
+*.pkl
+*.pt
+*.pth
+*.onnx
+data/
+models/
+jupyter_checkpoints/
