@@ -1,0 +1,26 @@
+{
+  "name": "cotizador",
+  "version": "1.0.0",
+  "description": "> Plataforma SaaS multi-tenant para gestión de rentabilidad, cotizaciones y análisis de agencias de servicios digitales.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gerriarte/Cotizador.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/gerriarte/Cotizador/issues"
+  },
+  "homepage": "https://github.com/gerriarte/Cotizador#readme",
+  "devDependencies": {
+    "jest": "^30.2.0"
+  }
+}
