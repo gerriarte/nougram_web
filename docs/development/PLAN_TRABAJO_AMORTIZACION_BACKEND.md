@@ -1,8 +1,10 @@
 # Plan de Trabajo - Implementación de Amortización de Equipos (Backend)
 
-**Versión:** 1.0  
-**Fecha:** 2026-01-23  
-**Objetivo:** Implementar soporte completo para amortización de equipos en el backend, alineado con los requerimientos de UI especificados en `UI_REQUIREMENTS_ADMIN_PANEL.md`
+**Versión:** 2.0  
+**Fecha:** 2026-01-25  
+**Objetivo:** Implementar soporte completo para amortización de equipos en el backend, alineado con los requerimientos de UI especificados en `UI_REQUIREMENTS_EQUIPMENT_AMORTIZATION.md`
+
+**Estado:** ❌ NO IMPLEMENTADO - Este plan detalla la implementación completa del módulo
 
 ---
 
@@ -18,22 +20,37 @@ Este plan detalla la implementación del módulo de amortización de equipos que
 
 ## 1. ANÁLISIS DE REQUERIMIENTOS
 
-### 1.1 Requerimientos del Frontend (UI_REQUIREMENTS_ADMIN_PANEL.md)
+### 1.1 Requerimientos del Frontend (UI_REQUIREMENTS_EQUIPMENT_AMORTIZATION.md)
 
 ```typescript
-interface EquipmentAmortizationInput {
-  name: string;                        // Nombre del equipo
-  description?: string;                 // Descripción
-  category: string;                    // "Hardware", "Software", "Vehicles", "Office Equipment"
-  purchase_price: string;              // Precio de compra (Decimal como string, > 0)
-  purchase_date: string;                // Fecha de compra (ISO: YYYY-MM-DD)
-  currency: "USD" | "COP" | "ARS" | "EUR";
-  useful_life_months: number;          // Vida útil en meses (ej: 36 meses)
-  salvage_value: string;               // Valor de salvamento (Decimal como string, >= 0)
-  depreciation_method: "straight_line" | "declining_balance";
-  monthly_depreciation?: string;       // Calculado automáticamente (read-only)
+interface EquipmentAmortizationCreate {
+  // Información Básica
+  name: string;                        // Nombre del equipo (requerido, min 1 carácter)
+  description?: string;                // Descripción (opcional)
+  category: "Hardware" | "Software" | "Vehicles" | "Office Equipment";  // Categoría (requerido)
+  
+  // Información de Compra
+  purchase_price: string;              // Precio de compra (Decimal como string, requerido, > 0)
+  purchase_date: string;                // Fecha de compra (ISO 8601: YYYY-MM-DD, requerido, no futura)
+  currency: "USD" | "COP" | "EUR" | "ARS";  // Moneda de compra (requerido, default: "USD")
+  exchange_rate_at_purchase?: string;   // TRM del día de compra (Decimal como string, opcional, requerido si currency != primary_currency)
+  
+  // Parámetros de Depreciación
+  useful_life_months: number;          // Vida útil en meses (requerido, > 0, típicamente 12-120)
+  salvage_value: string;               // Valor de salvamento (Decimal como string, requerido, >= 0, < purchase_price)
+  depreciation_method: "straight_line" | "declining_balance";  // Método de depreciación (requerido, default: "straight_line")
+  
+  // Estado
+  is_active?: boolean;                 // Si está activo y generando depreciación (default: true)
 }
 ```
+
+**NUEVOS REQUERIMIENTOS (v2.0):**
+- ✅ Campo `exchange_rate_at_purchase` para TRM histórica (crítico para precisión)
+- ✅ Validación: `purchase_date` no puede ser futura
+- ✅ Validación: `salvage_value < purchase_price`
+- ✅ Validación condicional: `exchange_rate_at_purchase` requerido si `currency !== primary_currency`
+- ✅ Campos calculados adicionales: `months_depreciated`, `months_remaining`, `percentage_depreciated`
 
 ### 1.2 Requerimientos Funcionales
 
@@ -83,16 +100,22 @@ class EquipmentAmortization(Base):
     purchase_price = Column(Numeric(precision=19, scale=4), nullable=False)  # ESTÁNDAR NOUGRAM: Numeric
     purchase_date = Column(DateTime(timezone=True), nullable=False)
     currency = Column(String, default="USD", nullable=False)  # USD, COP, ARS, EUR
+    exchange_rate_at_purchase = Column(Numeric(precision=19, scale=4), nullable=True)  # ESTÁNDAR NOUGRAM: TRM histórica (requerido si currency != primary_currency)
     
     # Depreciation parameters
     useful_life_months = Column(Integer, nullable=False)  # Vida útil en meses
     salvage_value = Column(Numeric(precision=19, scale=4), nullable=False, default=0)  # ESTÁNDAR NOUGRAM: Numeric
     depreciation_method = Column(String, nullable=False, default="straight_line")  # "straight_line", "declining_balance"
     
-    # Calculated fields (read-only, calculated on save)
-    monthly_depreciation = Column(Numeric(precision=19, scale=4), nullable=True)  # ESTÁNDAR NOUGRAM: Numeric
-    total_depreciated = Column(Numeric(precision=19, scale=4), nullable=True, default=0)  # ESTÁNDAR NOUGRAM: Numeric
-    remaining_value = Column(Numeric(precision=19, scale=4), nullable=True)  # ESTÁNDAR NOUGRAM: Numeric
+    # Calculated fields (read-only, calculated on save/update)
+    monthly_depreciation = Column(Numeric(precision=19, scale=4), nullable=True)  # ESTÁNDAR NOUGRAM: Numeric - Depreciación mensual
+    total_depreciated = Column(Numeric(precision=19, scale=4), nullable=True, default=0)  # ESTÁNDAR NOUGRAM: Numeric - Depreciación acumulada hasta la fecha
+    remaining_value = Column(Numeric(precision=19, scale=4), nullable=True)  # ESTÁNDAR NOUGRAM: Numeric - Valor en libros actual
+    
+    # Computed fields (calculados dinámicamente, no almacenados)
+    # months_depreciated: Calculado como diferencia entre purchase_date y fecha actual
+    # months_remaining: Calculado como useful_life_months - months_depreciated
+    # percentage_depreciated: Calculado como (total_depreciated / depreciable_base) × 100
     
     # Status
     is_active = Column(Boolean, default=True)  # Si está activo y generando depreciación
@@ -167,21 +190,69 @@ class DepreciationService:
     @staticmethod
     def generate_depreciation_schedule(
         equipment: EquipmentAmortization,
-        months: int = None
+        months: int = None,
+        include_past_months: bool = True
     ) -> List[Dict]:
         """
         Generate depreciation schedule for equipment
-        Returns list of monthly depreciation entries
+        Returns list of monthly depreciation entries with dates
+        
+        Args:
+            equipment: EquipmentAmortization instance
+            months: Number of months to calculate (default: useful_life_months)
+            include_past_months: Include months that have already passed (default: True)
+        
+        Returns:
+            List of dicts with: month, month_date, depreciation, accumulated_depreciation, 
+            book_value, percentage_depreciated
         """
+        from datetime import datetime, timedelta
+        from dateutil.relativedelta import relativedelta
+        
         schedule = []
         current_value = equipment.purchase_price
         total_depreciated = Decimal('0')
+        depreciable_base = equipment.purchase_price - equipment.salvage_value
         
         # Determine number of months to calculate
         if months is None:
             months = equipment.useful_life_months
         
-        for month in range(1, months + 1):
+        # Calculate start date (purchase_date)
+        purchase_date = equipment.purchase_date
+        if isinstance(purchase_date, str):
+            purchase_date = datetime.fromisoformat(purchase_date.replace('Z', '+00:00'))
+        
+        # Calculate current date for filtering past months
+        current_date = datetime.now(purchase_date.tzinfo) if purchase_date.tzinfo else datetime.now()
+        
+        for month_num in range(1, months + 1):
+            # Calculate date for this month
+            month_date = purchase_date + relativedelta(months=month_num-1)
+            
+            # Skip past months if include_past_months is False
+            if not include_past_months and month_date < current_date:
+                # Still update current_value and total_depreciated for accuracy
+                if equipment.depreciation_method == "straight_line":
+                    monthly_dep = DepreciationService.calculate_straight_line(
+                        equipment.purchase_price,
+                        equipment.salvage_value,
+                        equipment.useful_life_months
+                    )
+                else:
+                    # Declining balance calculation
+                    straight_line_rate = Decimal('1') / Decimal(str(equipment.useful_life_months))
+                    depreciation_rate = straight_line_rate * Decimal('2')
+                    monthly_rate = depreciation_rate / Decimal('12')
+                    monthly_dep = current_value * monthly_rate
+                    if current_value - monthly_dep < equipment.salvage_value:
+                        monthly_dep = current_value - equipment.salvage_value
+                
+                total_depreciated += monthly_dep
+                current_value -= monthly_dep
+                continue
+            
+            # Calculate depreciation for this month
             if equipment.depreciation_method == "straight_line":
                 monthly_dep = DepreciationService.calculate_straight_line(
                     equipment.purchase_price,
@@ -202,11 +273,18 @@ class DepreciationService:
             total_depreciated += monthly_dep
             current_value -= monthly_dep
             
+            # Calculate percentage depreciated
+            percentage_depreciated = 0.0
+            if depreciable_base > 0:
+                percentage_depreciated = float((total_depreciated / depreciable_base) * 100)
+            
             schedule.append({
-                "month": month,
+                "month": month_num,
+                "month_date": month_date.isoformat(),  # ISO 8601 format
                 "depreciation": float(monthly_dep),
                 "accumulated_depreciation": float(total_depreciated),
-                "book_value": float(current_value)
+                "book_value": float(current_value),
+                "percentage_depreciated": percentage_depreciated
             })
             
             # Stop if we've reached salvage value
@@ -214,6 +292,79 @@ class DepreciationService:
                 break
         
         return schedule
+    
+    @staticmethod
+    def calculate_depreciation_progress(
+        equipment: EquipmentAmortization
+    ) -> Dict:
+        """
+        Calculate current depreciation progress for equipment
+        
+        Returns:
+            Dict with: months_depreciated, months_remaining, percentage_depreciated,
+            total_depreciated, remaining_value
+        """
+        from datetime import datetime
+        from dateutil.relativedelta import relativedelta
+        
+        purchase_date = equipment.purchase_date
+        if isinstance(purchase_date, str):
+            purchase_date = datetime.fromisoformat(purchase_date.replace('Z', '+00:00'))
+        
+        current_date = datetime.now(purchase_date.tzinfo) if purchase_date.tzinfo else datetime.now()
+        
+        # Calculate months since purchase
+        months_depreciated = 0
+        if current_date > purchase_date:
+            delta = relativedelta(current_date, purchase_date)
+            months_depreciated = delta.years * 12 + delta.months
+        
+        # Cap at useful_life_months
+        months_depreciated = min(months_depreciated, equipment.useful_life_months)
+        months_remaining = max(0, equipment.useful_life_months - months_depreciated)
+        
+        # Calculate total depreciated and remaining value
+        depreciable_base = equipment.purchase_price - equipment.salvage_value
+        
+        if equipment.depreciation_method == "straight_line":
+            monthly_dep = DepreciationService.calculate_straight_line(
+                equipment.purchase_price,
+                equipment.salvage_value,
+                equipment.useful_life_months
+            )
+            total_depreciated = monthly_dep * Decimal(str(months_depreciated))
+        else:
+            # For declining balance, need to calculate month by month
+            # Use schedule generation for accuracy
+            schedule = DepreciationService.generate_depreciation_schedule(
+                equipment,
+                months=months_depreciated,
+                include_past_months=True
+            )
+            if schedule:
+                total_depreciated = Decimal(str(schedule[-1]["accumulated_depreciation"]))
+            else:
+                total_depreciated = Decimal('0')
+        
+        # Cap total_depreciated at depreciable_base
+        total_depreciated = min(total_depreciated, depreciable_base)
+        remaining_value = equipment.purchase_price - total_depreciated
+        
+        # Ensure remaining_value doesn't go below salvage_value
+        remaining_value = max(remaining_value, equipment.salvage_value)
+        
+        # Calculate percentage
+        percentage_depreciated = 0.0
+        if depreciable_base > 0:
+            percentage_depreciated = float((total_depreciated / depreciable_base) * 100)
+        
+        return {
+            "months_depreciated": months_depreciated,
+            "months_remaining": months_remaining,
+            "percentage_depreciated": percentage_depreciated,
+            "total_depreciated": float(total_depreciated),
+            "remaining_value": float(remaining_value)
+        }
 ```
 
 ### 2.3 Integración con BCR
@@ -236,18 +387,45 @@ equipment_result = await db.execute(equipment_query)
 equipment_list = equipment_result.scalars().all()
 
 # Convert equipment monthly depreciation to Money
+# IMPORTANTE: Usar TRM histórica (exchange_rate_at_purchase) si existe
 equipment_costs_money = []
 for equipment in equipment_list:
     equipment_currency = equipment.currency or "USD"
-    normalized = normalize_to_primary_currency(
-        equipment.monthly_depreciation or Decimal('0'),
-        equipment_currency,
-        primary_currency
-    )
-    if isinstance(normalized, Money):
-        equipment_costs_money.append(normalized)
+    monthly_dep = equipment.monthly_depreciation or Decimal('0')
+    
+    # Si el equipo tiene TRM histórica y la moneda es diferente a la principal,
+    # usar la TRM histórica para conversión (sin re-expresión mensual)
+    if equipment.exchange_rate_at_purchase and equipment_currency != primary_currency:
+        # Convertir usando TRM histórica
+        if equipment_currency == "USD" and primary_currency == "COP":
+            # USD a COP usando TRM histórica
+            monthly_dep_primary = monthly_dep * equipment.exchange_rate_at_purchase
+        elif equipment_currency == "COP" and primary_currency == "USD":
+            # COP a USD usando TRM histórica (inversa)
+            monthly_dep_primary = monthly_dep / equipment.exchange_rate_at_purchase
+        else:
+            # Para otras combinaciones, usar normalize_to_primary_currency con TRM histórica
+            # Nota: Esto requiere modificar normalize_to_primary_currency para aceptar TRM histórica
+            monthly_dep_primary = normalize_to_primary_currency(
+                monthly_dep,
+                equipment_currency,
+                primary_currency,
+                historical_exchange_rate=equipment.exchange_rate_at_purchase
+            )
     else:
-        equipment_costs_money.append(Money(normalized, primary_currency))
+        # Sin TRM histórica o misma moneda, usar conversión estándar
+        normalized = normalize_to_primary_currency(
+            monthly_dep,
+            equipment_currency,
+            primary_currency
+        )
+        monthly_dep_primary = normalized
+    
+    # Convertir a Money
+    if isinstance(monthly_dep_primary, Money):
+        equipment_costs_money.append(monthly_dep_primary)
+    else:
+        equipment_costs_money.append(Money(monthly_dep_primary, primary_currency))
 
 # Add equipment costs to fixed costs
 all_costs = fixed_costs_money + salary_amounts + equipment_costs_money
@@ -317,17 +495,20 @@ all_costs = fixed_costs_money + salary_amounts + equipment_costs_money
 
 **Schemas a crear:**
 1. `EquipmentAmortizationBase` - Campos base
-2. `EquipmentAmortizationCreate` - Para crear
+2. `EquipmentAmortizationCreate` - Para crear (con validación de TRM)
 3. `EquipmentAmortizationUpdate` - Para actualizar (todos opcionales)
-4. `EquipmentAmortizationResponse` - Para respuesta
+4. `EquipmentAmortizationResponse` - Para respuesta (incluye campos calculados: months_depreciated, months_remaining, percentage_depreciated)
 5. `EquipmentAmortizationListResponse` - Para lista paginada
-6. `DepreciationScheduleResponse` - Para cronograma de depreciación
+6. `DepreciationScheduleResponse` - Para cronograma de depreciación (con fechas específicas)
+7. `DepreciationScheduleEntry` - Entrada del cronograma (mes, fecha, depreciación, acumulada, valor en libros, porcentaje)
 
 **Características:**
 - Campos monetarios serializados como string (Decimal)
-- Validaciones: purchase_price > 0, salvage_value >= 0, useful_life_months > 0
-- Validación de fecha: purchase_date debe ser fecha válida
+- Validaciones: purchase_price > 0, salvage_value >= 0 y < purchase_price, useful_life_months > 0
+- Validación de fecha: purchase_date debe ser fecha válida y **no futura**
 - Validación de método: solo "straight_line" o "declining_balance"
+- Validación condicional: exchange_rate_at_purchase requerido si currency != primary_currency
+- Validación de categoría: solo "Hardware", "Software", "Vehicles", "Office Equipment"
 
 **Criterios de Aceptación:**
 - [ ] Todos los schemas creados
@@ -342,14 +523,18 @@ all_costs = fixed_costs_money + salary_amounts + equipment_costs_money
 1. Crear clase `DepreciationService`
 2. Implementar `calculate_straight_line`
 3. Implementar `calculate_declining_balance`
-4. Implementar `generate_depreciation_schedule`
-5. Agregar tests unitarios
+4. Implementar `generate_depreciation_schedule` (con fechas y porcentajes)
+5. Implementar `calculate_depreciation_progress` (para barras de vida útil)
+6. Agregar tests unitarios
 
 **Criterios de Aceptación:**
 - [ ] Método línea recta calcula correctamente
 - [ ] Método saldo decreciente calcula correctamente
-- [ ] Cronograma se genera correctamente
+- [ ] Cronograma se genera correctamente con fechas ISO 8601
+- [ ] Cronograma incluye porcentaje depreciado por mes
 - [ ] No se deprecia por debajo del valor de salvamento
+- [ ] `calculate_depreciation_progress` calcula meses transcurridos correctamente
+- [ ] `calculate_depreciation_progress` calcula porcentaje depreciado correctamente
 - [ ] Tests unitarios pasan
 
 ---
@@ -390,19 +575,25 @@ all_costs = fixed_costs_money + salary_amounts + equipment_costs_money
 **Archivo:** `backend/app/api/v1/endpoints/equipment.py`
 
 **Endpoints a crear:**
-1. `GET /api/v1/settings/equipment` - Listar equipos (con paginación)
-2. `POST /api/v1/settings/equipment` - Crear equipo
-3. `GET /api/v1/settings/equipment/{id}` - Obtener equipo por ID
-4. `PUT /api/v1/settings/equipment/{id}` - Actualizar equipo
+1. `GET /api/v1/settings/equipment` - Listar equipos (con paginación, filtros por categoría)
+2. `POST /api/v1/settings/equipment` - Crear equipo (con validación de TRM)
+3. `GET /api/v1/settings/equipment/{id}` - Obtener equipo por ID (incluye campos calculados)
+4. `PUT /api/v1/settings/equipment/{id}` - Actualizar equipo (recalcula depreciación)
 5. `DELETE /api/v1/settings/equipment/{id}` - Eliminar equipo (soft delete)
 6. `POST /api/v1/settings/equipment/{id}/restore` - Restaurar equipo
-7. `GET /api/v1/settings/equipment/{id}/depreciation-schedule` - Cronograma de depreciación
+7. `GET /api/v1/settings/equipment/{id}/depreciation-schedule` - Cronograma de depreciación (con query param `months` opcional)
+8. `GET /api/v1/settings/equipment/{id}/progress` - Progreso actual de depreciación (meses, porcentaje, etc.)
 
 **Características:**
 - Permisos: Requiere `can_modify_costs` para crear/editar/eliminar
 - Validaciones: Todos los campos requeridos validados
+  - `purchase_date` no puede ser futura
+  - `salvage_value < purchase_price`
+  - `exchange_rate_at_purchase` requerido si `currency != primary_currency`
 - Cálculo automático: `monthly_depreciation` se calcula al guardar
+- Cálculo de progreso: `months_depreciated`, `months_remaining`, `percentage_depreciated` se calculan dinámicamente
 - Cache invalidation: Invalidar cache de BCR al crear/editar/eliminar
+- Respuesta incluye campos calculados para UI (barra de vida útil, gráfico de valor)
 
 **Criterios de Aceptación:**
 - [ ] Todos los endpoints creados
@@ -432,10 +623,14 @@ all_costs = fixed_costs_money + salary_amounts + equipment_costs_money
 
 **Pasos:**
 1. Importar `EquipmentAmortization`
-2. Agregar query para obtener equipos activos
-3. Convertir `monthly_depreciation` a Money
+2. Agregar query para obtener equipos activos (solo no eliminados y `is_active=True`)
+3. Convertir `monthly_depreciation` a Money usando TRM histórica si existe
 4. Agregar a `all_costs` antes de calcular BCR
-5. Actualizar desglose en respuesta (agregar `total_equipment_depreciation`)
+5. Categorizar equipos:
+   - Hardware, Vehicles, Office Equipment → Overhead
+   - Software → Tools/SaaS
+6. Actualizar desglose en respuesta (agregar `total_equipment_depreciation`)
+7. Actualizar `BlendedCostRateResponse` para incluir breakdown de equipos
 
 **Criterios de Aceptación:**
 - [ ] Equipos se incluyen en cálculo de BCR
@@ -449,7 +644,9 @@ all_costs = fixed_costs_money + salary_amounts + equipment_costs_money
 
 **Pasos:**
 1. Agregar campo `total_equipment_depreciation` a `BlendedCostRateResponse`
-2. Serializar como Decimal string
+2. Agregar campo `equipment_breakdown` (opcional) con lista de equipos y su depreciación mensual
+3. Serializar como Decimal string
+4. Incluir categorización (Overhead vs Tools)
 
 **Criterios de Aceptación:**
 - [ ] Campo agregado al schema
@@ -467,9 +664,12 @@ all_costs = fixed_costs_money + salary_amounts + equipment_costs_money
 1. `test_calculate_straight_line_basic` - Cálculo básico línea recta
 2. `test_calculate_straight_line_with_salvage` - Con valor de salvamento
 3. `test_calculate_declining_balance_basic` - Cálculo básico saldo decreciente
-4. `test_generate_depreciation_schedule_straight_line` - Cronograma línea recta
-5. `test_generate_depreciation_schedule_declining_balance` - Cronograma saldo decreciente
+4. `test_generate_depreciation_schedule_straight_line` - Cronograma línea recta con fechas
+5. `test_generate_depreciation_schedule_declining_balance` - Cronograma saldo decreciente con fechas
 6. `test_depreciation_below_salvage_value` - No deprecia por debajo de salvamento
+7. `test_calculate_depreciation_progress` - Cálculo de progreso (meses, porcentaje)
+8. `test_schedule_includes_percentage_depreciated` - Cronograma incluye porcentajes
+9. `test_schedule_filters_past_months` - Filtrado de meses pasados funciona
 
 **Criterios de Aceptación:**
 - [ ] Todos los tests pasan
@@ -489,6 +689,11 @@ all_costs = fixed_costs_money + salary_amounts + equipment_costs_money
 7. `test_equipment_tenant_isolation` - Aislamiento multi-tenant
 8. `test_equipment_permissions` - Verificar permisos
 9. `test_get_depreciation_schedule` - Obtener cronograma
+10. `test_get_depreciation_progress` - Obtener progreso actual
+11. `test_create_equipment_with_exchange_rate` - Crear equipo con TRM histórica
+12. `test_create_equipment_requires_exchange_rate` - Validación de TRM cuando currency != primary
+13. `test_purchase_date_not_future` - Validación de fecha no futura
+14. `test_salvage_value_less_than_purchase_price` - Validación de valor de salvamento
 
 **Criterios de Aceptación:**
 - [ ] Todos los tests pasan
@@ -504,6 +709,8 @@ all_costs = fixed_costs_money + salary_amounts + equipment_costs_money
 2. `test_bcr_excludes_inactive_equipment` - No incluye equipos inactivos
 3. `test_bcr_excludes_deleted_equipment` - No incluye equipos eliminados
 4. `test_bcr_normalizes_equipment_currency` - Normaliza moneda de equipos
+5. `test_bcr_uses_historical_exchange_rate` - Usa TRM histórica para conversión (sin re-expresión)
+6. `test_bcr_categorizes_equipment` - Categoriza correctamente (Hardware → Overhead, Software → Tools)
 
 **Criterios de Aceptación:**
 - [ ] Todos los tests pasan
@@ -627,16 +834,21 @@ Total Monthly Costs =
 
 #### Validaciones de Entrada
 - `purchase_price`: Debe ser > 0
-- `salvage_value`: Debe ser >= 0 y < purchase_price
-- `useful_life_months`: Debe ser > 0 (típicamente 12-120 meses)
-- `purchase_date`: Debe ser fecha válida, no futura
+- `salvage_value`: Debe ser >= 0 y **< purchase_price** (crítico para competitividad)
+- `useful_life_months`: Debe ser > 0 (típicamente 12-120 meses, validación de advertencia)
+- `purchase_date`: Debe ser fecha válida, **no futura** (validación estricta)
 - `depreciation_method`: Solo "straight_line" o "declining_balance"
-- `category`: Debe ser una de las categorías válidas
+- `category`: Debe ser una de: "Hardware", "Software", "Vehicles", "Office Equipment"
+- `exchange_rate_at_purchase`: Requerido si `currency != primary_currency`, debe ser > 0
+- `currency`: Debe ser una de: "USD", "COP", "EUR", "ARS"
 
 #### Validaciones de Negocio
 - No se puede eliminar equipo si tiene depreciación acumulada > 0 (opcional, puede ser soft delete)
-- Al actualizar `useful_life_months`, recalcular `monthly_depreciation`
-- Al actualizar `purchase_price` o `salvage_value`, recalcular `monthly_depreciation`
+- Al actualizar `useful_life_months`, recalcular `monthly_depreciation` y `total_depreciated`
+- Al actualizar `purchase_price` o `salvage_value`, recalcular `monthly_depreciation` y `total_depreciated`
+- Al actualizar `depreciation_method`, regenerar cronograma completo
+- Al actualizar `exchange_rate_at_purchase`, recalcular `monthly_depreciation` en moneda principal (solo si cambia)
+- Si `remaining_value <= salvage_value`, marcar como completamente depreciado (opcional: `is_active = False`)
 
 ### 5.4 Cache y Performance
 
@@ -676,7 +888,7 @@ Total Monthly Costs =
 - Tarea 7.1: Documentación API (2 horas)
 - Tarea 7.2: Actualizar guía frontend (2 horas)
 
-**Total Estimado:** 11-14 días de desarrollo
+**Total Estimado:** 13-16 días de desarrollo (incluye manejo de TRM histórica y campos calculados adicionales)
 
 ---
 
@@ -689,9 +901,10 @@ Total Monthly Costs =
 - [ ] Migración aplicada en desarrollo
 
 ### Fase 2: Schemas y Servicio
-- [ ] Schemas Pydantic creados
-- [ ] Validaciones implementadas
-- [ ] `DepreciationService` implementado
+- [ ] Schemas Pydantic creados (incluye `exchange_rate_at_purchase`)
+- [ ] Validaciones implementadas (fecha no futura, TRM condicional, valor de salvamento)
+- [ ] `DepreciationService` implementado (con `calculate_depreciation_progress`)
+- [ ] `generate_depreciation_schedule` incluye fechas y porcentajes
 - [ ] Tests unitarios del servicio pasan
 
 ### Fase 3: Repository
@@ -708,9 +921,11 @@ Total Monthly Costs =
 
 ### Fase 5: Integración BCR
 - [ ] `calculate_blended_cost_rate` modificado
-- [ ] Equipos incluidos en cálculo
-- [ ] `BlendedCostRateResponse` actualizado
+- [ ] Equipos incluidos en cálculo usando TRM histórica
+- [ ] Categorización de equipos (Hardware → Overhead, Software → Tools)
+- [ ] `BlendedCostRateResponse` actualizado (con breakdown de equipos)
 - [ ] Cache se invalida correctamente
+- [ ] Normalización de moneda con TRM histórica funciona (sin re-expresión mensual)
 
 ### Fase 6: Tests
 - [ ] Tests unitarios del servicio pasan
@@ -750,6 +965,13 @@ Total Monthly Costs =
 - Cachear BCR (ya implementado)
 - Filtrar solo equipos activos y no eliminados
 
+### Riesgo 5: Manejo de TRM Histórica
+**Mitigación:**
+- Validar que `exchange_rate_at_purchase` se capture al crear equipo
+- Documentar que la TRM histórica evita re-expresión mensual
+- Si no se proporciona TRM y currency != primary, usar TRM actual como fallback (con warning)
+- Considerar integración con API de tasas de cambio históricas (futuro)
+
 ---
 
 ## 9. DECISIONES DE DISEÑO
@@ -783,6 +1005,22 @@ Total Monthly Costs =
 - Debe reflejarse en el costo por hora
 - Alinea con principios contables
 
+### Decisión 5: TRM Histórica vs Re-expresión Mensual
+**Decisión:** Usar TRM histórica del día de compra (sin re-expresión mensual)
+**Razón:**
+- Los activos no se re-expresan cada mes en el flujo de caja operativo
+- La amortización debe ser fija y predecible
+- Evita variaciones del dólar que afecten el BCR mensualmente
+- Alinea con principios contables (costo histórico)
+
+### Decisión 6: Campos Calculados Dinámicos
+**Decisión:** Calcular `months_depreciated`, `months_remaining`, `percentage_depreciated` dinámicamente (no almacenar)
+**Razón:**
+- Estos valores cambian cada mes automáticamente
+- Evita necesidad de actualización periódica
+- Siempre refleja el estado actual del equipo
+- Facilita visualización de barras de vida útil y gráficos
+
 ---
 
 ## 10. PRÓXIMOS PASOS
@@ -798,6 +1036,50 @@ Total Monthly Costs =
 
 ---
 
-**Última actualización:** 2026-01-23  
+---
+
+## 11. ACTUALIZACIONES v2.0 (2026-01-25)
+
+### Nuevos Requerimientos del UI
+
+**Basado en:** `UI_REQUIREMENTS_EQUIPMENT_AMORTIZATION.md`
+
+**Cambios Principales:**
+
+1. **Campo `exchange_rate_at_purchase` (TRM Histórica):**
+   - Agregado al modelo `EquipmentAmortization`
+   - Validación condicional: requerido si `currency != primary_currency`
+   - Uso en conversión de moneda: usar TRM histórica en lugar de TRM actual
+   - Sin re-expresión mensual: el valor no cambia con fluctuaciones cambiarias
+
+2. **Campos Calculados Adicionales:**
+   - `months_depreciated`: Meses transcurridos desde `purchase_date`
+   - `months_remaining`: Meses restantes de vida útil
+   - `percentage_depreciated`: Porcentaje depreciado (0-100)
+   - Calculados dinámicamente en `DepreciationService.calculate_depreciation_progress()`
+
+3. **Cronograma Mejorado:**
+   - Incluye `month_date` (fecha específica del mes en ISO 8601)
+   - Incluye `percentage_depreciated` por mes
+   - Filtro opcional `include_past_months` para mostrar solo meses futuros
+
+4. **Validaciones Adicionales:**
+   - `purchase_date` no puede ser futura
+   - `salvage_value < purchase_price` (validación estricta)
+   - `exchange_rate_at_purchase` requerido condicionalmente
+
+5. **Integración BCR Mejorada:**
+   - Uso de TRM histórica para conversión de moneda
+   - Categorización explícita (Hardware → Overhead, Software → Tools)
+   - Breakdown de equipos en `BlendedCostRateResponse`
+
+6. **Nuevo Endpoint:**
+   - `GET /api/v1/settings/equipment/{id}/progress` - Progreso actual de depreciación
+
+---
+
+**Última actualización:** 2026-01-25  
+**Versión:** 2.0  
 **Autor:** AI Assistant  
-**Revisión Requerida:** Sí
+**Revisión Requerida:** Sí  
+**Documento UI Base:** `UI_REQUIREMENTS_EQUIPMENT_AMORTIZATION.md`
