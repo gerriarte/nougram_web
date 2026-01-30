@@ -1,10 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useLanguage } from '../context/LanguageContext';
-import { Globe } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
-  const { language, setLanguage, t } = useLanguage();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -13,10 +10,6 @@ export const Header: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const toggleLanguage = () => {
-    setLanguage(language === 'es' ? 'en' : 'es');
-  };
 
   return (
     <header
@@ -27,19 +20,12 @@ export const Header: React.FC = () => {
         <div className="flex items-center">
           <img src="/logo-nougram.webp" alt="Nougram" className="h-8 sm:h-10 w-auto object-contain" />
         </div>
-        <nav className="flex items-center gap-4">
-          <button
-            onClick={toggleLanguage}
-            className="flex items-center gap-2 text-sm font-medium text-slate-300 hover:text-white transition-colors bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-full border border-white/10"
-          >
-            <Globe className="w-4 h-4" />
-            <span className="uppercase">{language}</span>
-          </button>
+        <nav>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
           >
-            {t.header.cta}
+            Acceso Beta
           </button>
         </nav>
       </div>

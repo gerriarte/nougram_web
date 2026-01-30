@@ -1,9 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useLanguage } from '../context/LanguageContext';
+import { COPY } from '../constants';
 import { BrainCircuit, Target, Users } from 'lucide-react';
 
 export const Solution: React.FC = () => {
-  const { t } = useLanguage();
   const icons = [Target, BrainCircuit, Users];
   const [isVisible, setIsVisible] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
@@ -34,19 +33,19 @@ export const Solution: React.FC = () => {
             }`}
         >
           <span className="inline-block px-4 py-1.5 bg-brand-50 text-brand-600 font-semibold text-xs lg:text-sm rounded-full mb-4">
-            {t.solution.tag}
+            La Solución
           </span>
           <h2 className="text-2xl md:text-5xl font-bold text-slate-900 mb-4 lg:mb-6">
-            {t.solution.headline}
+            Nougram: Entiende el valor de tus servicios
           </h2>
           <p className="text-base lg:text-xl text-slate-600 leading-relaxed">
-            {t.solution.subheadline}{' '}
+            {COPY.solution.subheadline}{' '}
             <span className="block mt-4 lg:mt-6 md:inline md:mt-0">
-              {t.solution.targetText}{' '}
+              La herramienta definitiva para{' '}
               <span className="relative inline-block px-2 py-1 mx-1 whitespace-normal md:whitespace-nowrap">
                 <span className="absolute inset-0 bg-brand-100/60 -skew-y-1 rounded-lg border border-brand-200/50 shadow-sm" aria-hidden="true"></span>
                 <span className="relative font-bold text-brand-700">
-                  {t.solution.targetRoles}
+                  consultores, diseñadores, fotógrafos y líderes de marketing
                 </span>
               </span>.
             </span>
@@ -54,7 +53,7 @@ export const Solution: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-10">
-          {t.solution.benefits.map((benefit, index) => {
+          {COPY.solution.benefits.map((benefit, index) => {
             const Icon = icons[index];
             return (
               <div
@@ -78,6 +77,6 @@ export const Solution: React.FC = () => {
           })}
         </div>
       </div>
-    </section>
+    </section >
   );
 };

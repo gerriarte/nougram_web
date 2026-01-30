@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { useLanguage } from '../context/LanguageContext';
+import { COPY } from '../constants';
 import { ChevronDown } from 'lucide-react';
 
 export const FAQ: React.FC = () => {
-  const { t } = useLanguage();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const toggle = (index: number) => {
@@ -15,17 +14,17 @@ export const FAQ: React.FC = () => {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-8 lg:mb-16">
           <h2 className="text-2xl md:text-4xl font-bold text-slate-900 mb-3 lg:mb-4">
-            {t.faq.title}
+            {COPY.faq.title}
           </h2>
           <p className="text-base lg:text-lg text-slate-600">
-            {t.faq.subtitle}
+            Resuelve tus dudas y únete sin riesgo.
           </p>
         </div>
 
         <div className="space-y-3 lg:space-y-4">
-          {t.faq.questions.map((item, index) => (
-            <div
-              key={index}
+          {COPY.faq.questions.map((item, index) => (
+            <div 
+              key={index} 
               className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden"
             >
               <button
@@ -35,15 +34,17 @@ export const FAQ: React.FC = () => {
                 <span className="text-base lg:text-lg font-semibold text-slate-900 pr-4">
                   {item.question}
                 </span>
-                <ChevronDown
-                  className={`h-5 w-5 flex-shrink-0 text-brand-500 transition-transform duration-300 ${openIndex === index ? 'rotate-180' : ''
-                    }`}
+                <ChevronDown 
+                  className={`h-5 w-5 flex-shrink-0 text-brand-500 transition-transform duration-300 ${
+                    openIndex === index ? 'rotate-180' : ''
+                  }`} 
                 />
               </button>
-
-              <div
-                className={`grid transition-all duration-300 ease-in-out ${openIndex === index ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-                  }`}
+              
+              <div 
+                className={`grid transition-all duration-300 ease-in-out ${
+                  openIndex === index ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+                }`}
               >
                 <div className="overflow-hidden">
                   <p className="px-4 pb-4 lg:px-6 lg:pb-6 text-sm lg:text-base text-slate-600 leading-relaxed">
@@ -57,10 +58,10 @@ export const FAQ: React.FC = () => {
 
         <div className="mt-8 lg:mt-12 text-center bg-brand-50 rounded-2xl p-4 lg:p-6 border border-brand-100">
           <p className="font-semibold text-brand-800 text-sm lg:text-base">
-            {t.faq.guaranteeTitle}
+            Garantía Cero Riesgo
           </p>
           <p className="text-brand-600 mt-2 text-sm lg:text-base">
-            {t.faq.guaranteeText}
+            El acceso a la Beta es completamente gratuito. Lo único que te pedimos es la valentía de unirte a los líderes que están definiendo el futuro.
           </p>
         </div>
       </div>

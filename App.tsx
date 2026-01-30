@@ -2,6 +2,7 @@ import React from 'react';
 import { Countdown } from './components/Countdown';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
+import { HeroHighlight } from './components/HeroHighlight';
 import { TargetAudience } from './components/TargetAudience';
 import { Problem } from './components/Problem';
 import { Solution } from './components/Solution';
@@ -16,6 +17,7 @@ function App() {
       <Header />
       <main>
         <Hero />
+        <HeroHighlight />
         <TargetAudience />
         <Problem />
         <Solution />

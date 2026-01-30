@@ -1,12 +1,10 @@
 import React from 'react';
-import { useLanguage } from '../context/LanguageContext';
+import { COPY } from '../constants';
 import { Button } from './Button';
 import { Check, Star } from 'lucide-react';
 import { Reveal } from './Reveal';
 
 export const Pricing = () => {
-    const { t } = useLanguage();
-
     return (
         <section className="py-24 bg-dark-900 relative overflow-hidden">
             {/* Background Elements */}
@@ -16,18 +14,18 @@ export const Pricing = () => {
                 <div className="text-center mb-16">
                     <Reveal width="100%">
                         <h2 className="text-3xl md:text-5xl font-bold text-white mb-6">
-                            {t.pricing.title}
+                            {COPY.pricing.title}
                         </h2>
                     </Reveal>
                     <Reveal width="100%" delay={0.1}>
                         <p className="text-lg text-slate-400 max-w-2xl mx-auto">
-                            {t.pricing.subtitle}
+                            {COPY.pricing.subtitle}
                         </p>
                     </Reveal>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {t.pricing.plans.map((plan, index) => (
+                    {COPY.pricing.plans.map((plan, index) => (
                         <Reveal key={index} delay={index * 0.1}>
                             <div
                                 className={`flex flex-col p-6 rounded-3xl border ${plan.popular
@@ -39,7 +37,7 @@ export const Pricing = () => {
                                     <div className="absolute -top-3 inset-x-0 flex justify-center">
                                         <span className="bg-brand-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide flex items-center gap-1 shadow-lg shadow-brand-500/40 animate-pulse">
                                             <Star className="w-3 h-3 fill-current" />
-                                            {t.pricing.labels.popular}
+                                            Más Popular
                                         </span>
                                     </div>
                                 )}
@@ -64,7 +62,7 @@ export const Pricing = () => {
                                 <div className="flex-1 space-y-6 mb-8">
                                     {/* Limits */}
                                     <div className="space-y-2">
-                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{t.pricing.labels.limits}</p>
+                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Límites</p>
                                         <ul className="space-y-2">
                                             {plan.limits.map((limit, i) => (
                                                 <li key={i} className="text-sm text-slate-300 flex items-start gap-2">
@@ -77,7 +75,7 @@ export const Pricing = () => {
 
                                     {/* Features */}
                                     <div className="space-y-2">
-                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{t.pricing.labels.includes}</p>
+                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Incluye</p>
                                         <ul className="space-y-2">
                                             {plan.features.map((feature, i) => (
                                                 <li key={i} className="text-sm text-slate-300 flex items-start gap-2">

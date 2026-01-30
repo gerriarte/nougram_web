@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, MessageSquare, Check, Hand } from 'lucide-react';
 import { Button } from './Button';
-import { useLanguage } from '../context/LanguageContext';
 
 interface FeedbackModalProps {
     isOpen: boolean;
@@ -14,7 +13,6 @@ interface FeedbackModalProps {
 type ModalState = 'initial' | 'accepted' | 'declined';
 
 export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, onDecision, isSubmitting = false }) => {
-    const { t } = useLanguage();
     const [state, setState] = useState<ModalState>('initial');
 
     const handleResponse = async (accepted: boolean) => {
@@ -22,9 +20,6 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, o
         await onDecision(accepted);
 
         // 2. Update local UI state
-        // setState(accepted ? 'accepted' : 'declined'); // Actually, parent handles submit, so we should only update state on success? Logic here is simplified, keeping original behavior but using text.
-
-        // Wait, original logic called onDecision then updated state.
         setState(accepted ? 'accepted' : 'declined');
 
         // 3. Create a timeout to close the modal after showing the message
@@ -78,14 +73,14 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, o
                                     <MessageSquare className="w-6 h-6 text-brand-400" />
                                 </div>
                                 <h3 className="text-2xl font-bold text-white mb-4">
-                                    {t.feedbackModal.initial.title}
+                                    ¡Gracias por unirte!
                                 </h3>
                                 <p className="text-slate-300 mb-8 leading-relaxed">
-                                    {t.feedbackModal.initial.text}
+                                    Este registro tiene como objetivo que puedas tener <strong>acceso preferencial</strong> al Cotizador Nougram a cambio de tu <strong>feedback sincero</strong>.
                                 </p>
 
                                 <p className="text-sm text-slate-400 font-medium mb-6">
-                                    {t.feedbackModal.initial.question}
+                                    ¿Estarías dispuesto a darnos tu opinión?
                                 </p>
 
                                 <div className="grid grid-cols-2 gap-4">
@@ -93,7 +88,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, o
                                         className={`px-6 py-3 rounded-xl border border-white/10 text-slate-300 hover:bg-white/5 transition-all font-medium text-sm ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         disabled={isSubmitting}
                                     >
-                                        {t.feedbackModal.initial.decline}
+                                        No, gracias
                                     </button>
                                     <Button
                                         onClick={() => handleResponse(true)}
@@ -101,7 +96,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, o
                                         className={`w-full justify-center ${isSubmitting ? 'opacity-80 cursor-wait' : ''}`}
                                         disabled={isSubmitting}
                                     >
-                                        {isSubmitting ? t.hero.form.loading : t.feedbackModal.initial.accept}
+                                        {isSubmitting ? 'Enviando...' : 'Sí, cuenta conmigo'}
                                     </Button>
                                 </div>
                             </motion.div>
@@ -117,10 +112,10 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, o
                                     <Check className="w-8 h-8 text-green-400" />
                                 </div>
                                 <h3 className="text-2xl font-bold text-white mb-2">
-                                    {t.feedbackModal.accepted.title}
+                                    ¡Gracias!
                                 </h3>
                                 <p className="text-slate-300">
-                                    {t.feedbackModal.accepted.text}
+                                    Te contactaremos pronto para conocer tu opinión.
                                 </p>
                             </motion.div>
                         )}
@@ -135,7 +130,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, o
                                     <Hand className="w-8 h-8 text-slate-400" />
                                 </div>
                                 <p className="text-lg text-slate-300 font-medium">
-                                    {t.feedbackModal.declined.text}
+                                    Ya estás agregado a nuestra lista de espera.
                                 </p>
                             </motion.div>
                         )}
