@@ -21,6 +21,9 @@ export default function AppLayout({
     if (pathname?.startsWith('/dashboard')) return 'Panel';
     if (pathname?.startsWith('/projects')) return 'Proyectos';
     if (pathname?.startsWith('/settings')) return 'Configuración';
+    if (pathname?.startsWith('/admin/support')) return 'Soporte';
+    if (pathname?.startsWith('/admin/maintenance')) return 'Mantenimiento';
+    if (pathname?.startsWith('/admin')) return 'Administración';
     return 'Nougram';
   };
 

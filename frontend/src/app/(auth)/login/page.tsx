@@ -83,7 +83,7 @@ function LoginContent() {
 
   return (
     <div className="min-h-screen bg-grey-50 flex items-center justify-center p-4">
-      <div 
+      <div
         className="w-full max-w-md bg-white rounded-xl p-8"
         style={{ boxShadow: 'var(--elevation-8)' }}
       >
@@ -104,7 +104,7 @@ function LoginContent() {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          
+
           <div>
             <Label htmlFor="email" className="text-grey-700">Correo Electrónico</Label>
             <Input
@@ -162,6 +162,14 @@ function LoginContent() {
             </Link>
           </div>
         </form>
+
+
+
+        <div className="mt-8 pt-6 border-t border-grey-100 text-center">
+          <p className="text-sm font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-indigo-600">
+            Cotiza a nivel local y global con Nougram
+          </p>
+        </div>
 
       </div>
     </div>

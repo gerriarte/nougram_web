@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { LayoutDashboard, FolderKanban, Settings, DollarSign, Users, Package, Receipt, ChevronDown, ChevronRight, UserCog, CreditCard, LifeBuoy, BarChart3, TrendingUp } from 'lucide-react'
+import { LayoutDashboard, FolderKanban, Settings, DollarSign, Users, Package, Receipt, ChevronDown, ChevronRight, UserCog, CreditCard, LifeBuoy, BarChart3, TrendingUp, Wrench } from 'lucide-react'
 import { useGetCurrentUser } from '@/lib/queries'
 import { canViewSensitiveData, canManageSubscription, canInviteUsers, isSupportRole, canViewFinancialProjections } from '@/lib/permissions'
 
@@ -22,6 +22,8 @@ export function AppSidebar({ currentOrgId }: AppSidebarProps) {
     { id: 'credits', label: 'Créditos', icon: CreditCard, path: '/credits' },
     { id: 'general-costs', label: 'Resumen de Costos', icon: BarChart3, path: '/general-costs' },
     { id: 'annual-projection', label: 'Proyección Anual', icon: TrendingUp, path: '/projections/annual', requiresPermission: () => canViewFinancialProjections(currentUser) },
+    { id: 'support', label: 'Soporte', icon: LifeBuoy, path: '/admin/support', requiresPermission: () => isSupportRole(currentUser) },
+    { id: 'maintenance', label: 'Mantenimiento', icon: Wrench, path: '/admin/maintenance', requiresPermission: () => currentUser?.role === 'super_admin' },
   ];
   
   const navItems = allNavItems.filter(item => {
