@@ -2,21 +2,13 @@
 Pydantic schemas for Team Members
 ESTÁNDAR NOUGRAM: Campos monetarios usan Decimal serializado como string
 """
-from typing import Optional, Literal, Dict, Any
+from typing import Optional, Literal
 from datetime import datetime
 from decimal import Decimal
 from pydantic import BaseModel, Field, field_serializer
 from app.core.pydantic_config import DECIMAL_CONFIG
 
 CurrencyCode = Literal["USD", "COP", "ARS", "EUR"]
-
-
-class NonBillableHoursBreakdown(BaseModel):
-    """Detailed breakdown of non-billable hours for efficiency audits"""
-    meetings: Optional[float] = Field(None, description="Hours per week spent in meetings", ge=0)
-    administration: Optional[float] = Field(None, description="Hours per week spent on administration", ge=0)
-    training: Optional[float] = Field(None, description="Hours per week spent on training/learning", ge=0)
-    other: Optional[float] = Field(None, description="Other non-billable hours per week", ge=0)
 
 
 class TeamMemberBase(BaseModel):
@@ -28,7 +20,6 @@ class TeamMemberBase(BaseModel):
     salary_monthly_brute: Decimal = Field(..., description="Monthly gross salary", gt=0)
     currency: CurrencyCode = Field("USD", description="Currency code (USD, COP, ARS, EUR)")
     billable_hours_per_week: int = Field(32, description="Billable hours per week", ge=0, le=80)
-    non_billable_hours_breakdown: Optional[Dict[str, Any]] = Field(None, description="Detailed breakdown of non-billable hours: {'meetings': 5, 'administration': 3, 'training': 2, 'other': 2}")
     is_active: Optional[bool] = Field(True, description="Whether the team member is active")
     user_id: Optional[int] = Field(None, description="Associated user ID")
     
@@ -55,7 +46,6 @@ class TeamMemberUpdate(BaseModel):
     salary_monthly_brute: Optional[Decimal] = Field(None, gt=0)
     currency: Optional[CurrencyCode] = None
     billable_hours_per_week: Optional[int] = Field(None, ge=0, le=40)
-    non_billable_hours_breakdown: Optional[Dict[str, Any]] = Field(None, description="Detailed breakdown of non-billable hours: {'meetings': 5, 'administration': 3, 'training': 2, 'other': 2}")
     is_active: Optional[bool] = None
     user_id: Optional[int] = None
     

@@ -8,7 +8,6 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 
 from app.core.database import Base
-from app.models.organization import FlexibleJSON
 
 
 class TeamMember(Base):
@@ -26,7 +25,6 @@ class TeamMember(Base):
     currency = Column(String, default="USD", nullable=False)  # USD, COP, ARS, EUR
     billable_hours_per_week = Column(Integer, default=32)
     non_billable_hours_percentage = Column(Numeric(precision=10, scale=4), default=0.0)  # ESTÁNDAR NOUGRAM: Numeric - Percentage of time for admin/compliance (e.g., 0.20 = 20%)
-    non_billable_hours_breakdown = Column(FlexibleJSON, nullable=True)  # Detailed breakdown of non-billable hours for efficiency audits: {"meetings": 5, "administration": 3, "training": 2, "other": 2}
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

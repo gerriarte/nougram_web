@@ -158,43 +158,6 @@ export function useParseDocument() {
   });
 }
 
-// Types for natural language command processing
-export interface NaturalLanguageCommandRequest {
-  command: string;
-  context?: Record<string, any>;
-}
-
-export interface NaturalLanguageCommandResponse {
-  action_type: string;
-  action_data: Record<string, any>;
-  confidence: number;
-  requires_confirmation: boolean;
-  reasoning?: string;
-}
-
-/**
- * Hook to process natural language commands
- */
-export function useProcessCommand() {
-  return useMutation({
-    mutationFn: async (request: NaturalLanguageCommandRequest): Promise<NaturalLanguageCommandResponse> => {
-      const response = await apiRequest<NaturalLanguageCommandResponse>('/ai/process-command', {
-        method: 'POST',
-        body: JSON.stringify(request),
-      });
-
-      if (response.error) {
-        throw new Error(response.error);
-      }
-
-      return response.data!;
-    },
-    onError: (error) => {
-      console.error('Error processing command:', error);
-    },
-  });
-}
-
 
 
 
