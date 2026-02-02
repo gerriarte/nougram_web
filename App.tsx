@@ -26,7 +26,7 @@ function App() {
         <FAQ />
       </main>
       <FooterCTA />
-      <Countdown targetDate={new Date('2026-02-01T00:00:00')} />
+      <Countdown targetDate={new Date('2026-03-15T00:00:00')} />
     </div>
   );
 }
