@@ -4,9 +4,11 @@ Unit tests for AI service
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch, Mock
 import json
+from decimal import Decimal
 
 from app.services.ai_service import AIService
 from app.core.cache import get_cache
+from app.schemas.ai import ExecutiveSummaryRequest, ExecutiveSummaryService
 
 
 @pytest.mark.unit
@@ -298,3 +300,117 @@ class TestAIService:
             
             assert result["success"] is False
             assert "error" in result
+    
+    @pytest.mark.asyncio
+    async def test_generate_executive_summary_success(self, mocker):
+        """Test generación exitosa de resumen ejecutivo"""
+        with patch('app.services.ai_service.settings') as mock_settings:
+            mock_settings.OPENAI_API_KEY = "test-key-123"
+            
+            # Mock de OpenAI client
+            mock_client = mocker.MagicMock()
+            mock_response = mocker.MagicMock()
+            mock_response.choices = [mocker.MagicMock()]
+            mock_response.choices[0].message.content = "Este es un resumen ejecutivo de prueba."
+            mock_response.usage.prompt_tokens = 100
+            mock_response.usage.completion_tokens = 50
+            mock_response.usage.total_tokens = 150
+            
+            mock_client.chat.completions.create = mocker.AsyncMock(return_value=mock_response)
+            
+            # Crear servicio con mock
+            service = AIService()
+            service.client = mock_client
+            
+            # Crear request
+            request = ExecutiveSummaryRequest(
+                project_name="Proyecto Test",
+                client_name="Cliente Test",
+                client_sector="Tecnología",
+                services=[
+                    ExecutiveSummaryService(
+                        service_id=1,
+                        service_name="Desarrollo Frontend",
+                        estimated_hours=80,
+                        client_price=Decimal("12000")
+                    )
+                ],
+                total_price=Decimal("12000"),
+                currency="USD",
+                language="es"
+            )
+            
+            # Llamar al servicio
+            result = await service.generate_executive_summary(request)
+            
+            # Verificar resultado
+            assert result["success"] is True
+            assert "summary" in result
+            assert result["summary"] == "Este es un resumen ejecutivo de prueba."
+            assert "usage" in result
+            assert result["usage"]["total_tokens"] == 150
+    
+    @pytest.mark.asyncio
+    async def test_generate_executive_summary_ai_not_available(self):
+        """Test que retorna error cuando IA no está disponible"""
+        with patch('app.services.ai_service.settings') as mock_settings:
+            mock_settings.OPENAI_API_KEY = None
+            service = AIService()
+            
+            request = ExecutiveSummaryRequest(
+                project_name="Proyecto Test",
+                client_name="Cliente Test",
+                services=[
+                    ExecutiveSummaryService(
+                        service_id=1,
+                        service_name="Servicio Test",
+                        client_price=Decimal("1000")
+                    )
+                ],
+                total_price=Decimal("1000"),
+                currency="USD"
+            )
+            
+            result = await service.generate_executive_summary(request)
+            
+            assert result["success"] is False
+            assert "error" in result
+    
+    def test_build_executive_summary_prompt(self):
+        """Test construcción de prompt para resumen ejecutivo"""
+        with patch('app.services.ai_service.settings') as mock_settings:
+            mock_settings.OPENAI_API_KEY = "test-key-123"
+            service = AIService()
+            
+            request = ExecutiveSummaryRequest(
+                project_name="Proyecto Test",
+                client_name="Cliente Test",
+                client_sector="Tecnología",
+                services=[
+                    ExecutiveSummaryService(
+                        service_id=1,
+                        service_name="Desarrollo Frontend",
+                        estimated_hours=80,
+                        client_price=Decimal("12000")
+                    ),
+                    ExecutiveSummaryService(
+                        service_id=2,
+                        service_name="Diseño UI/UX",
+                        client_price=Decimal("8000")
+                    )
+                ],
+                total_price=Decimal("20000"),
+                currency="USD",
+                language="es"
+            )
+            
+            prompt = service._build_executive_summary_prompt(request)
+            
+            # Verificar que el prompt contiene información relevante
+            assert "Proyecto Test" in prompt
+            assert "Cliente Test" in prompt
+            assert "Tecnología" in prompt
+            assert "Desarrollo Frontend" in prompt
+            assert "Diseño UI/UX" in prompt
+            assert "USD" in prompt
+            assert "20,000" in prompt or "20000" in prompt

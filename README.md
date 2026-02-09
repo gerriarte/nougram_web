@@ -8,6 +8,8 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.3-3178C6?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python)](https://www.python.org/)
 
+**Documentación con fecha en el nombre:** [2026-01-04-README.md](2026-01-04-README.md) · **Índice de docs:** [docs/2026-02-07-README.md](docs/2026-02-07-README.md)
+
 ## 📋 Tabla de Contenidos
 
 - [Descripción](#-descripción)
@@ -379,30 +381,30 @@ Cotizador/
 - Sprint 9: Onboarding y Self-Service
 - Sprint 10: Analytics y Reporting Avanzado
 
-Ver [PLAN_MULTI_TENANT.md](./docs/PLAN_MULTI_TENANT.md) para el plan completo.
+Ver [Plan Multi-Tenant](docs/deprecated/old-architecture/2026-02-07-PLAN_MULTI_TENANT.md) para el plan completo.
 
 ## 📚 Documentación
 
 ### Documentos Principales
 
-- **[PRD](./docs/PRD.md)** - Product Requirements Document completo
-- **[Arquitectura](./docs/architecture.md)** - Arquitectura del sistema
-- **[Plan Multi-Tenant](./docs/PLAN_MULTI_TENANT.md)** - Roadmap de migración SaaS
-- **[Estado del Proyecto](./docs/PROGRESO.md)** - Módulos completados y progreso
-- **[Tareas Pendientes](./docs/PENDIENTES.md)** - Próximos pasos
+- **[PRD](docs/2025-12-13-PRD.md)** - Product Requirements Document completo
+- **[Índice de documentación](docs/2026-02-07-README.md)** - Índice principal de docs
+- **[Plan Multi-Tenant](docs/deprecated/old-architecture/2026-02-07-PLAN_MULTI_TENANT.md)** - Roadmap de migración SaaS
+- **[Estado del Proyecto](docs/deprecated/old-sprints/2026-02-07-PROGRESO.md)** - Módulos completados y progreso
+- **[Tareas Pendientes](docs/deprecated/old-sprints/2026-02-07-PENDIENTES.md)** - Próximos pasos
 
 ### Documentación Técnica
 
-- **[Análisis Técnico](./docs/development/ANALISIS_CODIGO.md)** - Análisis profundo del código
-- **[Reglas de Desarrollo](./docs/development/rules.md)** - Estándares y convenciones
-- **[Testing de Aislamiento](./docs/TESTING_TENANT_ISOLATION.md)** - Validación multi-tenant
-- **[Administración Multi-Tenant](./docs/MULTI_TENANT_ADMIN.md)** - Guía de administración
+- **[Análisis Técnico](docs/deprecated/old-analysis/2026-02-07-ANALISIS_CODIGO.md)** - Análisis profundo del código
+- **[Reglas de Desarrollo](docs/development/2025-12-13-rules.md)** - Estándares y convenciones
+- **[Testing de Aislamiento](docs/testing/2026-02-07-TESTING_TENANT_ISOLATION.md)** - Validación multi-tenant
+- **[Administración Multi-Tenant](docs/development/concepts/2026-02-07-MULTI_TENANT_ADMIN.md)** - Guía de administración
 
 ### Sprints
 
-- **[Sprint 2](./docs/sprints/SPRINT2_PROGRESO.md)** - Estabilización
-- **[Sprint 3](./docs/sprints/SPRINT3_PROGRESO.md)** - Fundación Multi-Tenant
-- **[Sprint 4](./docs/sprints/SPRINT4_PROGRESO.md)** - Tenant Context
+- **[Sprint 2](docs/deprecated/old-sprints/2026-02-07-SPRINT2_PROGRESO.md)** - Estabilización
+- **[Sprint 3](docs/deprecated/old-sprints/2026-02-07-SPRINT3_PROGRESO.md)** - Fundación Multi-Tenant
+- **[Sprint 4](docs/deprecated/old-sprints/2026-02-07-SPRINT4_PROGRESO.md)** - Tenant Context
 
 ## 🗺️ Roadmap
 
@@ -438,7 +440,7 @@ Las contribuciones son bienvenidas. Por favor:
 - **Commits**: Usa mensajes descriptivos en español o inglés
 - **Tests**: Asegúrate de que todos los tests pasen antes de hacer PR
 
-Ver [Reglas de Desarrollo](./docs/development/rules.md) para más detalles.
+Ver [Reglas de Desarrollo](docs/development/2025-12-13-rules.md) para más detalles.
 
 ## 🧪 Testing
 
@@ -494,6 +496,8 @@ alembic revision --autogenerate -m "fix migration"
 # Frontend: puerto 5000 o 3000
 # PostgreSQL: puerto 5435
 ```
+
+Ver también: [Troubleshooting](docs/2025-12-30-TROUBLESHOOTING.md) y [Solución error conexión](2025-12-30-SOLUCION_ERROR_CONEXION.md), [Solución puerto 8000](2025-12-30-SOLUCION_PUERTO_8000.md).
 
 ## 📝 Licencia
 

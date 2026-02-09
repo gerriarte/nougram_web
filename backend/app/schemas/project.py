@@ -178,3 +178,19 @@ class QuoteCreateNewVersion(BaseModel):
         return str(value) if value is not None else None
     
     model_config = DECIMAL_CONFIG
+
+
+class ClientSearchResult(BaseModel):
+    """Resultado de búsqueda de cliente"""
+    name: str = Field(..., description="Nombre del cliente")
+    email: Optional[str] = Field(None, description="Email del cliente")
+    project_count: int = Field(..., description="Número de proyectos con este cliente", ge=0)
+    last_project_date: Optional[datetime] = Field(None, description="Fecha del último proyecto")
+    
+    model_config = {"from_attributes": False}  # No es un modelo ORM
+
+
+class ClientSearchResponse(BaseModel):
+    """Respuesta de búsqueda de clientes"""
+    clients: List[ClientSearchResult] = Field(..., description="Lista de clientes encontrados")
+    total: int = Field(..., description="Total de clientes encontrados", ge=0)

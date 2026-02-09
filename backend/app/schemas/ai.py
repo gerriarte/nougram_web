@@ -1,12 +1,14 @@
 """
 Schemas for AI-powered configuration assistance
 """
-from typing import List, Dict, Optional
-from pydantic import BaseModel, Field
+from typing import List, Dict, Optional, Any
+from decimal import Decimal
+from pydantic import BaseModel, Field, field_serializer
 
 from app.schemas.team import TeamMemberCreate
 from app.schemas.service import ServiceCreate
 from app.schemas.cost import CostFixedCreate
+from app.core.pydantic_config import DECIMAL_CONFIG
 
 
 class OnboardingSuggestionRequest(BaseModel):
@@ -54,6 +56,44 @@ class NaturalLanguageCommandResponse(BaseModel):
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score for the parsed command")
     requires_confirmation: bool = Field(default=True, description="Whether user confirmation is required")
     reasoning: Optional[str] = Field(None, description="AI reasoning for the parsed command")
+
+
+class ExecutiveSummaryService(BaseModel):
+    """Servicio para resumen ejecutivo"""
+    service_id: int = Field(..., description="ID del servicio", gt=0)
+    service_name: str = Field(..., description="Nombre del servicio", min_length=1)
+    estimated_hours: Optional[float] = Field(None, description="Horas estimadas", ge=0)
+    client_price: Decimal = Field(..., description="Precio al cliente", gt=0)
+    
+    @field_serializer('client_price')
+    def serialize_decimal(self, value: Decimal) -> str:
+        return str(value)
+    
+    model_config = DECIMAL_CONFIG
+
+
+class ExecutiveSummaryRequest(BaseModel):
+    """Request para generar resumen ejecutivo"""
+    project_name: str = Field(..., description="Nombre del proyecto", min_length=1)
+    client_name: str = Field(..., description="Nombre del cliente", min_length=1)
+    client_sector: Optional[str] = Field(None, description="Sector del cliente (ej: 'Tecnología', 'Retail')")
+    services: List[ExecutiveSummaryService] = Field(..., description="Lista de servicios incluidos", min_items=1)
+    total_price: Decimal = Field(..., description="Precio total de la cotización", gt=0)
+    currency: str = Field("USD", description="Moneda", min_length=3, max_length=3)
+    language: str = Field("es", description="Idioma del resumen: 'es' o 'en'", pattern="^(es|en)$")
+    
+    @field_serializer('total_price')
+    def serialize_decimal(self, value: Decimal) -> str:
+        return str(value)
+    
+    model_config = DECIMAL_CONFIG
+
+
+class ExecutiveSummaryResponse(BaseModel):
+    """Response con resumen ejecutivo generado"""
+    summary: str = Field(..., description="Resumen ejecutivo generado")
+    provider: str = Field("openai", description="Proveedor de IA utilizado")
+    usage: Optional[Dict[str, Any]] = Field(None, description="Información de uso de la API (tokens, costo estimado)")
 
 
 
