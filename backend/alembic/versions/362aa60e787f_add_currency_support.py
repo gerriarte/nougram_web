@@ -5,9 +5,9 @@ Revises: 001_initial
 Create Date: 2025-10-31 15:23:17.214376
 
 """
+from alembic import op
 from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
 
 
@@ -25,7 +25,7 @@ def upgrade() -> None:
     bind = op.get_bind()
     inspector = inspect(bind)
     tables = inspector.get_table_names()
-    
+
     if 'agency_settings' not in tables:
         op.create_table('agency_settings',
         sa.Column('id', sa.Integer(), nullable=False),
