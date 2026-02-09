@@ -24,7 +24,7 @@ def upgrade() -> None:
     op.add_column('projects', sa.Column('deleted_by_id', sa.Integer(), nullable=True))
     op.create_index(op.f('ix_projects_deleted_at'), 'projects', ['deleted_at'], unique=False)
     op.create_foreign_key('fk_projects_deleted_by', 'projects', 'users', ['deleted_by_id'], ['id'])
-    
+
     # Add soft delete fields to services table
     op.add_column('services', sa.Column('deleted_at', sa.DateTime(timezone=True), nullable=True))
     op.add_column('services', sa.Column('deleted_by_id', sa.Integer(), nullable=True))

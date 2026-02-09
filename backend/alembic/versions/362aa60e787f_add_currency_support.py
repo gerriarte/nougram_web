@@ -5,9 +5,9 @@ Revises: 001_initial
 Create Date: 2025-10-31 15:23:17.214376
 
 """
-from alembic import op
 from collections.abc import Sequence
 
+from alembic import op
 import sqlalchemy as sa
 
 
@@ -36,12 +36,12 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('id')
         )
         op.create_index(op.f('ix_agency_settings_id'), 'agency_settings', ['id'], unique=False)
-    
+
     # Add currency columns if they don't exist
     costs_columns = [col['name'] for col in inspector.get_columns('costs_fixed')]
     if 'currency' not in costs_columns:
         op.add_column('costs_fixed', sa.Column('currency', sa.String(), nullable=False, server_default='USD'))
-    
+
     team_columns = [col['name'] for col in inspector.get_columns('team_members')]
     if 'currency' not in team_columns:
         op.add_column('team_members', sa.Column('currency', sa.String(), nullable=False, server_default='USD'))
