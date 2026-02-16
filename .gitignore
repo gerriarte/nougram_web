@@ -43,6 +43,14 @@ yarn-error.log*
 *.sqlite
 *.sqlite3
 
+# Certbot / SSL
+certbot/
+certbot-work/
+certbot-logs/
+
+# Backups
+backups/
+
 # Logs
 *.log
 logs/
