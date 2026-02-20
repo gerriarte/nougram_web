@@ -8,8 +8,11 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json* ./
 
-# Install dependencies
-RUN npm ci
+# Install dependencies for build stage (include dev deps explicitly)
+RUN npm ci --include=dev
+
+# Fail fast if Next CLI is not available
+RUN npx --yes next --version
 
 # Copy source
 COPY . .
