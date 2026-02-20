@@ -50,6 +50,19 @@ export interface OnboardingSuggestionResponse {
   reasoning?: string;
 }
 
+export interface NaturalLanguageCommandRequest {
+  command: string;
+  context?: Record<string, unknown>;
+}
+
+export interface NaturalLanguageCommandResponse {
+  action_type: string;
+  action_data: Record<string, unknown>;
+  confidence: number;
+  requires_confirmation: boolean;
+  reasoning?: string;
+}
+
 /**
  * Hook to get AI-powered onboarding suggestions
  */
@@ -91,6 +104,29 @@ export function useAIStatus() {
       return response.data!;
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
+
+/**
+ * Hook to process natural language commands into structured actions.
+ */
+export function useProcessCommand() {
+  return useMutation({
+    mutationFn: async (request: NaturalLanguageCommandRequest): Promise<NaturalLanguageCommandResponse> => {
+      const response = await apiRequest<NaturalLanguageCommandResponse>('/ai/process-command', {
+        method: 'POST',
+        body: JSON.stringify(request),
+      });
+
+      if (response.error) {
+        throw new Error(response.error);
+      }
+
+      return response.data!;
+    },
+    onError: (error) => {
+      console.error('Error processing natural language command:', error);
+    },
   });
 }
 

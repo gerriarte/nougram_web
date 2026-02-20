@@ -96,7 +96,6 @@ export function QuoteItemsList({ items, onChange }: QuoteItemsListProps) {
                                 <div className="space-y-2">
                                     <Label>{item.pricing_type === "recurring" ? "Precio Mensual" : "Precio Fijo"}</Label>
                                     <Input
-                                        isCurrency
                                         value={item.pricing_type === "recurring" ? item.recurring_price : item.fixed_price}
                                         onChange={(e) => updateItem(index, item.pricing_type === "recurring" ? "recurring_price" : "fixed_price", e.target.value)}
                                     />

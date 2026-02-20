@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -83,7 +83,7 @@ function OrganizationRow({
   org: Organization
   router: ReturnType<typeof useRouter>
   openSubscriptionDialog: (org: Organization) => void
-  getStatusIcon: (status: string) => JSX.Element
+  getStatusIcon: (status: string) => ReactNode
 }) {
   const { data: orgStats } = useGetOrganizationStats(org.id)
   

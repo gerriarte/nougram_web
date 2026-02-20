@@ -3,6 +3,7 @@
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import type { MonthlySummary } from '@/lib/types/annual-projection';
+import { formatCurrency } from '@/lib/currency';
 
 interface CapacityAlertsProps {
   summary: MonthlySummary[];

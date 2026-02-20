@@ -314,6 +314,15 @@ export function getToken(): string | null {
 }
 
 /**
+ * Clear auth token (used on logout flows)
+ */
+export function clearToken(): void {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('auth_token');
+  }
+}
+
+/**
  * API Error class for better error handling
  */
 export class ApiError extends Error {

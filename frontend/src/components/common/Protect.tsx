@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { UserRole } from '@/types/user';
 
 interface ProtectProps {
     permission?: 'canViewFinancials' | 'canManageUsers' | 'canInviteUsers';
@@ -12,7 +11,12 @@ interface ProtectProps {
 }
 
 export function Protect({ permission, confidential, children, fallback, blur }: ProtectProps) {
-    const { permissions } = useAuth();
+    const { user } = useAuth();
+    const permissions = {
+        canViewFinancials: !!user,
+        canManageUsers: user?.role === 'owner',
+        canInviteUsers: user?.role === 'owner',
+    };
 
     let hasAccess = true;
 

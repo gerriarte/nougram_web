@@ -82,7 +82,6 @@ export function FixedCostForm({ initialData, onSubmit, onCancel }: FixedCostForm
                         <Input
                             id="amount"
                             required
-                            isCurrency
                             value={formData.amount_monthly}
                             onChange={e => handleChange("amount_monthly", e.target.value)}
                         />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { DocumentParser, DocumentParseResponse } from "@/components/ai/DocumentParser";
+import { DocumentParser } from "@/components/ai/DocumentParser";
 import { AIChatbot } from "@/components/ai/AIChatbot";
 import { useCreateTeamMember, useCreateFixedCost, useCreateService } from "@/lib/queries";
 import { useToast } from "@/hooks/use-toast";
@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Info, FileText, MessageSquare } from "lucide-react";
-import type { NaturalLanguageCommandResponse } from "@/lib/queries/ai";
+import type { DocumentParseResponse, NaturalLanguageCommandResponse } from "@/lib/queries/ai";
 
 export default function ImportSettingsPage() {
   const router = useRouter();
