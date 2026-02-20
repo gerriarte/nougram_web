@@ -7,8 +7,10 @@
  * - Importar monedas desde `@dinero.js/currencies`
  * - Tipo `Dinero<number>` en lugar de `Dinero.Dinero`
  */
-import { dinero, add, multiply, type Dinero } from 'dinero.js';
+import { dinero, type Dinero } from 'dinero.js';
 import { USD, COP, EUR, ARS } from '@dinero.js/currencies';
+
+export type { Dinero };
 
 // Configuración de monedas con objetos de Dinero.js v2
 export const CURRENCY_CONFIG: Record<string, {
@@ -105,11 +107,13 @@ export function toAPI(dinero: Dinero): number {
  */
 export function sumMoney(amounts: Dinero[]): Dinero | null {
   if (amounts.length === 0) return null;
-  
-  return amounts.reduce((total, amount) => {
-    // Dinero.js v2: usar función add() importada directamente
-    return add(total, amount);
-  });
+
+  // Sum amounts in minor units to avoid floating-point drift.
+  const [first, ...rest] = amounts;
+  const firstJson = first.toJSON();
+  const totalAmount = rest.reduce((acc, amount) => acc + amount.toJSON().amount, firstJson.amount);
+
+  return dinero({ amount: totalAmount, currency: firstJson.currency });
 }
 
 /**

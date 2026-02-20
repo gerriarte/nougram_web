@@ -147,7 +147,7 @@ export default function GeneralCostsPage() {
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                             ))}
                                         </Pie>
-                                        <Tooltip formatter={(value: number) => formatCurrency(value, stats.currency)} />
+                                        <Tooltip formatter={(value?: number) => formatCurrency(value ?? 0, stats.currency)} />
                                         <Legend />
                                     </PieChart>
                                 </ResponsiveContainer>

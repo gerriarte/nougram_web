@@ -73,7 +73,6 @@ export function TeamMemberForm({ initialData, onSubmit, onCancel }: TeamMemberFo
                             <Input
                                 id="salary"
                                 required
-                                isCurrency
                                 value={formData.salary_monthly_brute}
                                 onChange={e => handleChange("salary_monthly_brute", e.target.value)}
                                 className="flex-1"

@@ -8,11 +8,12 @@ export function cn(...inputs: ClassValue[]) {
 /**
  * Format currency
  */
-export function formatCurrency(amount: number, currency: string = 'USD'): string {
+export function formatCurrency(amount: number | string, currency: string = 'USD'): string {
+  const numericAmount = typeof amount === 'string' ? Number(amount) : amount;
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency,
-  }).format(amount);
+  }).format(Number.isFinite(numericAmount) ? numericAmount : 0);
 }
 
 /**

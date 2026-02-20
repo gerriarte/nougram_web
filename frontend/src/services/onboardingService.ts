@@ -27,6 +27,24 @@ export const OVERHEAD_TEMPLATES: FixedCostTemplate[] = [
 
 export const ALL_TEMPLATES = [...HARDWARE_TEMPLATES, ...SOFTWARE_TEMPLATES, ...OVERHEAD_TEMPLATES];
 
+export const BENCHMARKS = {
+    freelance: {
+        description: 'Operación individual con estructura ligera y foco en rentabilidad por hora.',
+        avgMargin: 45,
+        avgMonthlyIncome: 8000,
+    },
+    company: {
+        description: 'Equipo interno estable con costos fijos y mayor capacidad de entrega.',
+        avgMargin: 35,
+        avgTeamSize: 8,
+    },
+    agency: {
+        description: 'Servicios por proyecto con equipo mixto y procesos escalables.',
+        avgMargin: 40,
+        avgTeamSize: 15,
+    },
+} as const;
+
 // Types
 export interface CurrencyRate {
     from: string;
