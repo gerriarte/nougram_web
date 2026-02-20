@@ -272,4 +272,59 @@ export async function downloadDOCX(
     logger.error(`Error downloading DOCX from ${endpoint}:`, error);
     throw error;
   }
-}export default apiRequest;
+}
+
+/**
+ * Convenience wrapper functions for common HTTP methods
+ */
+export async function apiGet<T>(endpoint: string, retry: boolean = true): Promise<ApiResponse<T>> {
+  return apiRequest<T>(endpoint, { method: 'GET' }, retry);
+}
+
+export async function apiPost<T>(endpoint: string, data?: any, retry: boolean = true): Promise<ApiResponse<T>> {
+  return apiRequest<T>(endpoint, {
+    method: 'POST',
+    body: data ? JSON.stringify(data) : undefined,
+  }, retry);
+}
+
+export async function apiPut<T>(endpoint: string, data?: any, retry: boolean = true): Promise<ApiResponse<T>> {
+  return apiRequest<T>(endpoint, {
+    method: 'PUT',
+    body: data ? JSON.stringify(data) : undefined,
+  }, retry);
+}
+
+export async function apiPatch<T>(endpoint: string, data?: any, retry: boolean = true): Promise<ApiResponse<T>> {
+  return apiRequest<T>(endpoint, {
+    method: 'PATCH',
+    body: data ? JSON.stringify(data) : undefined,
+  }, retry);
+}
+
+export async function apiDelete<T>(endpoint: string, retry: boolean = true): Promise<ApiResponse<T>> {
+  return apiRequest<T>(endpoint, { method: 'DELETE' }, retry);
+}
+
+/**
+ * Get auth token (exported for convenience)
+ */
+export function getToken(): string | null {
+  return getAuthToken();
+}
+
+/**
+ * API Error class for better error handling
+ */
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status?: number,
+    public data?: any
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+export default apiRequest;
