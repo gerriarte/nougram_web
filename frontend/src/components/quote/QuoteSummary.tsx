@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { QuoteCalculationResponse } from "@/types/quote";
 import { formatCurrency } from "@/lib/utils";
-import { Alert } from "@/components/ui/Alert";
+import { Alert } from "@/components/ui/alert";
 
 interface QuoteSummaryProps {
     calculation: QuoteCalculationResponse;
