@@ -8,6 +8,10 @@ from contextlib import asynccontextmanager
 import logging
 
 from app.core.config import settings
+
+# Docs only in non-production
+_docs_url = "/docs" if settings.ENVIRONMENT.lower() != "production" else None
+_redoc_url = "/redoc" if settings.ENVIRONMENT.lower() != "production" else None
 from app.core.database import engine, Base
 from app.api.v1.router import api_router
 from app.core.rate_limiting import limiter, rate_limit_exceeded_handler
@@ -23,9 +27,10 @@ async def lifespan(app: FastAPI):
     """
     Lifespan context manager for startup and shutdown events
     """
-    # Startup: Create database tables
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Startup: Create database tables only in non-production (use Alembic in production)
+    if settings.ENVIRONMENT.lower() != "production":
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
     yield
     # Shutdown: Clean up if needed
 
@@ -72,8 +77,8 @@ app = FastAPI(
     """,
     version="1.0.0",
     lifespan=lifespan,
-    docs_url="/docs",
-    redoc_url="/redoc"
+    docs_url=_docs_url,
+    redoc_url=_redoc_url
 )
 
 # Configure CORS
@@ -148,6 +153,26 @@ async def root():
 async def health_check():
     """Health check endpoint for monitoring"""
     return {"status": "healthy"}
+
+
+@app.get("/health/ready")
+async def health_ready():
+    """
+    Readiness probe: verifica conexión a BD.
+    Uso: UptimeRobot, Kubernetes liveness, etc.
+    """
+    from sqlalchemy import text
+    try:
+        async with engine.connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        return {"status": "ready", "database": "ok"}
+    except Exception as e:
+        logging.error("Readiness check failed", exc_info=True)
+        detail = str(e) if settings.ENVIRONMENT.lower() != "production" else "database unavailable"
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={"status": "not_ready", "database": "error", "detail": detail},
+        )
 
 
 if __name__ == "__main__":

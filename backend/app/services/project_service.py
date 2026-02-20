@@ -1,7 +1,7 @@
 """
 Project Service - Business logic for project and quote management
 """
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, insert
 from sqlalchemy.orm import selectinload
@@ -713,5 +713,190 @@ class ProjectService:
             created_at=final_quote.created_at,
             updated_at=final_quote.updated_at,
             items=items_response
+        )
+    
+    async def list_projects(
+        self,
+        status_filter: Optional[str] = None,
+        include_deleted: bool = False,
+        page: int = 1,
+        page_size: int = 20
+    ) -> tuple[List[Project], int]:
+        """
+        List projects with pagination
+        
+        Args:
+            status_filter: Optional status filter
+            include_deleted: Whether to include soft-deleted projects
+            page: Page number (1-indexed)
+            page_size: Items per page
+            
+        Returns:
+            Tuple of (list of projects, total count)
+        """
+        offset = (page - 1) * page_size
+        
+        projects = await self.project_repo.get_all_paginated(
+            include_deleted=include_deleted,
+            status_filter=status_filter,
+            limit=page_size,
+            offset=offset
+        )
+        
+        # Get total count
+        where_clause = None
+        if status_filter:
+            where_clause = Project.status == status_filter
+        
+        total = await self.project_repo.count(where=where_clause, include_deleted=include_deleted)
+        
+        return projects, total
+    
+    async def get_project_by_id(
+        self,
+        project_id: int,
+        include_deleted: bool = False
+    ) -> Optional[Project]:
+        """
+        Get project by ID
+        
+        Args:
+            project_id: Project ID
+            include_deleted: Whether to include soft-deleted projects
+            
+        Returns:
+            Project instance or None
+        """
+        return await self.project_repo.get_by_id_with_quotes(project_id, include_deleted=include_deleted)
+    
+    async def update_project(
+        self,
+        project_id: int,
+        project_data: 'ProjectUpdate',
+        current_user: User
+    ) -> Project:
+        """
+        Update an existing project
+        
+        Args:
+            project_id: Project ID
+            project_data: Update data
+            current_user: Current user performing the update
+            
+        Returns:
+            Updated project instance
+            
+        Raises:
+            HTTPException: If project not found
+        """
+        project = await self.project_repo.get_by_id_with_quotes(project_id, include_deleted=False)
+        if not project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Project with id {project_id} not found"
+            )
+        
+        update_data = project_data.model_dump(exclude_unset=True)
+        
+        # Handle tax_ids separately
+        tax_ids = update_data.pop("tax_ids", None)
+        
+        # Update project fields
+        for field, value in update_data.items():
+            setattr(project, field, value)
+        
+        # Update taxes if provided
+        if tax_ids is not None:
+            # Remove existing tax associations
+            from app.models.project import project_taxes
+            from sqlalchemy import delete as sql_delete
+            await self.db.execute(
+                sql_delete(project_taxes).where(project_taxes.c.project_id == project_id)
+            )
+            await self.db.flush()
+            
+            # Associate new taxes
+            if tax_ids:
+                await self._associate_taxes(project_id, tax_ids)
+        
+        await self.db.commit()
+        await self.db.refresh(project)
+        
+        # Reload with relationships
+        return await self.project_repo.get_by_id_with_quotes(project_id, include_deleted=False)
+    
+    async def delete_project(
+        self,
+        project_id: int,
+        current_user: User
+    ) -> None:
+        """
+        Soft delete a project
+        
+        Args:
+            project_id: Project ID
+            current_user: Current user performing the deletion
+            
+        Raises:
+            HTTPException: If project not found
+        """
+        project = await self.project_repo.get_by_id(project_id, include_deleted=False)
+        if not project:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Project with id {project_id} not found"
+            )
+        
+        await self.project_repo.delete(project, soft=True, deleted_by_id=current_user.id)
+    
+    async def restore_project(
+        self,
+        project_id: int
+    ) -> Project:
+        """
+        Restore a soft-deleted project
+        
+        Args:
+            project_id: Project ID
+            
+        Returns:
+            Restored project instance
+            
+        Raises:
+            HTTPException: If project not found or not deleted
+        """
+        project = await self.project_repo.get_by_id_with_quotes(project_id, include_deleted=True)
+        if not project or project.deleted_at is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Project with id {project_id} not found or not deleted"
+            )
+        
+        # Restore by clearing deleted_at
+        project.deleted_at = None
+        project.deleted_by_id = None
+        await self.db.commit()
+        await self.db.refresh(project)
+        
+        return await self.project_repo.get_by_id_with_quotes(project_id, include_deleted=False)
+    
+    async def search_clients(
+        self,
+        search_query: str,
+        limit: int = 10
+    ) -> List[Dict[str, Any]]:
+        """
+        Buscar clientes existentes por nombre o email
+        
+        Args:
+            search_query: Query de búsqueda
+            limit: Límite de resultados
+        
+        Returns:
+            Lista de diccionarios con información de clientes
+        """
+        return await self.project_repo.search_clients(
+            search_query=search_query,
+            limit=limit
         )
 

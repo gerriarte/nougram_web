@@ -2,6 +2,7 @@
 AI-powered financial analysis endpoints
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
+from starlette.requests import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import Optional
@@ -22,7 +23,9 @@ from app.schemas.ai import (
     DocumentParseRequest,
     DocumentParseResponse,
     NaturalLanguageCommandRequest,
-    NaturalLanguageCommandResponse
+    NaturalLanguageCommandResponse,
+    ExecutiveSummaryRequest,
+    ExecutiveSummaryResponse
 )
 from pydantic import BaseModel
 
@@ -567,6 +570,132 @@ async def process_command(
         raise
     except Exception as e:
         logger.error(f"Unexpected error in process_command: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=translate_error(ErrorCode.UNKNOWN_ERROR)
+        )
+
+
+@router.post("/generate-executive-summary", response_model=ExecutiveSummaryResponse, summary="Generate executive summary for quote")
+@limiter.limit(AI_RATE_LIMIT, key_func=get_tenant_identifier)  # Rate limit: 10 requests per minute per tenant
+async def generate_executive_summary(
+    request: Request,
+    payload: ExecutiveSummaryRequest,
+    tenant: TenantContext = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Generate an executive summary for a quote using AI
+    
+    This endpoint uses OpenAI to generate a professional executive summary
+    for a quote, suitable for presenting to executives and decision-makers.
+    
+    **Permissions:**
+    - All authenticated users can generate summaries for their organization
+    
+    **Rate Limiting:**
+    - Limited to 10 requests per minute per tenant (to control API costs)
+    
+    **Request Body:**
+    - `project_name`: Name of the project
+    - `client_name`: Name of the client
+    - `client_sector`: Optional client sector (e.g., 'Technology', 'Retail')
+    - `services`: List of services included in the quote (min 1)
+      - `service_id`: Service ID
+      - `service_name`: Service name
+      - `estimated_hours`: Optional estimated hours
+      - `client_price`: Price for this service
+    - `total_price`: Total quote price
+    - `currency`: Currency code (default: "USD")
+    - `language`: Language for summary: "es" or "en" (default: "es")
+    
+    **Returns:**
+    - `200 OK`: Executive summary generated successfully
+    - `400 Bad Request`: Invalid request data
+    - `503 Service Unavailable`: AI service not configured
+    - `500 Internal Server Error`: Error generating summary
+    
+    **Response includes:**
+    - `summary`: Generated executive summary (150-250 words)
+    - `provider`: AI provider used ("openai")
+    - `usage`: API usage information (tokens, estimated cost)
+    
+    **Example Request:**
+    ```json
+    {
+      "project_name": "Rediseño de E-commerce",
+      "client_name": "TechStore Inc",
+      "client_sector": "Retail",
+      "services": [
+        {
+          "service_id": 1,
+          "service_name": "Diseño UI/UX",
+          "estimated_hours": 80,
+          "client_price": "12000"
+        },
+        {
+          "service_id": 2,
+          "service_name": "Desarrollo Frontend",
+          "estimated_hours": 120,
+          "client_price": "18000"
+        }
+      ],
+      "total_price": "30000",
+      "currency": "USD",
+      "language": "es"
+    }
+    ```
+    """
+    if not ai_service.is_available():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=translate_error(ErrorCode.AI_SERVICE_UNAVAILABLE)
+        )
+    
+    try:
+        # Validar request
+        if not payload.services or len(payload.services) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="At least one service is required"
+            )
+        
+        # Llamar al servicio de IA
+        result = await ai_service.generate_executive_summary(payload)
+        
+        if not result.get('success'):
+            error_msg = result.get('error', 'Unknown error')
+            logger.error(f"AI service error: {error_msg}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=translate_error(ErrorCode.AI_PROCESSING_ERROR, detail=error_msg)
+            )
+        
+        # Construir respuesta
+        response = ExecutiveSummaryResponse(
+            summary=result.get('summary', ''),
+            provider="openai",
+            usage=result.get('usage')
+        )
+        
+        logger.info(
+            f"Executive summary generated for project={payload.project_name}",
+            extra={
+                "organization_id": tenant.organization_id,
+                "user_id": current_user.id,
+                "project_name": payload.project_name,
+                "services_count": len(payload.services),
+                "language": payload.language,
+                "usage": result.get('usage', {})
+            }
+        )
+        
+        return response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error in generate_executive_summary: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=translate_error(ErrorCode.UNKNOWN_ERROR)

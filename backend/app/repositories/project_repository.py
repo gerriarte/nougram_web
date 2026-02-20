@@ -1,9 +1,9 @@
 """
 Repository for Project, Quote, and QuoteItem models
 """
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, desc
+from sqlalchemy import select, and_, desc, func, or_
 from sqlalchemy.orm import selectinload
 
 from app.repositories.base import BaseRepository
@@ -187,5 +187,156 @@ class ProjectRepository(BaseRepository[Project]):
         
         result = await self.db.execute(query)
         return result.scalars().all()
+    
+    async def get_max_quote_version(self, project_id: int) -> int:
+        """
+        Get maximum quote version for a project (with tenant scoping via project)
+        
+        Args:
+            project_id: Project ID
+            
+        Returns:
+            Maximum version number (0 if no quotes exist)
+        """
+        from sqlalchemy import func
+        
+        query = select(func.max(Quote.version)).where(Quote.project_id == project_id)
+        
+        # Apply tenant filter via project
+        if self.tenant_id is not None:
+            query = query.join(Project).where(Project.organization_id == self.tenant_id)
+        
+        result = await self.db.execute(query)
+        max_version = result.scalar() or 0
+        return max_version
+    
+    async def get_quote_with_relationships(self, quote_id: int, project_id: int) -> Optional[Quote]:
+        """
+        Get quote by ID with all relationships loaded for email generation (with tenant scoping)
+        
+        Args:
+            quote_id: Quote ID
+            project_id: Project ID
+            
+        Returns:
+            Quote instance with all relationships loaded or None
+        """
+        query = select(Quote).options(
+            selectinload(Quote.items).selectinload(QuoteItem.service),
+            selectinload(Quote.expenses),
+            selectinload(Quote.project).selectinload(Project.taxes)
+        ).where(
+            Quote.id == quote_id,
+            Quote.project_id == project_id
+        )
+        
+        # Apply tenant filter via project
+        if self.tenant_id is not None:
+            query = query.join(Project).where(Project.organization_id == self.tenant_id)
+        
+        result = await self.db.execute(query)
+        return result.scalar_one_or_none()
+    
+    async def associate_taxes(self, project_id: int, tax_ids: List[int]):
+        """
+        Associate taxes with a project
+        
+        Args:
+            project_id: Project ID
+            tax_ids: List of tax IDs to associate
+            
+        Raises:
+            ValueError: If project doesn't belong to tenant
+        """
+        from app.models.project import project_taxes
+        from sqlalchemy import insert
+        
+        # Verify project belongs to tenant
+        project = await self.get_by_id(project_id)
+        if not project:
+            raise ValueError(f"Project {project_id} not found or doesn't belong to tenant")
+        
+        # Insert associations
+        if tax_ids:
+            await self.db.execute(
+                insert(project_taxes).values([
+                    {"project_id": project_id, "tax_id": tax_id}
+                    for tax_id in tax_ids
+                ])
+            )
+            await self.db.flush()
+    
+    async def search_clients(
+        self,
+        search_query: str,
+        limit: int = 10
+    ) -> List[Dict[str, Any]]:
+        """
+        Buscar clientes existentes por nombre o email
+        
+        Args:
+            search_query: Query de búsqueda (nombre o email)
+            limit: Límite de resultados (default: 10, max: 50)
+        
+        Returns:
+            Lista de diccionarios con información de clientes:
+            [
+                {
+                    "name": "Cliente ABC",
+                    "email": "contacto@cliente.com",
+                    "project_count": 3,
+                    "last_project_date": datetime(...)
+                },
+                ...
+            ]
+        """
+        # Validar límite
+        limit = min(limit, 50)
+        
+        # Construir query de búsqueda (case-insensitive)
+        search_pattern = f"%{search_query.lower()}%"
+        
+        # Query para buscar por nombre o email
+        # Agrupar por nombre y email para evitar duplicados
+        query = (
+            select(
+                Project.client_name,
+                Project.client_email,
+                func.count(Project.id).label('project_count'),
+                func.max(Project.created_at).label('last_project_date')
+            )
+            .where(
+                # Aplicar filtro de tenant
+                Project.organization_id == self.tenant_id,
+                # Excluir proyectos eliminados
+                Project.deleted_at.is_(None),
+                # Búsqueda case-insensitive en nombre o email
+                or_(
+                    func.lower(Project.client_name).like(search_pattern),
+                    and_(
+                        Project.client_email.isnot(None),
+                        func.lower(Project.client_email).like(search_pattern)
+                    )
+                )
+            )
+            .group_by(Project.client_name, Project.client_email)
+            .order_by(desc('last_project_date'))
+            .limit(limit)
+        )
+        
+        result = await self.db.execute(query)
+        rows = result.all()
+        
+        # Convertir a lista de diccionarios
+        clients = []
+        for row in rows:
+            clients.append({
+                "name": row.client_name,
+                "email": row.client_email,
+                "project_count": row.project_count,
+                "last_project_date": row.last_project_date
+            })
+        
+        return clients
 
 

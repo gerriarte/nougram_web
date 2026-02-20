@@ -39,6 +39,7 @@ from app.schemas.project import (
     QuoteItemCreate,
     QuoteUpdate,
     QuoteCreateNewVersion,
+    ClientSearchResponse,
 )
 from app.schemas.quote import QuoteEmailRequest, QuoteEmailResponse, QuoteExpenseCreate, QuoteExpenseResponse
 
@@ -132,6 +133,53 @@ async def list_projects(
         page=page,
         page_size=page_size,
         total_pages=total_pages
+    )
+
+
+@router.get("/clients/search", response_model=ClientSearchResponse, summary="Search existing clients")
+async def search_clients(
+    q: str = Query(..., min_length=2, description="Search query (client name or email)"),
+    limit: int = Query(10, ge=1, le=50, description="Maximum number of results"),
+    tenant: TenantContext = Depends(get_tenant_context),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Search existing clients by name or email
+    
+    This endpoint provides autocomplete functionality for client selection
+    in the quote creation flow. It searches across all projects in the organization
+    and returns unique clients matching the search query.
+    
+    **Permissions:**
+    - All authenticated users can search clients for their organization
+    
+    **Query Parameters:**
+    - `q`: Search query (minimum 2 characters) - searches in client name and email
+    - `limit`: Maximum number of results (1-50, default: 10)
+    
+    **Returns:**
+    - `200 OK`: List of matching clients
+    - `400 Bad Request`: Search query too short
+    - `500 Internal Server Error`: Error searching clients
+    
+    **Response includes:**
+    - `clients`: List of matching clients with:
+      - `name`: Client name
+      - `email`: Client email (if available)
+      - `project_count`: Number of projects with this client
+      - `last_project_date`: Date of the most recent project
+    - `total`: Total number of clients found
+    
+    **Example:**
+    ```
+    GET /api/v1/projects/clients/search?q=Tech&limit=5
+    ```
+    """
+    controller = ProjectController(db, tenant, current_user)
+    return await controller.search_clients(
+        search_query=q,
+        limit=limit
     )
 
 

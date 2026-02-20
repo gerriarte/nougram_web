@@ -43,7 +43,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_costs_fixed_id'), 'costs_fixed', ['id'], unique=False)
-    
+
     # Team Members table
     op.create_table(
         'team_members',
@@ -60,7 +60,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_team_members_id'), 'team_members', ['id'], unique=False)
-    
+
     # Services table
     op.create_table(
         'services',
@@ -75,7 +75,7 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_services_id'), 'services', ['id'], unique=False)
     op.create_index(op.f('ix_services_name'), 'services', ['name'], unique=False)
-    
+
     # Projects table
     op.create_table(
         'projects',
@@ -90,7 +90,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_projects_id'), 'projects', ['id'], unique=False)
-    
+
     # Quotes table
     op.create_table(
         'quotes',
@@ -107,7 +107,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_quotes_id'), 'quotes', ['id'], unique=False)
-    
+
     # Quote Items table
     op.create_table(
         'quote_items',

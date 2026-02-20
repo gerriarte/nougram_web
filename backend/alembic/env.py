@@ -8,7 +8,7 @@ from alembic import context
 from sqlalchemy import create_engine, pool
 from sqlalchemy.engine import Connection
 
-import app.models  # noqa: F401 - This ensures all models are imported
+import app.models  # noqa: F401
 from app.core.config import settings
 from app.core.database import Base
 

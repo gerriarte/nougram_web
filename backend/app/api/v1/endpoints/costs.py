@@ -385,36 +385,6 @@ async def permanently_delete_fixed_cost(
     return None
 
 
-@router.get("/calculations/agency-cost-hour-test", response_model=BlendedCostRateResponse)
-async def test_calculate_agency_cost_hour(
-    tenant: TenantContext = Depends(get_tenant_context),
-    current_user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db)
-) -> BlendedCostRateResponse:
-    """
-    TEST ENDPOINT: Returns hardcoded values to isolate BCR display issue.
-    ESTÁNDAR NOUGRAM: Decimal serializado como string
-    """
-    from decimal import Decimal
-    from datetime import datetime
-    
-    # Hardcoded test values
-    test_response = BlendedCostRateResponse(
-        blended_cost_rate=Decimal("50.00"),
-        total_monthly_costs=Decimal("10000.00"),
-        total_fixed_overhead=Decimal("3000.00"),
-        total_tools_costs=Decimal("2000.00"),
-        total_salaries=Decimal("5000.00"),
-        total_monthly_hours=200.0,
-        active_team_members=3,
-        primary_currency="USD",
-        currencies_used=[],
-        exchange_rates_date=datetime.now().isoformat()
-    )
-    
-    return test_response
-
-
 @router.get("/calculations/agency-cost-hour", response_model=BlendedCostRateResponse)
 async def calculate_agency_cost_hour(
     tenant: TenantContext = Depends(get_tenant_context),
@@ -451,32 +421,6 @@ async def calculate_agency_cost_hour(
             tenant_id=tenant.organization_id,
             social_charges_config=social_config
         )
-        
-        # #region agent log
-        import json
-        import os
-        try:
-            log_data = {
-                "location": "costs.py:423",
-                "message": "Blended rate calculated",
-                "data": {
-                    "blended_rate": str(blended_rate),
-                    "blended_rate_type": str(type(blended_rate).__name__),
-                    "primary_currency": primary_currency,
-                    "tenant_id": tenant.organization_id
-                },
-                "timestamp": __import__("time").time() * 1000,
-                "sessionId": "debug-session",
-                "runId": "run1",
-                "hypothesisId": "C"
-            }
-            log_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), ".cursor", "debug.log")
-            os.makedirs(os.path.dirname(log_path), exist_ok=True)
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps(log_data) + "\n")
-        except:
-            pass
-        # #endregion
         
         # Get additional details for response (normalized to primary currency)
         # Exclude soft-deleted costs from calculations
@@ -521,26 +465,6 @@ async def calculate_agency_cost_hour(
         team_repo = RepositoryFactory.create_team_repository(db, tenant.organization_id)
         team_members = await team_repo.get_all_active()
         
-        # #region agent log
-        try:
-            log_data = {
-                "location": "costs.py:467",
-                "message": "Team members retrieved",
-                "data": {
-                    "team_members_count": len(team_members),
-                    "tenant_id": tenant.organization_id
-                },
-                "timestamp": __import__("time").time() * 1000,
-                "sessionId": "debug-session",
-                "runId": "run1",
-                "hypothesisId": "C"
-            }
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps(log_data) + "\n")
-        except:
-            pass
-        # #endregion
-        
         # Get organization settings for social charges (Sprint 18)
         social_charges_multiplier = Decimal('1.0')
         if org_settings and org_settings.get('social_charges_config'):
@@ -563,26 +487,6 @@ async def calculate_agency_cost_hour(
         for currency in ["USD", "COP", "ARS", "EUR"]:
             currency_counts[currency] = {"count": 0, "total_amount": 0.0, "exchange_rate_to_primary": 0.0}
         
-        # #region agent log
-        try:
-            log_data = {
-                "location": "costs.py:490",
-                "message": "Before salary calculation loop",
-                "data": {
-                    "team_members_count": len(team_members),
-                    "social_charges_multiplier": str(social_charges_multiplier)
-                },
-                "timestamp": __import__("time").time() * 1000,
-                "sessionId": "debug-session",
-                "runId": "run1",
-                "hypothesisId": "C"
-            }
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps(log_data) + "\n")
-        except:
-            pass
-        # #endregion
-        
         for member in team_members:
             # Normalize first, then apply social charges multiplier (consistent with calculate_blended_cost_rate)
             normalized = normalize_to_primary_currency(
@@ -600,31 +504,6 @@ async def calculate_agency_cost_hour(
             # Apply social charges multiplier after normalization
             real_monthly_cost = normalized_decimal * social_charges_multiplier
             total_salaries += real_monthly_cost
-            
-            # #region agent log
-            try:
-                log_data = {
-                    "location": "costs.py:506",
-                    "message": "Team member salary processed",
-                    "data": {
-                        "member_id": member.id,
-                        "member_name": member.name,
-                        "salary_monthly_brute": str(member.salary_monthly_brute),
-                        "member_currency": member.currency or "USD",
-                        "normalized_decimal": str(normalized_decimal),
-                        "real_monthly_cost": str(real_monthly_cost),
-                        "total_salaries_so_far": str(total_salaries)
-                    },
-                    "timestamp": __import__("time").time() * 1000,
-                    "sessionId": "debug-session",
-                    "runId": "run1",
-                    "hypothesisId": "C"
-                }
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps(log_data) + "\n")
-            except:
-                pass
-            # #endregion
         
         # Calculate total billable hours per month across all members
         # Consider non_billable_hours_percentage (consistent with calculate_blended_cost_rate)
@@ -678,33 +557,6 @@ async def calculate_agency_cost_hour(
         
         # ESTÁNDAR NOUGRAM: Construir respuesta con Decimal
         total_monthly_costs_final = total_fixed_costs + total_salaries
-        
-        # #region agent log
-        try:
-            log_data = {
-                "location": "costs.py:559",
-                "message": "BCR response values before serialization",
-                "data": {
-                    "blended_rate": str(blended_rate),
-                    "total_fixed_costs": str(total_fixed_costs),
-                    "total_salaries": str(total_salaries),
-                    "total_monthly_costs_final": str(total_monthly_costs_final),
-                    "total_fixed_overhead": str(total_fixed_overhead),
-                    "total_tools_costs": str(total_tools_costs),
-                    "total_hours": total_hours,
-                    "active_team_members": len(team_members),
-                    "primary_currency": primary_currency
-                },
-                "timestamp": __import__("time").time() * 1000,
-                "sessionId": "debug-session",
-                "runId": "run1",
-                "hypothesisId": "C"
-            }
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps(log_data) + "\n")
-        except:
-            pass
-        # #endregion
         
         return BlendedCostRateResponse(
             blended_cost_rate=blended_rate,

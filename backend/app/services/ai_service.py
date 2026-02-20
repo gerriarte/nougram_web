@@ -769,6 +769,132 @@ FORMATO DE RESPUESTA (JSON):
 }}
 """
         return prompt
+    
+    async def generate_executive_summary(
+        self,
+        request: "ExecutiveSummaryRequest"
+    ) -> Dict[str, Any]:
+        """
+        Generar resumen ejecutivo para una cotización usando IA
+        
+        Args:
+            request: ExecutiveSummaryRequest con datos del proyecto y servicios
+        
+        Returns:
+            Dictionary con:
+            {
+                "success": bool,
+                "summary": str,  # Resumen ejecutivo generado
+                "usage": dict,    # Información de uso de la API
+                "error": str      # Solo si success=False
+            }
+        """
+        if not self.is_available():
+            return {
+                "success": False,
+                "error": "AI service not configured. Please set OPENAI_API_KEY in environment variables."
+            }
+        
+        try:
+            # Construir prompt
+            prompt = self._build_executive_summary_prompt(request)
+            
+            # Determinar idioma del sistema
+            system_language = "español" if request.language == "es" else "english"
+            
+            # Llamar a OpenAI
+            response = await self.client.chat.completions.create(
+                model="gpt-4-turbo-preview",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": f"""Eres un experto en redacción de propuestas comerciales y resúmenes ejecutivos para agencias digitales.
+
+Tu objetivo es crear un resumen ejecutivo profesional, conciso y persuasivo que:
+1. Presente el proyecto de manera clara y profesional
+2. Destaque el valor de los servicios propuestos
+3. Sea apropiado para presentar a ejecutivos y tomadores de decisión
+4. Mantenga un tono profesional pero accesible
+
+Responde SIEMPRE en {system_language}.
+El resumen debe tener entre 150-250 palabras.
+Sé específico con los servicios pero evita jerga técnica excesiva.
+Enfócate en beneficios y resultados esperados."""
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ],
+                temperature=0.7,
+                max_tokens=500
+            )
+            
+            summary = response.choices[0].message.content
+            
+            return {
+                "success": True,
+                "summary": summary.strip(),
+                "usage": {
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens,
+                    "total_tokens": response.usage.total_tokens,
+                    "estimated_cost": self._estimate_cost(response.usage)
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Error generating executive summary: {e}", exc_info=True)
+            return {
+                "success": False,
+                "error": f"Error generating executive summary: {str(e)}"
+            }
+    
+    def _build_executive_summary_prompt(
+        self,
+        request: "ExecutiveSummaryRequest"
+    ) -> str:
+        """
+        Construir prompt para generación de resumen ejecutivo
+        
+        Args:
+            request: ExecutiveSummaryRequest con datos del proyecto
+        
+        Returns:
+            String con el prompt completo
+        """
+        # Construir lista de servicios
+        services_text = []
+        for service in request.services:
+            service_line = f"- {service.service_name}"
+            if service.estimated_hours:
+                service_line += f" ({service.estimated_hours} horas)"
+            service_line += f": {request.currency} {service.client_price:,.2f}"
+            services_text.append(service_line)
+        
+        services_list = "\n".join(services_text)
+        
+        # Construir prompt
+        prompt = f"""Genera un resumen ejecutivo para la siguiente propuesta comercial:
+
+**Proyecto:** {request.project_name}
+**Cliente:** {request.client_name}
+{f"**Sector:** {request.client_sector}" if request.client_sector else ""}
+
+**Servicios Incluidos:**
+{services_list}
+
+**Inversión Total:** {request.currency} {request.total_price:,.2f}
+
+El resumen debe:
+- Presentar el proyecto de manera profesional
+- Destacar el valor y beneficios de los servicios
+- Ser apropiado para presentar a ejecutivos
+- Tener entre 150-250 palabras
+- Mantener un tono profesional pero accesible
+"""
+        
+        return prompt
 
 
 # Singleton instance

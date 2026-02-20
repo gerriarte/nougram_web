@@ -18,13 +18,13 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     
-    # Google OAuth
-    GOOGLE_CLIENT_ID: str
-    GOOGLE_CLIENT_SECRET: str
-    GOOGLE_SERVICE_ACCOUNT_PATH: str
+    # Google OAuth (opcional - vacío si no se usa)
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+    GOOGLE_SERVICE_ACCOUNT_PATH: str = ""
     
-    # Google Sheets
-    GOOGLE_SHEETS_ID: str
+    # Google Sheets (opcional - vacío si no se usa)
+    GOOGLE_SHEETS_ID: str = ""
     
     # AI Configuration
     OPENAI_API_KEY: str = ""
@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     SMTP_USE_TLS: bool = True
     
     # CORS
-    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:5000"
+    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:3001,http://localhost:5000"
     
     # Environment
     ENVIRONMENT: str = "development"
