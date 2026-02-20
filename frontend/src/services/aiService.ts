@@ -6,6 +6,7 @@ export interface ExecutiveSummaryRequest {
     services: {
         name: string;
         price: number;
+        currency?: string;
     }[];
     totalPrice: number;
     currency: string;

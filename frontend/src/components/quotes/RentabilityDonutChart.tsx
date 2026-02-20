@@ -42,7 +42,7 @@ export const RentabilityDonutChart = ({ data }: RentabilityDonutChartProps) => {
                         ))}
                     </Pie>
                     <Tooltip
-                        formatter={(value: number) => [`$${value.toLocaleString()}`, 'Monto']}
+                        formatter={(value?: number) => [`$${(value ?? 0).toLocaleString()}`, 'Monto']}
                         contentStyle={{
                             borderRadius: '12px',
                             border: 'none',

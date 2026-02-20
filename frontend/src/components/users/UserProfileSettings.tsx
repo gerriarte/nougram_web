@@ -15,7 +15,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function UserProfileSettings() {
-    const { user } = useAuth();
+    const { user } = useAuth() as { user: any };
     const [formData, setFormData] = useState({
         fullName: user?.fullName || '',
         job_title: user?.job_title || '',

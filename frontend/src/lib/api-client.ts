@@ -7,10 +7,10 @@ import { transformAPIResponse } from './money-transformer';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
 
-export interface ApiResponse<T> {
+export type ApiResponse<T> = {
   data?: T;
   error?: string;
-}
+} & (T extends object ? Partial<T> : {});
 
 /**
  * Get auth token from localStorage
@@ -77,7 +77,7 @@ async function retryRequest<T>(
   
   return { 
     error: lastError?.message || 'La solicitud falló después de varios intentos' 
-  };
+  } as ApiResponse<T>;
 }
 
 /**
@@ -116,7 +116,7 @@ async function apiRequestInternal<T>(
           localStorage.removeItem('auth_token');
           window.location.href = '/';
         }
-        return { error: 'No autorizado. Por favor, inicia sesión nuevamente.' };
+        return { error: 'No autorizado. Por favor, inicia sesión nuevamente.' } as ApiResponse<T>;
       }
       
       const error = await response.json().catch(() => ({ 
@@ -133,12 +133,12 @@ async function apiRequestInternal<T>(
             const msg = err.msg || 'Error de validación';
             return `${field}: ${msg}`;
           }).join(', ');
-          return { error: `Error de validación: ${validationErrors}` };
+          return { error: `Error de validación: ${validationErrors}` } as ApiResponse<T>;
         }
       }
       
       const errorMessage = error.detail || error.message || `Error ${response.status}`;
-      return { error: translateError(errorMessage) };
+      return { error: translateError(errorMessage) } as ApiResponse<T>;
     }
 
     // Handle 204 No Content responses
@@ -152,16 +152,19 @@ async function apiRequestInternal<T>(
     const transformedData = transformAPIResponse<T>(data, currency);
     
     logger.debug(`[API] Response data (transformed):`, transformedData);
-    return { data: transformedData };
+    return {
+      ...(transformedData && typeof transformedData === 'object' ? (transformedData as object) : {}),
+      data: transformedData,
+    } as ApiResponse<T>;
   } catch (error) {
     if (error instanceof TypeError && error.message === 'Failed to fetch') {
       return { 
         error: 'Error de conexión. El servidor backend no está disponible. Verifica que el backend esté corriendo en http://localhost:8000' 
-      };
+      } as ApiResponse<T>;
     }
     return { 
       error: translateError(error instanceof Error ? error.message : 'Error de red') 
-    };
+    } as ApiResponse<T>;
   }
 }
 

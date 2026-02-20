@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '../ui/Card';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Label } from '../ui/Label';
-import { Badge } from '../ui/Badge';
-import { Alert } from '../ui/Alert';
+import { Card, CardContent } from '../ui/card';
+import { Button } from '../ui/button';
+import { Input } from '../ui/input';
+import { Label } from '../ui/label';
+import { Badge } from '../ui/badge';
+import { Alert } from '../ui/alert';
 import { onboardingService } from '@/services/onboardingService';
 import { Step3MyTeamData } from '@/types/onboarding';
 

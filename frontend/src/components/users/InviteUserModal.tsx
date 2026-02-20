@@ -28,7 +28,7 @@ export function InviteUserModal({ isOpen, onClose }: InviteModalProps) {
         e.preventDefault();
         setStatus('loading');
         try {
-            await actions.inviteUser(email, role, message, currentUser?.fullName);
+            await actions.inviteUser(email, role, message, currentUser?.full_name);
             setStatus('success');
             setTimeout(() => {
                 onClose();

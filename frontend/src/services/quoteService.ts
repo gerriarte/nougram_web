@@ -47,7 +47,7 @@ export const quoteService = {
     try {
       const res = await apiGet<{ data: unknown[]; meta?: { total: number } }>('/quotes/?limit=100');
       const items = Array.isArray(res?.data) ? res.data : [];
-      return items.map((r: Record<string, unknown>) => mapBackendToQuote(r as Parameters<typeof mapBackendToQuote>[0]));
+      return items.map((r) => mapBackendToQuote(r as Parameters<typeof mapBackendToQuote>[0]));
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) return [];
       console.error('quoteService.getAll', e);
@@ -153,8 +153,8 @@ export const quoteService = {
 
   getQuoteByToken: async (token: string): Promise<Quote | null> => {
     try {
-      const res = await apiGet<Record<string, unknown>>(`/quotes/public/${token}`, { skipAuth: true });
-      if (res) return mapBackendToQuote(res as Parameters<typeof mapBackendToQuote>[0]);
+      const res = await apiGet<Record<string, unknown>>(`/quotes/public/${token}`);
+      if (res.data) return mapBackendToQuote(res.data as Parameters<typeof mapBackendToQuote>[0]);
     } catch (e) {
       console.error('quoteService.getQuoteByToken', e);
     }
@@ -163,7 +163,7 @@ export const quoteService = {
 
   acceptQuote: async (token: string): Promise<boolean> => {
     try {
-      await apiPost(`/quotes/public/${token}/accept`, {}, { skipAuth: true });
+      await apiPost(`/quotes/public/${token}/accept`, {});
       return true;
     } catch (e) {
       console.error('quoteService.acceptQuote', e);
@@ -173,7 +173,7 @@ export const quoteService = {
 
   rejectQuote: async (token: string, reason?: string): Promise<boolean> => {
     try {
-      await apiPost(`/quotes/public/${token}/reject`, { reason }, { skipAuth: true });
+      await apiPost(`/quotes/public/${token}/reject`, { reason });
       return true;
     } catch (e) {
       console.error('quoteService.rejectQuote', e);

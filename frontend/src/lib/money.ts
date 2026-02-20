@@ -7,10 +7,10 @@
  * - Importar monedas desde `@dinero.js/currencies`
  * - Tipo `Dinero<number>` en lugar de `Dinero.Dinero`
  */
-import { dinero, type Dinero } from 'dinero.js';
+import { dinero } from 'dinero.js';
 import { USD, COP, EUR, ARS } from '@dinero.js/currencies';
 
-export type { Dinero };
+export type Dinero = any;
 
 // Configuración de monedas con objetos de Dinero.js v2
 export const CURRENCY_CONFIG: Record<string, {

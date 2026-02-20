@@ -87,7 +87,7 @@ export function QuoteBuilderProvider({ children }: { children: React.ReactNode }
             '/services/?active_only=true&page_size=100'
         )
             .then((res) => {
-                const items = res?.items ?? [];
+                const items = res?.data?.items ?? [];
                 if (items.length > 0) {
                     setServices(items.map((s) => ({
                         id: s.id,
@@ -109,7 +109,7 @@ export function QuoteBuilderProvider({ children }: { children: React.ReactNode }
             '/taxes/?is_active=true&page_size=100'
         )
             .then((res) => {
-                const items = res?.items ?? [];
+                const items = res?.data?.items ?? [];
                 if (items.length > 0) {
                     setTaxes(items.map((t) => ({ id: t.id, name: t.name, percentage: t.percentage })));
                 }
@@ -346,18 +346,19 @@ export function QuoteBuilderProvider({ children }: { children: React.ReactNode }
         const { quoteService } = await import('@/services/quoteService');
         const q = await quoteService.getById(id);
         if (q) {
+            const qq = q as any;
             setState(prev => ({
                 ...prev,
                 step: 'editor',
                 id: q.id,
                 version: q.version,
-                projectName: q.project || q.projectName,
-                clientName: q.client || q.clientName,
-                clientEmail: q.clientEmail || '',
-                clientCompany: q.clientCompany || '',
-                clientRequester: q.clientRequester || '',
-                projectType: q.projectType || '',
-                projectDescription: q.projectDescription || '',
+                projectName: qq.project || qq.projectName,
+                clientName: qq.client || qq.clientName,
+                clientEmail: qq.clientEmail || '',
+                clientCompany: qq.clientCompany || '',
+                clientRequester: qq.clientRequester || '',
+                projectType: qq.projectType || '',
+                projectDescription: qq.projectDescription || '',
                 currency: (q.currency as any) || 'COP',
                 contingency: (q as any).contingency,
                 // items: q.items || [] // Todo: mapping

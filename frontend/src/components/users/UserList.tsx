@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { RoleBadge } from './RoleBadge';
-import { UserRole, ROLE_CONFIG } from '@/types/user';
+import { UserRole, ROLE_CONFIG, canInviteUsers, canManageUsers } from '@/types/user';
 import { InviteUserModal } from './InviteUserModal';
 import { useUserManagement } from '@/hooks/useUserManagement';
 import { useAuth } from '@/hooks/useAuth';
@@ -15,7 +15,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export function UserList() {
     const { members, loading, actions } = useUserManagement();
-    const { permissions, user: currentUser } = useAuth();
+    const { user: currentUser } = useAuth();
+    const permissions = {
+        canInviteUsers: currentUser?.role ? canInviteUsers(currentUser.role as UserRole) : false,
+        canManageUsers: currentUser?.role ? canManageUsers(currentUser.role as UserRole) : false,
+    };
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState<string>('all');
     const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -108,7 +112,7 @@ export function UserList() {
                                                 <div>
                                                     <p className="font-bold text-gray-900 text-base flex items-center gap-2">
                                                         {user.fullName}
-                                                        {user.id === currentUser?.id && <span className="bg-blue-50 text-blue-600 text-[9px] font-black px-2 py-0.5 rounded-full tracking-widest uppercase border border-blue-100">Tú</span>}
+                                                        {currentUser?.id !== undefined && String(user.id) === String(currentUser.id) && <span className="bg-blue-50 text-blue-600 text-[9px] font-black px-2 py-0.5 rounded-full tracking-widest uppercase border border-blue-100">Tú</span>}
                                                     </p>
                                                     <p className="text-system-gray text-xs font-medium flex items-center gap-1.5 mt-0.5">
                                                         <Mail size={12} strokeWidth={1.5} />

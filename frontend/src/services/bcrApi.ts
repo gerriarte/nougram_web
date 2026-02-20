@@ -18,7 +18,7 @@ export async function fetchBCR(): Promise<BCRResponse | null> {
   if (!getToken()) return null;
   try {
     const res = await apiGet<BCRResponse>('/settings/calculations/agency-cost-hour');
-    return res;
+    return res.data ?? null;
   } catch {
     return null;
   }

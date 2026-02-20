@@ -185,7 +185,7 @@ export function useReplicateMonth() {
       projectionId: number;
       data: ReplicateMonthRequest;
     }): Promise<{ success: boolean; source_month: number; target_months: number[]; entries_replicated: number }> => {
-      const response = await apiRequest(
+      const response = await apiRequest<{ success: boolean; source_month: number; target_months: number[]; entries_replicated: number }>(
         `/projections/annual/${projectionId}/replicate-month`,
         {
           method: 'POST',

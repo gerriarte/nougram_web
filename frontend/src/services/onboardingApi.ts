@@ -57,7 +57,7 @@ export function hasOnboardingAuth(): boolean {
 
 export async function completeOnboarding(data: OnboardingData): Promise<CompleteOnboardingResponse> {
   const country = toCountryCode(data.identity.country || 'Colombia');
-  const currency = data.identity.primaryCurrency || data.identity.currency || 'COP';
+  const currency = data.identity.primaryCurrency || (data.identity as any).currency || 'COP';
   const profileType = 'freelance';
 
   const team = data.team as { name?: string; role?: string; level?: string; salary?: number; billableHours?: number } | undefined;
@@ -89,7 +89,11 @@ export async function completeOnboarding(data: OnboardingData): Promise<Complete
     expenses,
   };
 
-  return apiPost<CompleteOnboardingResponse>('/onboarding/complete', body);
+  const response = await apiPost<CompleteOnboardingResponse>('/onboarding/complete', body);
+  if (response.error || !response.data) {
+    throw new Error(response.error || 'No se pudo completar onboarding');
+  }
+  return response.data;
 }
 
 export async function calculateTemporaryBCR(data: OnboardingData): Promise<TemporaryBCRResponse | null> {
@@ -116,11 +120,12 @@ export async function calculateTemporaryBCR(data: OnboardingData): Promise<Tempo
   }));
 
   try {
-    return await apiPost<TemporaryBCRResponse>('/onboarding/calculate-bcr', {
+    const response = await apiPost<TemporaryBCRResponse>('/onboarding/calculate-bcr', {
       team_members,
       expenses,
       currency,
     });
+    return response.data ?? null;
   } catch {
     return null;
   }

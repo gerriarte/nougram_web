@@ -7,10 +7,12 @@ import { AdminSidebar } from './AdminSidebar';
 import { BCRSummaryCard } from './BCRSummaryCard';
 import { AdminHeader } from './AdminHeader';
 import { AuthGuard } from '@/components/auth/AuthGuard';
+import { NougramCoreProvider } from '@/context/NougramCoreContext';
 
 export function AdminLayout({ children, hideRightPanel = false }: { children: React.ReactNode, hideRightPanel?: boolean }) {
     return (
         <AuthGuard>
+        <NougramCoreProvider>
         <AdminProvider>
             <div className="flex min-h-screen bg-background">
                 {/* Sidebar */}
@@ -38,6 +40,7 @@ export function AdminLayout({ children, hideRightPanel = false }: { children: Re
                 </div>
             </div>
         </AdminProvider>
+        </NougramCoreProvider>
         </AuthGuard>
     );
 }

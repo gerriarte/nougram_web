@@ -84,7 +84,7 @@ async function fetchAllTeamMembers(): Promise<TeamMember[]> {
   const res = await apiGet<TeamMemberListResponse>(
     `/settings/team?page=1&page_size=${pageSize}`
   );
-  return (res.items || []).map(mapTeamMemberFromApi);
+  return (res.data?.items || []).map(mapTeamMemberFromApi);
 }
 
 async function fetchAllFixedCosts(): Promise<FixedCost[]> {
@@ -92,7 +92,7 @@ async function fetchAllFixedCosts(): Promise<FixedCost[]> {
   const res = await apiGet<CostFixedListResponse>(
     `/settings/costs/fixed?page=1&page_size=${pageSize}`
   );
-  return (res.items || []).map(mapFixedCostFromApi);
+  return (res.data?.items || []).map(mapFixedCostFromApi);
 }
 
 // --- Public API ---
@@ -113,7 +113,7 @@ export const adminApi = {
       is_active: data.isActive ?? true,
     };
     const res = await apiPost<TeamMemberResponse>('/settings/team', body);
-    return mapTeamMemberFromApi(res);
+    return mapTeamMemberFromApi(res.data!);
   },
 
   async updateTeamMember(
@@ -129,7 +129,7 @@ export const adminApi = {
     if (data.isActive != null) body.is_active = data.isActive;
 
     const res = await apiPut<TeamMemberResponse>(`/settings/team/${id}`, body);
-    return mapTeamMemberFromApi(res);
+    return mapTeamMemberFromApi(res.data!);
   },
 
   async deleteTeamMember(id: string): Promise<void> {
@@ -149,7 +149,7 @@ export const adminApi = {
       description: data.description ?? '',
     };
     const res = await apiPost<CostFixedResponse>('/settings/costs/fixed', body);
-    return mapFixedCostFromApi(res);
+    return mapFixedCostFromApi(res.data!);
   },
 
   async updateFixedCost(id: string, data: Partial<Omit<FixedCost, 'id'>>): Promise<FixedCost> {
@@ -161,7 +161,7 @@ export const adminApi = {
     if (data.description != null) body.description = data.description;
 
     const res = await apiPut<CostFixedResponse>(`/settings/costs/fixed/${id}`, body);
-    return mapFixedCostFromApi(res);
+    return mapFixedCostFromApi(res.data!);
   },
 
   async deleteFixedCost(id: string): Promise<void> {
