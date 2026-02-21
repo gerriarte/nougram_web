@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+/* cache-bust: force new static asset hash for Railway CDN */
+
 @layer base {
   :root {
     /* Material Design 3 - Primary Palette */
