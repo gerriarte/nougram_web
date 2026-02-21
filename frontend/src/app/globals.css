@@ -6,6 +6,7 @@
 
 @layer base {
   :root {
+    --deploy-rev-20260221: 1;
     /* Material Design 3 - Primary Palette */
     --primary-50: hsl(210, 100%, 97%);
     --primary-100: hsl(210, 100%, 93%);
