@@ -28,7 +28,8 @@ export function QuoteBuilderForm() {
             // For now saveQuote simulates "Create".
             router.push('/dashboard');
         } catch (e) {
-            alert('Error saving quote');
+            const message = e instanceof Error ? e.message : 'Error guardando cotización';
+            alert(message);
         }
     };
 

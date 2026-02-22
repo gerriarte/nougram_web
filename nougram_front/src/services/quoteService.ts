@@ -192,13 +192,6 @@ const MOCK_QUOTES: Quote[] = [
     { id: '5', project: 'Web Redesign', client: 'OldSchool', amount: 15000, currency: 'USD', margin: 28, version: 3, history: [{ version: 1, amount: 12000, date: 'Hace 1w' }, { version: 2, amount: 14000, date: 'Hace 2d' }], status: 'viewed', sentAt: 'Hace 5h', viewedCount: 12, downloadCount: 4 },
 ];
 
-const FALLBACK_SERVICES: Service[] = [
-    { id: 1, name: 'Desarrollo Frontend', pricingType: 'hourly', defaultMarginTarget: 0.4, isActive: true },
-    { id: 2, name: 'Diseño UI/UX', pricingType: 'hourly', defaultMarginTarget: 0.4, isActive: true },
-    { id: 3, name: 'Setup Inicial', pricingType: 'fixed', defaultMarginTarget: 0.3, isActive: true },
-    { id: 4, name: 'Mantenimiento Mensual', pricingType: 'recurring', defaultMarginTarget: 0.5, isActive: true },
-];
-
 function mapProjectStatusToQuoteStatus(status?: string): Quote['status'] {
     switch (status) {
         case 'Sent':
@@ -508,8 +501,7 @@ export const quoteService = {
         servicesFetchInFlight = (async () => {
             const response = await apiRequest<ServiceListResponse>('/services/');
             if (response.error) {
-                servicesCache = FALLBACK_SERVICES;
-                return FALLBACK_SERVICES;
+                throw new Error(response.error);
             }
 
             const currentItems = response.data?.items || [];
@@ -531,8 +523,7 @@ export const quoteService = {
 
                     const refreshed = await apiRequest<ServiceListResponse>('/services/');
                     if (refreshed.error || !refreshed.data?.items?.length) {
-                        servicesCache = FALLBACK_SERVICES;
-                        return FALLBACK_SERVICES;
+                        throw new Error(refreshed.error || 'No hay servicios disponibles para cotizar');
                     }
                     const mapped = mapServices(refreshed.data.items);
                     servicesCache = mapped;
