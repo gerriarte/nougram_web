@@ -1,7 +1,7 @@
 """
 Pydantic schemas for Invitation management
 """
-from typing import Optional
+from typing import Optional, Literal
 from datetime import datetime
 from pydantic import BaseModel, Field, EmailStr, validator
 
@@ -9,7 +9,10 @@ from pydantic import BaseModel, Field, EmailStr, validator
 class InvitationBase(BaseModel):
     """Base schema for invitation"""
     email: EmailStr = Field(..., description="Email address to invite")
-    role: str = Field(..., description="Role to assign when invitation is accepted")
+    role: Literal["owner", "admin_financiero", "product_manager"] = Field(
+        ...,
+        description="Role to assign when invitation is accepted"
+    )
 
 
 class InvitationCreate(InvitationBase):

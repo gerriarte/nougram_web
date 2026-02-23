@@ -20,7 +20,7 @@ export function InviteUserModal({ isOpen, onClose }: InviteModalProps) {
     const { actions } = useUserManagement();
     const { user: currentUser } = useAuth();
     const [email, setEmail] = useState('');
-    const [role, setRole] = useState<TenantRole>('collaborator');
+    const [role, setRole] = useState<TenantRole>('product_manager');
     const [message, setMessage] = useState('');
     const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
 
@@ -123,7 +123,6 @@ export function InviteUserModal({ isOpen, onClose }: InviteModalProps) {
                                             <option value="owner">Owner (Full Control)</option>
                                             <option value="admin_financiero">Admin Financiero (Márgenes & Costos)</option>
                                             <option value="product_manager">Product Manager (Solo Cotizaciones)</option>
-                                            <option value="collaborator">Collaborator (Lectura)</option>
                                         </select>
                                         <Shield className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={18} strokeWidth={1.5} />
                                     </div>
@@ -136,7 +135,6 @@ export function InviteUserModal({ isOpen, onClose }: InviteModalProps) {
                                             {role === 'owner' && 'Control total de facturación y miembros.'}
                                             {role === 'admin_financiero' && 'Gestión de nómina, BCR e impuestos.'}
                                             {role === 'product_manager' && 'Solo puede armar propuestas sin ver costos.'}
-                                            {role === 'collaborator' && 'Acceso limitado a proyectos asignados.'}
                                         </span>
                                     </motion.div>
                                 </div>

@@ -19,7 +19,6 @@ TENANT_ROLES: Set[str] = {
     "owner",
     "admin_financiero",
     "product_manager",
-    "collaborator",
 }
 
 # All valid roles
@@ -108,7 +107,6 @@ ROLE_DESCRIPTIONS: Dict[str, str] = {
     "owner": "Dueño de la cuenta. Único que puede pagar, acceso completo a su organización.",
     "admin_financiero": "Administrador financiero. Ve costos sensibles, gestiona costos y configuraciones financieras.",
     "product_manager": "Product Manager. Crea propuestas y cotizaciones, consume créditos.",
-    "collaborator": "Colaborador. Puede crear borradores, NO puede enviar cotizaciones, NO ve costos.",
 }
 
 

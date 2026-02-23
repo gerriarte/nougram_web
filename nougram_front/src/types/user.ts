@@ -1,7 +1,7 @@
 
 
 export type SupportRole = "super_admin" | "support_manager" | "data_analyst";
-export type TenantRole = "owner" | "admin_financiero" | "product_manager" | "collaborator";
+export type TenantRole = "owner" | "admin_financiero" | "product_manager";
 
 export type UserRole = SupportRole | TenantRole;
 
@@ -67,11 +67,6 @@ export const ROLE_CONFIG: Record<UserRole, { label: string; color: string; badge
         label: 'Product Manager',
         color: 'text-purple-800',
         badge: 'bg-purple-100 border-purple-200'
-    },
-    collaborator: {
-        label: 'Collaborator',
-        color: 'text-gray-800',
-        badge: 'bg-gray-100 border-gray-200'
     }
 };
 

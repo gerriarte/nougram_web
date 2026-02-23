@@ -488,7 +488,7 @@ async def update_organization(
     Update an organization
     
     - Super admin: can update any organization
-    - Org admin: can update their own organization
+    - Owner: can update their own organization
     """
     org_repo = OrganizationRepository(db)
     org = await org_repo.get_by_id(organization_id)
@@ -501,12 +501,12 @@ async def update_organization(
     
     # Check permissions
     is_super_admin = getattr(current_user, 'role', None) == 'super_admin'
-    is_org_admin = (
+    is_owner = (
         current_user.organization_id == organization_id and
-        getattr(current_user, 'role', None) in ['org_admin', 'admin_financiero', 'owner']
+        getattr(current_user, 'role', None) == 'owner'
     )
     
-    if not (is_super_admin or is_org_admin):
+    if not (is_super_admin or is_owner):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You don't have permission to update this organization"

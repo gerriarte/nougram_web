@@ -125,11 +125,6 @@ PERMISSION_MATRIX: Dict[str, Set[str]] = {
         PERM_VIEW_ANALYTICS,
         # Cannot view financial projections (only owner and admin_financiero)
     },
-    "collaborator": {
-        PERM_CREATE_QUOTES,
-        PERM_CREATE_PROJECTS,
-        # Cannot send quotes, view costs, or analytics
-    },
 }
 
 # Resources that consume credits (for future credit system)

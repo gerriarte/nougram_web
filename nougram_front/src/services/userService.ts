@@ -43,7 +43,7 @@ const INITIAL_USERS: UserProfileExtended[] = [
         id: '4',
         email: 'ana.martinez@agency.com',
         fullName: 'Ana Martínez',
-        role: 'collaborator',
+        role: 'product_manager',
         status: 'INACTIVE',
         job_title: 'Developer',
         created_at: '2026-01-04T00:00:00Z',

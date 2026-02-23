@@ -24,8 +24,7 @@ type CurrentUserResponse = {
     | "data_analyst"
     | "owner"
     | "admin_financiero"
-    | "product_manager"
-    | "collaborator";
+    | "product_manager";
 };
 
 function mapToExtendedUser(data: CurrentUserResponse): UserProfileExtended {
@@ -33,7 +32,7 @@ function mapToExtendedUser(data: CurrentUserResponse): UserProfileExtended {
     id: String(data.id),
     email: data.email,
     fullName: data.full_name,
-    role: data.role || "collaborator",
+    role: data.role || "product_manager",
     status: "ACTIVE",
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),

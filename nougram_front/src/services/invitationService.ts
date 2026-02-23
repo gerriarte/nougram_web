@@ -7,7 +7,7 @@ const INITIAL_INVITATIONS: Invitation[] = [
     {
         id: 'inv_1',
         email: 'nuevo.talento@agency.com',
-        role: 'collaborator',
+        role: 'product_manager',
         status: 'pending',
         createdAt: '2026-02-01T10:00:00Z',
         expiresAt: '2026-02-08T10:00:00Z',

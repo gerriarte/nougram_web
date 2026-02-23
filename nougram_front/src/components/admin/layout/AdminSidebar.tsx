@@ -8,6 +8,7 @@ import {
     LayoutDashboard,
     UsersRound,
     Building2,
+    Building,
     PlusCircle,
     ChevronRight
 } from 'lucide-react';
@@ -22,6 +23,7 @@ export function AdminSidebar() {
 
     const BUSINESS_ITEMS = [
         { label: 'Dashboard & Pipeline', href: '/dashboard', icon: LayoutDashboard },
+        { label: 'Empresa (Tenant)', href: '/dashboard/organization', icon: Building },
         { label: 'Nómina (Equipo)', href: '/admin/payroll', icon: UsersRound },
         { label: 'Overhead (Gastos)', href: '/admin/overhead', icon: Building2 },
     ];
