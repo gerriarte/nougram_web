@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { COPY } from '../constants';
 import { Button } from './Button';
 
@@ -10,7 +11,7 @@ export const FooterCTA: React.FC = () => {
   return (
     <footer className="bg-white pt-12 lg:pt-24 pb-12 border-t border-slate-100">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <div className="bg-dark-900 rounded-3xl p-6 md:p-16 shadow-2xl relative overflow-hidden">
+        <div className="bg-slate-900 rounded-3xl p-6 md:p-16 shadow-2xl relative overflow-hidden">
           {/* Decorative circles */}
           <div className="absolute top-0 right-0 w-64 h-64 bg-brand-500/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
@@ -35,12 +36,15 @@ export const FooterCTA: React.FC = () => {
 
         <div className="mt-12 flex flex-col items-center justify-between gap-6 md:flex-row text-xs lg:text-sm text-slate-500">
           <div className="flex items-center">
-            <img src="/logo-nougram.webp" alt="Nougram" className="h-8 w-auto object-contain" />
+            <Link to="/" onClick={scrollToTop}>
+              <img src="/logo-nougram.webp" alt="Nougram" className="h-8 w-auto object-contain" />
+            </Link>
           </div>
           <div>
             &copy; {new Date().getFullYear()} Nougram. Todos los derechos reservados.
           </div>
           <div className="flex gap-6">
+            <Link to="/blog" className="hover:text-brand-600 transition-colors">Blog</Link>
             <a href="#" className="hover:text-brand-600 transition-colors">Privacidad</a>
             <a href="#" className="hover:text-brand-600 transition-colors">Términos</a>
             <a href="#" className="hover:text-brand-600 transition-colors">Contacto</a>
