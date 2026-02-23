@@ -2,20 +2,13 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import { useNougram } from '@/context/NougramCoreContext';
 import { Users, LogOut, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '@/hooks/useAuth';
-import { apiRequest } from '@/lib/api-client';
-
-type OrganizationResponse = {
-    id: number;
-    name: string;
-};
 
 export function AdminHeader() {
-    const { user, logout } = useAuth();
+    const { state } = useNougram();
     const [isMenuOpen, setIsMenuOpen] = useState(false);
-    const [workspaceName, setWorkspaceName] = useState('Workspace');
     const menuRef = useRef<HTMLDivElement>(null);
 
     // Close on click outside
@@ -29,29 +22,7 @@ export function AdminHeader() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    useEffect(() => {
-        const loadOrganization = async () => {
-            const response = await apiRequest<OrganizationResponse>('/organizations/me');
-            if (response.data?.name) {
-                setWorkspaceName(response.data.name);
-                return;
-            }
-            setWorkspaceName('Workspace');
-        };
-        void loadOrganization();
-    }, []);
-
-    const userInitials = user?.fullName
-        ? user.fullName
-            .split(' ')
-            .filter(Boolean)
-            .slice(0, 2)
-            .map((part) => part[0]?.toUpperCase())
-            .join('')
-        : 'U';
-
     const handleLogout = () => {
-        logout();
         window.location.href = '/login';
     };
 
@@ -60,7 +31,7 @@ export function AdminHeader() {
             {/* Left: Context */}
             <div className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                <h2 className="text-system-gray text-xs font-black uppercase tracking-[0.2em]">{workspaceName} Workspace</h2>
+                <h2 className="text-system-gray text-xs font-black uppercase tracking-[0.2em]">{state.identity.name} Workspace</h2>
             </div>
 
             {/* Right: User Menu */}
@@ -70,15 +41,15 @@ export function AdminHeader() {
                     className="flex items-center gap-4 hover:bg-white/50 p-2 pl-4 rounded-2xl transition-all focus:outline-none group"
                 >
                     <div className="text-right hidden sm:block">
-                        <p className="text-sm font-bold text-gray-900 tracking-tight leading-none">{user?.fullName || 'Usuario'}</p>
-                        <p className="text-[10px] font-black text-system-gray uppercase tracking-widest mt-1.5">{user?.role || 'sin_rol'}</p>
+                        <p className="text-sm font-bold text-gray-900 tracking-tight leading-none">Usuario Demo</p>
+                        <p className="text-[10px] font-black text-system-gray uppercase tracking-widest mt-1.5">{state.user.role}</p>
                     </div>
                     <div className="relative">
                         <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-lg shadow-blue-500/20 border border-white/20">
-                            {userInitials || 'U'}
+                            U
                         </div>
                         <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white rounded-lg flex items-center justify-center shadow-sm border border-gray-100">
-                            <ChevronDown size={10} className={user?.role === 'owner' ? "rotate-180" : ""} />
+                            <ChevronDown size={10} className={state.user.role === 'owner' ? "rotate-180" : ""} />
                         </div>
                     </div>
                 </button>
@@ -94,11 +65,11 @@ export function AdminHeader() {
                         >
                             <div className="px-6 py-4 border-b border-gray-100/50 mb-2">
                                 <p className="text-[10px] font-black text-system-gray uppercase tracking-widest mb-1">Sesión Actual</p>
-                                <p className="text-sm font-bold text-gray-900 truncate">{user?.email || 'sin-email'}</p>
+                                <p className="text-sm font-bold text-gray-900 truncate">usuario@nougram.com</p>
                             </div>
 
                             <div className="px-2 space-y-1">
-                                {user?.role === 'owner' && (
+                                {state.user.role === 'owner' && (
                                     <a href="/dashboard/users" className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-600 hover:bg-white hover:text-blue-600 hover:shadow-sm rounded-2xl transition-all group">
                                         <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
                                             <Users size={16} strokeWidth={2} />
