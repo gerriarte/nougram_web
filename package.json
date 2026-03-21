@@ -1,30 +1,36 @@
 {
-  "name": "cotizador",
-  "version": "1.0.0",
-  "description": "> Plataforma SaaS multi-tenant para gestión de rentabilidad, cotizaciones y análisis de agencias de servicios digitales.",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs"
+  "name": "nougram",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "framer-motion": "^12.23.26",
+    "googleapis": "^169.0.0",
+    "lucide-react": "^0.561.0",
+    "nodemailer": "^7.0.12",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
+    "react-helmet-async": "^2.0.5",
+    "react-router-dom": "^7.13.0",
+    "vite": "^6.2.0",
+    "@vitejs/plugin-react": "^4.3.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@types/nodemailer": "^7.0.4",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/react-helmet-async": "^1.0.1",
+    "@types/react-router-dom": "^5.3.3",
+    "@vercel/node": "^5.5.16",
+    "typescript": "~5.8.2"
   },
   "engines": {
-    "node": ">=20.9.0",
-    "npm": ">=10.0.0"
-  },
-  "scripts": {
-    "test": "jest app.test.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/gerriarte/Cotizador.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/gerriarte/Cotizador/issues"
-  },
-  "homepage": "https://github.com/gerriarte/Cotizador#readme",
-  "devDependencies": {
-    "jest": "^30.2.0"
+    "node": "20.x"
   }
 }

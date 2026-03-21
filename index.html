@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nougram - Ponele Precio a tu Talento</title>
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://nougram.co/">
+  <meta property="og:title" content="Nougram | Deja de adivinar y empieza a rentabilizar.">
+  <meta property="og:description"
+    content="Calcula tus costos reales, impuestos y margen de utilidad antes de enviar una propuesta comercial.">
+  <meta property="og:image" content="https://nougram.co/og-image.jpg">
+  <meta property="twitter:card" content="summary_large_image">
+  <meta property="twitter:url" content="https://nougram.co/">
+  <meta property="twitter:title" content="Nougram | Rentabilidad para servicios de conocimiento">
+  <meta property="twitter:description" content="Deja de cotizar a ojo. Valida tu margen neto con Nougram.">
+  <meta property="twitter:image" content="https://nougram.co/og-image.jpg">
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700;800&display=swap"
+    rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#fff3ed',
+              100: '#ffe4d4',
+              200: '#ffc5a8',
+              300: '#ff9d70',
+              400: '#ff6b33',
+              500: '#F35D0A', // Main Primary Nougram Orange
+              600: '#e54d00',
+              700: '#bf3b00',
+              800: '#993000',
+              900: '#7a2804',
+            },
+            secondary: {
+              50: '#fff9f2',
+              100: '#ffefe0',
+              200: '#ffd9b3',
+              300: '#FCC68C', // Main Secondary Peach
+              400: '#f8a855',
+              500: '#f08924',
+              600: '#e06c13',
+              700: '#ba5011',
+              800: '#943f14',
+              900: '#753513',
+            },
+            nougram: {
+              background: '#262537',
+              primary: '#F35D0A', // Vibrant Orange
+              secondary: '#FCC68C', // Peach/Tangerine
+              data: '#D5D3FB', // Soft Lavender
+              textBase: '#F0F0E8', // Light Cream
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      scroll-behavior: smooth;
+      background-color: #262537;
+      color: #F0F0E8;
+    }
+  </style>
+  <script type="importmap">
+{
+  "imports": {
+    "lucide-react": "https://esm.sh/lucide-react@^0.561.0",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react-dom": "https://esm.sh/react-dom@^19.2.3",
+    "react-router-dom/": "https://esm.sh/react-router-dom@^7.2.0/",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.2.0",
+    "react-helmet-async": "https://esm.sh/react-helmet-async@2.0.1",
+    "@remix-run/router": "https://esm.sh/@remix-run/router@^1.21.0"
+  }
+}
+</script>
+
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>

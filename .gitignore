@@ -1,86 +1,26 @@
-# ============================================
-# IP Protection - Protocolo de Exclusión
-# docs/, manuals/, *.pdf gestionados externamente
-# ============================================
-docs/
-manuals/
-*.pdf
-
-# Environment - Zero-Secrets Policy
-.env
-.env.*
-!.env*.example
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-ENV/
-build/
-*.egg-info/
-dist/
-*.pyc
-
-# Node
-node_modules/
+# Logs
+logs
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+node_modules
+dist
+dist-ssr
+*.local
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Certbot / SSL
-certbot/
-certbot-work/
-certbot-logs/
-
-# Backups
-backups/
-
-# Logs
-*.log
-logs/
-*.dup.bak
-
-# OS
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
 .DS_Store
-Thumbs.db
-
-# Next.js
-.next/
-out/
-
-# Alembic
-
-# Machine Learning & Data
-*.h5
-*.pkl
-*.pt
-*.pth
-*.onnx
-data/
-models/
-jupyter_checkpoints/
-!nougram_front/src/data/
-!nougram_front/src/data/**
-
-# Test artifacts
-coverage/
-htmlcov/
-.pytest_cache/
-test-results/
-playwright-report/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.vercel
+.env*.local

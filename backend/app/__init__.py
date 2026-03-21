@@ -1,5 +1,0 @@
-"""
-Nougram Backend Application
-"""
-
-
