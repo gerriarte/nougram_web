@@ -281,9 +281,9 @@ export const es = {
     submitting: "Enviando...",
     yesCount: "Sí, cuenta conmigo",
     noThanks: "No, gracias",
-    thanksGeneral: "¡Gracias!",
-    contactSoon: "Te contactaremos pronto para conocer tu opinión.",
-    addedToWaitlist: "Ya estás agregado a nuestra lista de espera."
+    thanksGeneral: "¡Registro exitoso! 🚀",
+    contactSoon: "Te contactaremos pronto para los siguientes pasos.",
+    addedToWaitlist: "¡Registro exitoso! Te contactaremos pronto para los siguientes pasos."
   },
   faqExtra: {
     disclaimer: "Resolución de Conflictos & Dudas Técnicas."

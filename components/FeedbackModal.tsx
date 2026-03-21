@@ -85,6 +85,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, o
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <button
+                                        onClick={() => handleResponse(false)}
                                         className={`px-6 py-3 rounded-xl border border-white/10 text-slate-300 hover:bg-white/5 transition-all font-medium text-sm ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                                         disabled={isSubmitting}
                                     >
