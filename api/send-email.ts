@@ -136,6 +136,17 @@ export default async function handler(
         // 3. Add to MailerLite
         if (process.env.MAILERLITE_API_KEY) {
             try {
+                const mailerLitePayload: any = {
+                    email: email,
+                    fields: {
+                        name: name
+                    }
+                };
+
+                if (process.env.MAILERLITE_GROUP_ID) {
+                    mailerLitePayload.groups = [process.env.MAILERLITE_GROUP_ID];
+                }
+
                 const mailerLiteResponse = await fetch('https://connect.mailerlite.com/api/subscribers', {
                     method: 'POST',
                     headers: {
@@ -143,25 +154,33 @@ export default async function handler(
                         'Accept': 'application/json',
                         'Authorization': `Bearer ${process.env.MAILERLITE_API_KEY}`
                     },
-                        body: JSON.stringify({
-                            email: email,
-                            fields: {
-                                name: name
-                            },
-                            groups: process.env.MAILERLITE_GROUP_ID ? [process.env.MAILERLITE_GROUP_ID] : []
-                        })
+                    body: JSON.stringify(mailerLitePayload)
                 });
 
+                let mailerLiteStatusStr = 'Success';
                 if (!mailerLiteResponse.ok) {
                     const errorText = await mailerLiteResponse.text();
                     console.error('Mailerlite Error:', errorText);
+                    mailerLiteStatusStr = `Error: ${mailerLiteResponse.status} - ${errorText}`;
                 }
-            } catch (mailerliteError) {
-                console.error('Error adding to Mailerlite:', mailerliteError);
-            }
-        }
 
-        return res.status(200).json({ message: 'Lead captured successfully' });
+                return res.status(200).json({ 
+                    message: 'Lead captured successfully', 
+                    mailerlite: mailerLiteStatusStr 
+                });
+            } catch (mailerliteError: any) {
+                console.error('Error adding to Mailerlite:', mailerliteError);
+                return res.status(200).json({ 
+                    message: 'Lead captured but Mailerlite failed', 
+                    mailerlite: `Catch: ${mailerliteError.message}` 
+                });
+            }
+        } else {
+            return res.status(200).json({ 
+                message: 'Lead captured successfully', 
+                mailerlite: 'Skipped - MAILERLITE_API_KEY missing' 
+            });
+        }
     } catch (error) {
         console.error('Error processing lead:', error);
         return res.status(500).json({ error: 'Failed to process lead' });
