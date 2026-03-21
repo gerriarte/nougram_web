@@ -3,6 +3,9 @@ import ReactDOM from 'react-dom/client';
 import App from './App';
 
 import { HelmetProvider } from 'react-helmet-async';
+import { inject } from '@vercel/analytics';
+
+inject();
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
