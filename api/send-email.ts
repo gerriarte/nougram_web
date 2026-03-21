@@ -25,7 +25,7 @@ export default async function handler(
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { name, email, profession, phone, whatsappConsent, feedbackConsent, _gotcha } = req.body;
+    const { name, email, profession, phone, company, country, website, termsConsent, whatsappConsent, feedbackConsent, _gotcha } = req.body;
 
     // Honeypot check: If _gotcha is filled, it's a bot. Fail silently.
     if (_gotcha) {
@@ -64,6 +64,10 @@ export default async function handler(
         Email: ${email}
         Profesión: ${profession}
         Teléfono: ${phone || 'No especificado'}
+        Empresa: ${company || 'No especificado'}
+        País: ${country || 'No especificado'}
+        Sitio Web: ${website || 'No especificado'}
+        Acepta Términos: ${termsConsent ? 'Sí' : 'No'}
         WhatsApp Consent: ${whatsappConsent ? 'Sí' : 'No'}
         Dará Feedback: ${feedbackConsent ? 'Sí' : 'No'}
       `,
@@ -73,6 +77,10 @@ export default async function handler(
         <p><strong>Email:</strong> ${email}</p>
         <p><strong>Profesión:</strong> ${profession}</p>
         <p><strong>Teléfono:</strong> ${phone || 'No especificado'}</p>
+        <p><strong>Empresa:</strong> ${company || 'No especificado'}</p>
+        <p><strong>País:</strong> ${country || 'No especificado'}</p>
+        <p><strong>Sitio Web:</strong> ${website || 'No especificado'}</p>
+        <p><strong>Acepta Términos:</strong> ${termsConsent ? 'Sí' : 'No'}</p>
         <p><strong>Acepta WhatsApp:</strong> ${whatsappConsent ? 'Sí' : 'No'}</p>
         <p><strong>Dará Feedback:</strong> ${feedbackConsent ? 'Sí' : 'No'}</p>
       `,
@@ -99,7 +107,7 @@ export default async function handler(
 
                 await sheets.spreadsheets.values.append({
                     spreadsheetId: process.env.GOOGLE_SHEET_ID,
-                    range: `${process.env.GOOGLE_SHEET_NAME || 'Hoja 1'}!A:G`,
+                    range: `${process.env.GOOGLE_SHEET_NAME || 'Hoja 1'}!A:K`,
                     valueInputOption: 'USER_ENTERED',
                     requestBody: {
                         values: [
@@ -109,7 +117,10 @@ export default async function handler(
                                 email,
                                 profession,
                                 phone || '',
-                                phone || '',
+                                company || '',
+                                country || '',
+                                website || '',
+                                termsConsent ? 'Sí' : 'No',
                                 whatsappConsent ? 'Sí' : 'No',
                                 feedbackConsent ? 'Sí' : 'No'
                             ]
@@ -132,15 +143,19 @@ export default async function handler(
                         'Accept': 'application/json',
                         'Authorization': `Bearer ${process.env.MAILERLITE_API_KEY}`
                     },
-                    body: JSON.stringify({
-                        email: email,
-                        fields: {
-                            name: name,
-                            profession: profession,
-                            phone: phone || ''
-                        },
-                        groups: process.env.MAILERLITE_GROUP_ID ? [process.env.MAILERLITE_GROUP_ID] : []
-                    })
+                        body: JSON.stringify({
+                            email: email,
+                            fields: {
+                                name: name,
+                                profession: profession,
+                                phone: phone || '',
+                                company: company || '',
+                                country: country || '',
+                                website: website || '',
+                                terms: termsConsent ? 'Sí' : 'No'
+                            },
+                            groups: process.env.MAILERLITE_GROUP_ID ? [process.env.MAILERLITE_GROUP_ID] : []
+                        })
                 });
 
                 if (!mailerLiteResponse.ok) {
