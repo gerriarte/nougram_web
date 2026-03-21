@@ -39,35 +39,35 @@ export default async function handler(
 
     try {
         // 1. Send Email via SMTP
-        const transporter = nodemailer.createTransport({
-            host: process.env.SMTP_HOST,
-            port: Number(process.env.SMTP_PORT) || 587,
-            secure: false, // true for 465, false for other ports
-            auth: {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS,
-            },
-            tls: {
-                rejectUnauthorized: false
-            }
-        });
+        try {
+            const transporter = nodemailer.createTransport({
+                host: process.env.SMTP_HOST,
+                port: Number(process.env.SMTP_PORT) || 587,
+                secure: false, // true for 465, false for other ports
+                auth: {
+                    user: process.env.SMTP_USER,
+                    pass: process.env.SMTP_PASS,
+                },
+                tls: {
+                    rejectUnauthorized: false
+                }
+            });
 
-        const mailOptions = {
-            from: `"Nougram Lead" <${process.env.SMTP_USER}>`,
-            to: 'business@nougram.co',
-            subject: `Nuevo Lead Beta: ${name}`,
-            text: `
+            const mailOptions = {
+                from: `"Nougram Lead" <${process.env.SMTP_USER}>`,
+                to: 'business@nougram.co',
+                subject: `Nuevo Lead Beta: ${name}`,
+                text: `
         Nuevo registro para la Beta de Nougram:
         
         Nombre: ${name}
         Email: ${email}
         Profesión: ${profession}
         Teléfono: ${phone || 'No especificado'}
-        Teléfono: ${phone || 'No especificado'}
         WhatsApp Consent: ${whatsappConsent ? 'Sí' : 'No'}
         Dará Feedback: ${feedbackConsent ? 'Sí' : 'No'}
       `,
-            html: `
+                html: `
         <h2>Nuevo registro para la Beta de Nougram</h2>
         <p><strong>Nombre:</strong> ${name}</p>
         <p><strong>Email:</strong> ${email}</p>
@@ -76,9 +76,13 @@ export default async function handler(
         <p><strong>Acepta WhatsApp:</strong> ${whatsappConsent ? 'Sí' : 'No'}</p>
         <p><strong>Dará Feedback:</strong> ${feedbackConsent ? 'Sí' : 'No'}</p>
       `,
-        };
+            };
 
-        await transporter.sendMail(mailOptions);
+            await transporter.sendMail(mailOptions);
+        } catch (smtpError) {
+            console.error('Error sending Email via SMTP:', smtpError);
+            // We do not fail the function if SMTP is unconfigured.
+        }
 
         // 2. Save to Google Sheets
         if (process.env.GOOGLE_SHEET_ID && process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
