@@ -146,13 +146,7 @@ export default async function handler(
                         body: JSON.stringify({
                             email: email,
                             fields: {
-                                name: name,
-                                profession: profession,
-                                phone: phone || '',
-                                company: company || '',
-                                country: country || '',
-                                website: website || '',
-                                terms: termsConsent ? 'Sí' : 'No'
+                                name: name
                             },
                             groups: process.env.MAILERLITE_GROUP_ID ? [process.env.MAILERLITE_GROUP_ID] : []
                         })
