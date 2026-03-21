@@ -129,6 +129,7 @@ export const Pricing = () => {
                                 </div>
 
                                 <button
+                                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                                     className={`w-full py-3 px-4 rounded-lg font-bold text-sm tracking-widest uppercase transition-all duration-300 border ${plan.popular
                                         ? 'bg-brand-500 hover:bg-brand-400 text-nougram-background border-brand-500 shadow-[0_0_20px_rgba(243,93,10,0.3)]'
                                         : 'bg-transparent hover:bg-white/5 text-white border-white/20 hover:border-white/50'
