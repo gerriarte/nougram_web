@@ -275,9 +275,9 @@ export const es = {
     terms: "Términos y Condiciones"
   },
   feedbackModal: {
-    thanks: "¡Gracias por unirte!",
-    purpose: "Este registro tiene como objetivo que puedas tener <strong>acceso preferencial</strong> al Cotizador Nougram a cambio de tu <strong>feedback sincero</strong>.",
-    willing: "¿Estarías dispuesto a darnos tu opinión?",
+    thanks: "¡Registro Exitoso! 🚀",
+    purpose: "Tu registro se ha completado correctamente en nuestra Beta. Pronto nos pondremos en contacto contigo para los siguientes pasos y darte acceso preferencial.",
+    willing: "¿Te gustaría darnos tu opinión para mejorar la experiencia?",
     submitting: "Enviando...",
     yesCount: "Sí, cuenta conmigo",
     noThanks: "No, gracias",

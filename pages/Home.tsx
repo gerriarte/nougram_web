@@ -1,4 +1,6 @@
 import React from 'react';
+import { Helmet } from 'react-helmet-async';
+import { useTranslation } from '../context/LanguageContext';
 import { Hero } from '../components/Hero';
 import { TargetAudience } from '../components/TargetAudience';
 import { Problem } from '../components/Problem';
@@ -9,8 +11,13 @@ import { Credibility } from '../components/Credibility';
 import { FAQ } from '../components/FAQ';
 
 export const Home: React.FC = () => {
+    const { t: COPY } = useTranslation();
+
     return (
         <main>
+            <Helmet>
+                <meta name="description" content={COPY.hero.subheadline} />
+            </Helmet>
             <Hero />
             <TargetAudience />
             <Problem />

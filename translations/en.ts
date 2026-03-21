@@ -275,9 +275,9 @@ export const en = {
     terms: "Terms and Conditions"
   },
   feedbackModal: {
-    thanks: "Thank you for joining!",
-    purpose: "This registration aims to give you <strong>preferential access</strong> to the Nougram Quoter in exchange for your <strong>sincere feedback</strong>.",
-    willing: "Would you be willing to give us your opinion?",
+    thanks: "Registration Successful! 🚀",
+    purpose: "Your registration has been successfully completed for our Beta. We will be in touch soon for the next steps and preferential access.",
+    willing: "Would you like to give us your opinion to improve the experience?",
     submitting: "Sending...",
     yesCount: "Yes, count me in",
     noThanks: "No, thanks",

@@ -16,10 +16,30 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | null>(null);
 
 export const LanguageProvider = ({ children }: { children: React.ReactNode }) => {
-    const [lang, setLang] = useState<Language>('es');
+    const [lang, setLang] = useState<Language>(() => {
+        if (typeof window !== 'undefined') {
+            const savedLang = localStorage.getItem('language') as Language;
+            if (savedLang && (savedLang === 'es' || savedLang === 'en')) {
+                return savedLang;
+            }
+            const browserLang = navigator.language.toLowerCase();
+            return browserLang.startsWith('es') ? 'es' : 'en';
+        }
+        return 'es';
+    });
     
-    const toggleLanguage = () => setLang((prev) => (prev === 'es' ? 'en' : 'es'));
-    const setLanguage = (l: Language) => setLang(l);
+    const toggleLanguage = () => {
+        setLang((prev) => {
+            const next = prev === 'es' ? 'en' : 'es';
+            localStorage.setItem('language', next);
+            return next;
+        });
+    };
+
+    const setLanguage = (l: Language) => {
+        setLang(l);
+        localStorage.setItem('language', l);
+    };
     
     const t = translations[lang];
 
