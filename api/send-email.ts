@@ -138,12 +138,17 @@ export default async function handler(
             try {
                 const mailerLitePayload: any = {
                     email: email,
+                    status: 'active', // Ensure the subscriber is active (bypasses double opt-in if allowed/configured)
                     fields: {
-                        name: name
+                        name: name,
+                        phone: phone || '', // Standard field
+                        company: company || '', // Standard field
+                        country: country || '' // Standard field
                     }
                 };
 
                 if (process.env.MAILERLITE_GROUP_ID) {
+                    // Make sure this is the Numeric Group ID, NOT the name!
                     mailerLitePayload.groups = [process.env.MAILERLITE_GROUP_ID];
                 }
 
