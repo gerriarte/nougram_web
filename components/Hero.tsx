@@ -95,8 +95,8 @@ export const Hero: React.FC = () => {
       setEmailError(COPY.heroValidation.invalidEmailVerbose);
       return;
     }
-    // Open modal to ask for feedback consent before submitting
-    setIsModalOpen(true);
+    // Submit directly without asking for feedback consent in modal first
+    handleFinalSubmit(false);
   };
 
   const handleFinalSubmit = async (feedbackConsent: boolean) => {
@@ -112,6 +112,8 @@ export const Hero: React.FC = () => {
         setFormData({ name: '', email: '', profession: '', phone: '', company: '', country: '', website: '', termsConsent: false, _gotcha: '' });
         setEmailError('');
         setIsEmailTouched(false);
+        // Show confirmation modal after successful submission
+        setIsModalOpen(true);
       } else {
         alert(COPY.heroValidation.connectionError);
         setIsModalOpen(false); // Close modal if error

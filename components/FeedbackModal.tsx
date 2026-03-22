@@ -43,7 +43,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, o
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                     onClick={onClose}
-                    className="absolute inset-0 bg-dark-900/85 backdrop-blur-md"
+                    className="absolute inset-0 bg-dark-950/95 backdrop-blur-lg"
                 />
 
                 {/* Modal Content */}
@@ -51,7 +51,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, o
                     initial={{ opacity: 0, scale: 0.95, y: 20 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                    className="relative bg-dark-800 border border-white/10 rounded-3xl p-8 max-w-md w-full shadow-2xl overflow-hidden"
+                    className="relative bg-dark-950 border border-white/20 rounded-3xl p-8 max-w-md w-full shadow-[0_0_50px_rgba(0,0,0,0.5)] overflow-hidden"
                 >
                     {/* Background Decorations */}
                     <div className="absolute -top-20 -right-20 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -64,78 +64,27 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ isOpen, onClose, o
                         <X className="w-5 h-5" />
                     </button>
 
-                    <div className="relative z-10 text-center">
+                    <div className="relative z-10 text-center py-4">
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                        >
+                            <div className="mx-auto w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-6 animate-bounce">
+                                <Check className="w-8 h-8 text-green-400" />
+                            </div>
+                            <h3 className="text-3xl font-bold text-white mb-4">
+                                {COPY.feedbackModal.thanks}
+                            </h3>
+                            <p className="text-lg text-slate-200 mb-8 leading-relaxed font-medium" dangerouslySetInnerHTML={{ __html: COPY.feedbackModal.purpose }} />
 
-                        {state === 'initial' && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
+                            <Button
+                                onClick={onClose}
+                                variant="primary"
+                                className="w-full justify-center text-base py-3.5 shadow-lg shadow-brand-500/20 mt-4"
                             >
-                                <div className="mx-auto w-12 h-12 bg-brand-500/20 rounded-full flex items-center justify-center mb-6">
-                                    <MessageSquare className="w-6 h-6 text-brand-400" />
-                                </div>
-                                <h3 className="text-2xl font-bold text-white mb-4">
-                                    {COPY.feedbackModal.thanks}
-                                </h3>
-                                <p className="text-slate-300 mb-8 leading-relaxed" dangerouslySetInnerHTML={{ __html: COPY.feedbackModal.purpose }} />
-
-                                <p className="text-sm text-slate-400 font-medium mb-6">
-                                    {COPY.feedbackModal.willing}
-                                </p>
-
-                                <div className="grid grid-cols-2 gap-4">
-                                    <button
-                                        onClick={() => handleResponse(false)}
-                                        className={`px-6 py-3 rounded-xl border border-white/10 text-slate-300 hover:bg-white/5 transition-all font-medium text-sm ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                        disabled={isSubmitting}
-                                    >
-                                        {COPY.feedbackModal.noThanks}
-                                    </button>
-                                    <Button
-                                        onClick={() => handleResponse(true)}
-                                        variant="primary"
-                                        className={`w-full justify-center ${isSubmitting ? 'opacity-80 cursor-wait' : ''}`}
-                                        disabled={isSubmitting}
-                                    >
-                                        {isSubmitting ? COPY.feedbackModal.submitting : COPY.feedbackModal.yesCount}
-                                    </Button>
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {state === 'accepted' && (
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className="py-8"
-                            >
-                                <div className="mx-auto w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-6 animate-bounce">
-                                    <Check className="w-8 h-8 text-green-400" />
-                                </div>
-                                <h3 className="text-2xl font-bold text-white mb-2">
-                                    {COPY.feedbackModal.thanksGeneral}
-                                </h3>
-                                <p className="text-slate-300">
-                                    {COPY.feedbackModal.contactSoon}
-                                </p>
-                            </motion.div>
-                        )}
-
-                        {state === 'declined' && (
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className="py-8"
-                            >
-                                <div className="mx-auto w-16 h-16 bg-slate-500/20 rounded-full flex items-center justify-center mb-6">
-                                    <Hand className="w-8 h-8 text-slate-400" />
-                                </div>
-                                <p className="text-lg text-slate-300 font-medium">
-                                    {COPY.feedbackModal.addedToWaitlist}
-                                </p>
-                            </motion.div>
-                        )}
-
+                                ¡Entendido!
+                            </Button>
+                        </motion.div>
                     </div>
                 </motion.div>
             </div>

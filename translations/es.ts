@@ -275,9 +275,9 @@ export const es = {
     terms: "Términos y Condiciones"
   },
   feedbackModal: {
-    thanks: "¡Registro Exitoso! 🚀",
-    purpose: "Tu registro se ha completado correctamente en nuestra Beta. Pronto nos pondremos en contacto contigo para los siguientes pasos y darte acceso preferencial.",
-    willing: "¿Te gustaría darnos tu opinión para mejorar la experiencia?",
+    thanks: "Registro Exitoso",
+    purpose: "Pronto nos contactaremos para agendar la sesión Demo.",
+    willing: "",
     submitting: "Enviando...",
     yesCount: "Sí, cuenta conmigo",
     noThanks: "No, gracias",
