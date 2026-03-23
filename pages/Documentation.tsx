@@ -17,7 +17,7 @@ const STEPS_ES = [
             { subtitle: "1.4 El Momento de la Verdad: Tu BCR", text: "Revisa tu Blended Cost Rate. Este número representa cuánto cuesta operativamente producir una hora de trabajo." }
         ],
         expected: "Un dashboard activo con la certeza de tu tasa de costo por hora (BCR) real.",
-        image: "/docs/step1.png"
+        image: "/Onboarding.gif"
     },
     {
         phase: 2,
@@ -87,7 +87,7 @@ const STEPS_EN = [
             { subtitle: "1.4 The Moment of Truth: Your BCR", text: "Review your Blended Cost Rate. This number represents how much it costs operatively to produce an hour of work." }
         ],
         expected: "A live dashboard with the certainty of your real hourly cost rate (BCR).",
-        image: "/docs/step1.png"
+        image: "/Onboarding.gif"
     },
     {
         phase: 2,
