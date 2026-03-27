@@ -9,6 +9,7 @@ import { Blog } from './pages/Blog';
 import { BlogPost } from './pages/BlogPost';
 import { Documentation } from './pages/Documentation';
 import { Terms } from './pages/Terms';
+import { FinancialHealthTest } from './pages/FinancialHealthTest';
 
 // Helper to scroll to top on route change
 function ScrollToTop() {
@@ -34,6 +35,8 @@ function App() {
           <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/docs" element={<Documentation />} />
           <Route path="/terminos" element={<Terms />} />
+          <Route path="/test-salud-financiera" element={<FinancialHealthTest />} />
+          <Route path="/financial-health-test" element={<FinancialHealthTest />} />
         </Routes>
         <FooterCTA />
 

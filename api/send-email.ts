@@ -25,7 +25,21 @@ export default async function handler(
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { name, email, profession, phone, company, country, website, termsConsent, whatsappConsent, feedbackConsent, _gotcha } = req.body;
+    const {
+        name,
+        email,
+        profession,
+        phone,
+        company,
+        country,
+        website,
+        termsConsent,
+        whatsappConsent,
+        feedbackConsent,
+        _gotcha,
+        leadSource,
+        testSummary
+    } = req.body;
 
     // Honeypot check: If _gotcha is filled, it's a bot. Fail silently.
     if (_gotcha) {
@@ -36,6 +50,16 @@ export default async function handler(
     if (!name || !email || !profession) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
+
+    const source = leadSource || 'landing-form';
+    const isFinancialTestLead = source === 'financial-health-test';
+    const summary = testSummary || {};
+    const testScore = summary.score ?? '';
+    const testDiagnosis = summary.diagnosis ?? '';
+    const testWeakArea = summary.weakArea ?? '';
+    const testMarginProtection = summary.marginProtection ?? '';
+    const testQuoteTimeRecovered = summary.quoteTimeRecovered ?? '';
+    const testAutomationPotential = summary.automationPotential ?? '';
 
     try {
         // 1. Send Email via SMTP
@@ -56,7 +80,9 @@ export default async function handler(
             const mailOptions = {
                 from: `"Nougram Lead" <${process.env.SMTP_USER}>`,
                 to: 'business@nougram.co',
-                subject: `Nuevo Lead Beta: ${name}`,
+                subject: isFinancialTestLead
+                    ? `Nuevo Lead Test Financiero: ${name}`
+                    : `Nuevo Lead Beta: ${name}`,
                 text: `
         Nuevo registro para la Beta de Nougram:
         
@@ -70,6 +96,16 @@ export default async function handler(
         Acepta Términos: ${termsConsent ? 'Sí' : 'No'}
         WhatsApp Consent: ${whatsappConsent ? 'Sí' : 'No'}
         Dará Feedback: ${feedbackConsent ? 'Sí' : 'No'}
+        Origen: ${source}
+        ${isFinancialTestLead ? `
+        ---- Resumen Test de Salud Financiera ----
+        Puntaje: ${testScore}
+        Diagnóstico: ${testDiagnosis}
+        Área Crítica: ${testWeakArea}
+        Margen Protegible: ${testMarginProtection}
+        Tiempo Recuperable: ${testQuoteTimeRecovered}
+        Potencial de Automatización: ${testAutomationPotential}
+        ` : ''}
       `,
                 html: `
         <h2>Nuevo registro para la Beta de Nougram</h2>
@@ -83,6 +119,17 @@ export default async function handler(
         <p><strong>Acepta Términos:</strong> ${termsConsent ? 'Sí' : 'No'}</p>
         <p><strong>Acepta WhatsApp:</strong> ${whatsappConsent ? 'Sí' : 'No'}</p>
         <p><strong>Dará Feedback:</strong> ${feedbackConsent ? 'Sí' : 'No'}</p>
+        <p><strong>Origen:</strong> ${source}</p>
+        ${isFinancialTestLead ? `
+        <hr />
+        <h3>Resumen Test de Salud Financiera</h3>
+        <p><strong>Puntaje:</strong> ${testScore}</p>
+        <p><strong>Diagnóstico:</strong> ${testDiagnosis}</p>
+        <p><strong>Área Crítica:</strong> ${testWeakArea}</p>
+        <p><strong>Margen Protegible:</strong> ${testMarginProtection}</p>
+        <p><strong>Tiempo Recuperable:</strong> ${testQuoteTimeRecovered}</p>
+        <p><strong>Potencial de Automatización:</strong> ${testAutomationPotential}</p>
+        ` : ''}
       `,
             };
 
@@ -105,9 +152,13 @@ export default async function handler(
 
                 const sheets = google.sheets({ version: 'v4', auth });
 
+                const defaultSheetName = process.env.GOOGLE_SHEET_NAME || 'Hoja 1';
+                const testSheetName = process.env.GOOGLE_SHEET_TEST_NAME || 'test';
+                const targetSheetName = isFinancialTestLead ? testSheetName : defaultSheetName;
+
                 await sheets.spreadsheets.values.append({
                     spreadsheetId: process.env.GOOGLE_SHEET_ID,
-                    range: `${process.env.GOOGLE_SHEET_NAME || 'Hoja 1'}!A:K`,
+                    range: `${targetSheetName}!A:Q`,
                     valueInputOption: 'USER_ENTERED',
                     requestBody: {
                         values: [
@@ -122,7 +173,14 @@ export default async function handler(
                                 website || '',
                                 termsConsent ? 'Sí' : 'No',
                                 whatsappConsent ? 'Sí' : 'No',
-                                feedbackConsent ? 'Sí' : 'No'
+                                feedbackConsent ? 'Sí' : 'No',
+                                source,
+                                testScore,
+                                testDiagnosis,
+                                testWeakArea,
+                                testMarginProtection,
+                                testQuoteTimeRecovered,
+                                testAutomationPotential
                             ]
                         ],
                     },

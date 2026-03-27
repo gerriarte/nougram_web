@@ -43,7 +43,7 @@ const BG_IMAGES = [
 ];
 
 export const Hero: React.FC = () => {
-  const { t: COPY } = useTranslation();
+  const { t: COPY, language } = useTranslation();
   const mobileInputVisibilityStyle: React.CSSProperties = {
     color: '#f8fafc',
     caretColor: '#f8fafc',
@@ -228,6 +228,18 @@ export const Hero: React.FC = () => {
             >
               {COPY.hero.subheadline}
             </p>
+
+            <div
+              className={`mb-8 fade-in-up ${loaded ? 'visible' : ''}`}
+              style={{ transitionDelay: '260ms' }}
+            >
+              <Link
+                to="/test-salud-financiera"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-full border border-brand-400/40 bg-brand-500/10 text-brand-200 hover:bg-brand-500/20 hover:text-white transition-colors text-xs sm:text-sm font-semibold tracking-wide"
+              >
+                {language === 'en' ? 'Take Financial Health Test' : 'Hacer Test de Salud Financiera'}
+              </Link>
+            </div>
 
             <div
               className={`grid grid-cols-3 divide-x divide-white/10 border-t border-b border-white/10 py-4 mb-8 fade-in-up ${loaded ? 'visible' : ''}`}
