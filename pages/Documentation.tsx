@@ -248,24 +248,6 @@ export const Documentation = () => {
                                                                     ))}
                                                                 </ul>
 
-                                                                {/* Screenshot Placeholder */}
-                                                                {step.image && (
-                                                                    <div className="mt-4 relative rounded-xl overflow-hidden border border-white/5 bg-dark-800/50 aspect-video flex items-center justify-center p-1 group/img">
-                                                                        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
-                                                                        <img
-                                                                            src={step.image}
-                                                                            alt={step.title}
-                                                                            className="w-full h-full object-cover rounded-lg group-hover/img:scale-[1.02] transition-transform duration-500"
-                                                                            onError={(e) => {
-                                                                                e.currentTarget.src = "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80"; // fallback para visualización premium
-                                                                            }}
-                                                                        />
-                                                                        <div className="absolute bottom-2 right-2 bg-dark-900/80 backdrop-blur-md px-2 py-1 rounded text-[9px] text-slate-500 border border-white/5 font-mono">
-                                                                            {step.image.split('/').pop()}
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-
                                                                 {/* Expected Results - Monospace style requested */}
                                                                 <div className="p-3.5 bg-brand-500/[0.03] border border-brand-500/10 rounded-xl mt-4">
                                                                     <div className="flex items-center gap-2 mb-1.5">

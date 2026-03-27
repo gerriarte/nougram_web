@@ -48,6 +48,7 @@ export const Hero: React.FC = () => {
     color: '#f8fafc',
     caretColor: '#f8fafc',
     WebkitTextFillColor: '#f8fafc',
+    backgroundColor: 'rgba(2, 6, 23, 0.72)',
     opacity: 1,
   };
   const [loaded, setLoaded] = useState(false);
@@ -164,8 +165,8 @@ export const Hero: React.FC = () => {
         .hero-form-input:-webkit-autofill:hover,
         .hero-form-input:-webkit-autofill:focus {
           -webkit-text-fill-color: rgb(248 250 252) !important;
-          box-shadow: 0 0 0px 1000px rgba(15, 23, 42, 0.85) inset;
-          -webkit-box-shadow: 0 0 0px 1000px rgba(15, 23, 42, 0.85) inset;
+          box-shadow: 0 0 0px 1000px rgba(2, 6, 23, 0.92) inset;
+          -webkit-box-shadow: 0 0 0px 1000px rgba(2, 6, 23, 0.92) inset;
           transition: background-color 9999s ease-out 0s;
         }
       `}</style>
@@ -201,13 +202,6 @@ export const Hero: React.FC = () => {
 
           {/* Left Content */}
           <div className="flex-1 text-center lg:text-left">
-            <div className={`fade-in-up ${loaded ? 'visible' : ''}`} style={{ transitionDelay: '0ms' }}>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-900/40 border border-brand-500/30 text-brand-300 text-[10px] md:text-xs font-semibold tracking-wide backdrop-blur-md mb-6 hover:bg-brand-900/60 transition-colors cursor-default">
-                <Sparkles className="w-3 h-3 text-brand-400" />
-                <span>{COPY.hero.placeholders.betaBadge}</span>
-              </div>
-            </div>
-
             <h1
               className={`text-4xl lg:text-7xl font-bold text-white tracking-tight leading-[1.1] mb-4 fade-in-up ${loaded ? 'visible' : ''}`}
               style={{ transitionDelay: '100ms' }}
@@ -288,7 +282,7 @@ export const Hero: React.FC = () => {
                       value={formData.name}
                       onChange={handleChange}
                       style={mobileInputVisibilityStyle}
-                      className="hero-form-input w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-slate-50 placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
+                      className="hero-form-input w-full px-4 py-2.5 text-sm bg-slate-950/70 md:bg-slate-950/50 border border-white/20 md:border-white/10 rounded-xl text-slate-50 placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-slate-950/80 md:hover:bg-slate-950/70"
                     />
 
                     <input
@@ -299,7 +293,7 @@ export const Hero: React.FC = () => {
                       value={formData.profession}
                       onChange={handleChange}
                       style={mobileInputVisibilityStyle}
-                      className="hero-form-input w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-slate-50 placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
+                      className="hero-form-input w-full px-4 py-2.5 text-sm bg-slate-950/70 md:bg-slate-950/50 border border-white/20 md:border-white/10 rounded-xl text-slate-50 placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-slate-950/80 md:hover:bg-slate-950/70"
                     />
 
                     <div className="relative">
@@ -311,7 +305,7 @@ export const Hero: React.FC = () => {
                         value={formData.email}
                         onChange={handleChange}
                         style={mobileInputVisibilityStyle}
-                        className={`hero-form-input w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border rounded-xl text-slate-50 placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70 ${emailError
+                        className={`hero-form-input w-full px-4 py-2.5 text-sm bg-slate-950/70 md:bg-slate-950/50 border rounded-xl text-slate-50 placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 transition-all hover:bg-slate-950/80 md:hover:bg-slate-950/70 ${emailError
                           ? 'border-red-500/50 focus:ring-red-500/50'
                           : 'border-white/10 focus:ring-brand-500/50 focus:border-brand-500/50'
                           }`}
@@ -331,7 +325,7 @@ export const Hero: React.FC = () => {
                       value={formData.phone}
                       onChange={handleChange}
                       style={mobileInputVisibilityStyle}
-                      className="hero-form-input w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-slate-50 placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
+                      className="hero-form-input w-full px-4 py-2.5 text-sm bg-slate-950/70 md:bg-slate-950/50 border border-white/20 md:border-white/10 rounded-xl text-slate-50 placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-slate-950/80 md:hover:bg-slate-950/70"
                     />
 
                     <input
@@ -342,7 +336,7 @@ export const Hero: React.FC = () => {
                       value={formData.company}
                       onChange={handleChange}
                       style={mobileInputVisibilityStyle}
-                      className="hero-form-input w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-slate-50 placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
+                      className="hero-form-input w-full px-4 py-2.5 text-sm bg-slate-950/70 md:bg-slate-950/50 border border-white/20 md:border-white/10 rounded-xl text-slate-50 placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-slate-950/80 md:hover:bg-slate-950/70"
                     />
 
                     <div className="grid grid-cols-2 gap-3">
@@ -354,7 +348,7 @@ export const Hero: React.FC = () => {
                         value={formData.country}
                         onChange={handleChange}
                         style={mobileInputVisibilityStyle}
-                        className="hero-form-input w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-slate-50 placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
+                        className="hero-form-input w-full px-4 py-2.5 text-sm bg-slate-950/70 md:bg-slate-950/50 border border-white/20 md:border-white/10 rounded-xl text-slate-50 placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-slate-950/80 md:hover:bg-slate-950/70"
                       />
                       <input
                         name="website"
@@ -363,7 +357,7 @@ export const Hero: React.FC = () => {
                         value={formData.website}
                         onChange={handleChange}
                         style={mobileInputVisibilityStyle}
-                        className="hero-form-input w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-slate-50 placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
+                        className="hero-form-input w-full px-4 py-2.5 text-sm bg-slate-950/70 md:bg-slate-950/50 border border-white/20 md:border-white/10 rounded-xl text-slate-50 placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-slate-950/80 md:hover:bg-slate-950/70"
                       />
                     </div>
 
