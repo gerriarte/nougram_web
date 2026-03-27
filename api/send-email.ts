@@ -38,8 +38,12 @@ export default async function handler(
         feedbackConsent,
         _gotcha,
         leadSource,
-        testSummary
+        testSummary,
+        testAnswers
     } = req.body;
+
+    const source = leadSource || 'landing-form';
+    const isFinancialTestLead = source === 'financial-health-test';
 
     // Honeypot check: If _gotcha is filled, it's a bot. Fail silently.
     if (_gotcha) {
@@ -47,12 +51,10 @@ export default async function handler(
         return res.status(200).json({ message: 'Email sent successfully' });
     }
 
-    if (!name || !email || !profession) {
+    if (!name || !email || (!isFinancialTestLead && !profession)) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    const source = leadSource || 'landing-form';
-    const isFinancialTestLead = source === 'financial-health-test';
     const summary = testSummary || {};
     const testScore = summary.score ?? '';
     const testDiagnosis = summary.diagnosis ?? '';
@@ -60,6 +62,10 @@ export default async function handler(
     const testMarginProtection = summary.marginProtection ?? '';
     const testQuoteTimeRecovered = summary.quoteTimeRecovered ?? '';
     const testAutomationPotential = summary.automationPotential ?? '';
+    const serializedAnswers = Array.isArray(testAnswers)
+        ? JSON.stringify(testAnswers)
+        : '';
+    const formatBooleanField = (value: any) => (value ? 'Sí' : 'No');
 
     try {
         // 1. Send Email via SMTP
@@ -84,18 +90,20 @@ export default async function handler(
                     ? `Nuevo Lead Test Financiero: ${name}`
                     : `Nuevo Lead Beta: ${name}`,
                 text: `
-        Nuevo registro para la Beta de Nougram:
+        ${isFinancialTestLead ? 'Nuevo registro del Test de Salud Financiera:' : 'Nuevo registro para la Beta de Nougram:'}
         
         Nombre: ${name}
         Email: ${email}
+        ${!isFinancialTestLead ? `
         Profesión: ${profession}
         Teléfono: ${phone || 'No especificado'}
         Empresa: ${company || 'No especificado'}
         País: ${country || 'No especificado'}
         Sitio Web: ${website || 'No especificado'}
-        Acepta Términos: ${termsConsent ? 'Sí' : 'No'}
-        WhatsApp Consent: ${whatsappConsent ? 'Sí' : 'No'}
-        Dará Feedback: ${feedbackConsent ? 'Sí' : 'No'}
+        Acepta Términos: ${formatBooleanField(termsConsent)}
+        WhatsApp Consent: ${formatBooleanField(whatsappConsent)}
+        Dará Feedback: ${formatBooleanField(feedbackConsent)}
+        ` : ''}
         Origen: ${source}
         ${isFinancialTestLead ? `
         ---- Resumen Test de Salud Financiera ----
@@ -105,20 +113,23 @@ export default async function handler(
         Margen Protegible: ${testMarginProtection}
         Tiempo Recuperable: ${testQuoteTimeRecovered}
         Potencial de Automatización: ${testAutomationPotential}
+        Respuestas: ${serializedAnswers || 'No especificadas'}
         ` : ''}
       `,
                 html: `
-        <h2>Nuevo registro para la Beta de Nougram</h2>
+        <h2>${isFinancialTestLead ? 'Nuevo registro del Test de Salud Financiera' : 'Nuevo registro para la Beta de Nougram'}</h2>
         <p><strong>Nombre:</strong> ${name}</p>
         <p><strong>Email:</strong> ${email}</p>
+        ${!isFinancialTestLead ? `
         <p><strong>Profesión:</strong> ${profession}</p>
         <p><strong>Teléfono:</strong> ${phone || 'No especificado'}</p>
         <p><strong>Empresa:</strong> ${company || 'No especificado'}</p>
         <p><strong>País:</strong> ${country || 'No especificado'}</p>
         <p><strong>Sitio Web:</strong> ${website || 'No especificado'}</p>
-        <p><strong>Acepta Términos:</strong> ${termsConsent ? 'Sí' : 'No'}</p>
-        <p><strong>Acepta WhatsApp:</strong> ${whatsappConsent ? 'Sí' : 'No'}</p>
-        <p><strong>Dará Feedback:</strong> ${feedbackConsent ? 'Sí' : 'No'}</p>
+        <p><strong>Acepta Términos:</strong> ${formatBooleanField(termsConsent)}</p>
+        <p><strong>Acepta WhatsApp:</strong> ${formatBooleanField(whatsappConsent)}</p>
+        <p><strong>Dará Feedback:</strong> ${formatBooleanField(feedbackConsent)}</p>
+        ` : ''}
         <p><strong>Origen:</strong> ${source}</p>
         ${isFinancialTestLead ? `
         <hr />
@@ -129,6 +140,7 @@ export default async function handler(
         <p><strong>Margen Protegible:</strong> ${testMarginProtection}</p>
         <p><strong>Tiempo Recuperable:</strong> ${testQuoteTimeRecovered}</p>
         <p><strong>Potencial de Automatización:</strong> ${testAutomationPotential}</p>
+        <p><strong>Respuestas:</strong> ${serializedAnswers || 'No especificadas'}</p>
         ` : ''}
       `,
             };
@@ -158,7 +170,7 @@ export default async function handler(
 
                 await sheets.spreadsheets.values.append({
                     spreadsheetId: process.env.GOOGLE_SHEET_ID,
-                    range: `${targetSheetName}!A:Q`,
+                    range: `${targetSheetName}!A:R`,
                     valueInputOption: 'USER_ENTERED',
                     requestBody: {
                         values: [
@@ -166,21 +178,22 @@ export default async function handler(
                                 new Date().toISOString(), // Timestamp
                                 name,
                                 email,
-                                profession,
-                                phone || '',
-                                company || '',
-                                country || '',
-                                website || '',
-                                termsConsent ? 'Sí' : 'No',
-                                whatsappConsent ? 'Sí' : 'No',
-                                feedbackConsent ? 'Sí' : 'No',
+                                isFinancialTestLead ? '' : (profession || ''),
+                                isFinancialTestLead ? '' : (phone || ''),
+                                isFinancialTestLead ? '' : (company || ''),
+                                isFinancialTestLead ? '' : (country || ''),
+                                isFinancialTestLead ? '' : (website || ''),
+                                isFinancialTestLead ? '' : formatBooleanField(termsConsent),
+                                isFinancialTestLead ? '' : formatBooleanField(whatsappConsent),
+                                isFinancialTestLead ? '' : formatBooleanField(feedbackConsent),
                                 source,
                                 testScore,
                                 testDiagnosis,
                                 testWeakArea,
                                 testMarginProtection,
                                 testQuoteTimeRecovered,
-                                testAutomationPotential
+                                testAutomationPotential,
+                                serializedAnswers
                             ]
                         ],
                     },

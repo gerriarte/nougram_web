@@ -32,6 +32,13 @@ interface CategoryMetric {
   max: number;
 }
 
+interface TestAnswer {
+  questionId: number;
+  question: string;
+  answer: string;
+  points: number;
+}
+
 const QUESTIONS_ES: Question[] = [
   {
     id: 1,
@@ -250,6 +257,7 @@ export const FinancialHealthTest: React.FC = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [answerPoints, setAnswerPoints] = useState<number[]>(Array(10).fill(0));
+  const [answers, setAnswers] = useState<Array<TestAnswer | null>>(Array(10).fill(null));
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -343,6 +351,7 @@ export const FinancialHealthTest: React.FC = () => {
     setCurrentQuestionIndex(0);
     setScore(0);
     setAnswerPoints(Array(questions.length).fill(0));
+    setAnswers(Array(questions.length).fill(null));
     setSelectedOption(null);
     setName('');
     setEmail('');
@@ -355,6 +364,7 @@ export const FinancialHealthTest: React.FC = () => {
     setCurrentQuestionIndex(0);
     setScore(0);
     setAnswerPoints(Array(questions.length).fill(0));
+    setAnswers(Array(questions.length).fill(null));
     setSelectedOption(null);
     setEmailTouched(false);
   };
@@ -368,6 +378,16 @@ export const FinancialHealthTest: React.FC = () => {
       setAnswerPoints((prev) => {
         const next = [...prev];
         next[currentQuestionIndex] = option.points;
+        return next;
+      });
+      setAnswers((prev) => {
+        const next = [...prev];
+        next[currentQuestionIndex] = {
+          questionId: currentQuestion.id,
+          question: currentQuestion.prompt,
+          answer: option.label,
+          points: option.points,
+        };
         return next;
       });
 
@@ -391,14 +411,6 @@ export const FinancialHealthTest: React.FC = () => {
     const leadPayload = {
       name: name.trim(),
       email: email.trim(),
-      profession: 'Test de Salud Financiera',
-      phone: '',
-      company: '',
-      country: '',
-      website: '',
-      termsConsent: true,
-      whatsappConsent: false,
-      feedbackConsent: true,
       leadSource: 'financial-health-test',
       testSummary: {
         score,
@@ -408,6 +420,7 @@ export const FinancialHealthTest: React.FC = () => {
         quoteTimeRecovered,
         automationPotential,
       },
+      testAnswers: answers.filter((item): item is TestAnswer => item !== null),
       _gotcha: '',
     };
 
