@@ -144,6 +144,24 @@ export const Hero: React.FC = () => {
         
         .fade-in-up { opacity: 0; transform: translateY(20px); transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
         .fade-in-up.visible { opacity: 1; transform: translateY(0); }
+
+        /* Ensure typed text remains visible on mobile and autofill states */
+        .hero-form-input {
+          color: rgb(248 250 252) !important;
+          caret-color: rgb(248 250 252);
+          -webkit-text-fill-color: rgb(248 250 252);
+        }
+        .hero-form-input::placeholder {
+          -webkit-text-fill-color: rgb(148 163 184);
+        }
+        .hero-form-input:-webkit-autofill,
+        .hero-form-input:-webkit-autofill:hover,
+        .hero-form-input:-webkit-autofill:focus {
+          -webkit-text-fill-color: rgb(248 250 252) !important;
+          box-shadow: 0 0 0px 1000px rgba(15, 23, 42, 0.85) inset;
+          -webkit-box-shadow: 0 0 0px 1000px rgba(15, 23, 42, 0.85) inset;
+          transition: background-color 9999s ease-out 0s;
+        }
       `}</style>
 
       {/* Dynamic Background */}
@@ -263,7 +281,7 @@ export const Hero: React.FC = () => {
                       required
                       value={formData.name}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-white placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
+                      className="hero-form-input w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-slate-50 placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
                     />
 
                     <input
@@ -273,7 +291,7 @@ export const Hero: React.FC = () => {
                       required
                       value={formData.profession}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-white placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
+                      className="hero-form-input w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-slate-50 placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
                     />
 
                     <div className="relative">
@@ -284,7 +302,7 @@ export const Hero: React.FC = () => {
                         required
                         value={formData.email}
                         onChange={handleChange}
-                        className={`w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border rounded-xl text-white placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70 ${emailError
+                        className={`hero-form-input w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border rounded-xl text-slate-50 placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70 ${emailError
                           ? 'border-red-500/50 focus:ring-red-500/50'
                           : 'border-white/10 focus:ring-brand-500/50 focus:border-brand-500/50'
                           }`}
@@ -303,7 +321,7 @@ export const Hero: React.FC = () => {
                       required
                       value={formData.phone}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-white placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
+                      className="hero-form-input w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-slate-50 placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
                     />
 
                     <input
@@ -313,7 +331,7 @@ export const Hero: React.FC = () => {
                       required
                       value={formData.company}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-white placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
+                      className="hero-form-input w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-slate-50 placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
                     />
 
                     <div className="grid grid-cols-2 gap-3">
@@ -324,7 +342,7 @@ export const Hero: React.FC = () => {
                         required
                         value={formData.country}
                         onChange={handleChange}
-                        className="w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-white placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
+                        className="hero-form-input w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-slate-50 placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
                       />
                       <input
                         name="website"
@@ -332,7 +350,7 @@ export const Hero: React.FC = () => {
                         placeholder={COPY.hero.placeholders.website}
                         value={formData.website}
                         onChange={handleChange}
-                        className="w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-white placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
+                        className="hero-form-input w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-slate-50 placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
                       />
                     </div>
 
