@@ -263,7 +263,7 @@ export const Hero: React.FC = () => {
                       required
                       value={formData.name}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 text-sm bg-dark-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/70"
+                      className="w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-white placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
                     />
 
                     <input
@@ -273,7 +273,7 @@ export const Hero: React.FC = () => {
                       required
                       value={formData.profession}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 text-sm bg-dark-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/70"
+                      className="w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-white placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
                     />
 
                     <div className="relative">
@@ -284,7 +284,7 @@ export const Hero: React.FC = () => {
                         required
                         value={formData.email}
                         onChange={handleChange}
-                        className={`w-full px-4 py-2.5 text-sm bg-dark-800/50 border rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 transition-all hover:bg-dark-800/70 ${emailError
+                        className={`w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border rounded-xl text-white placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70 ${emailError
                           ? 'border-red-500/50 focus:ring-red-500/50'
                           : 'border-white/10 focus:ring-brand-500/50 focus:border-brand-500/50'
                           }`}
@@ -303,7 +303,7 @@ export const Hero: React.FC = () => {
                       required
                       value={formData.phone}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 text-sm bg-dark-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/70"
+                      className="w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-white placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
                     />
 
                     <input
@@ -313,7 +313,7 @@ export const Hero: React.FC = () => {
                       required
                       value={formData.company}
                       onChange={handleChange}
-                      className="w-full px-4 py-2.5 text-sm bg-dark-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/70"
+                      className="w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-white placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
                     />
 
                     <div className="grid grid-cols-2 gap-3">
@@ -324,7 +324,7 @@ export const Hero: React.FC = () => {
                         required
                         value={formData.country}
                         onChange={handleChange}
-                        className="w-full px-4 py-2.5 text-sm bg-dark-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/70"
+                        className="w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-white placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
                       />
                       <input
                         name="website"
@@ -332,7 +332,7 @@ export const Hero: React.FC = () => {
                         placeholder={COPY.hero.placeholders.website}
                         value={formData.website}
                         onChange={handleChange}
-                        className="w-full px-4 py-2.5 text-sm bg-dark-800/50 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/70"
+                        className="w-full px-4 py-2.5 text-sm bg-dark-800/70 md:bg-dark-800/50 border border-white/20 md:border-white/10 rounded-xl text-white placeholder-slate-400 md:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500/50 transition-all hover:bg-dark-800/80 md:hover:bg-dark-800/70"
                       />
                     </div>
 
@@ -357,7 +357,7 @@ export const Hero: React.FC = () => {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                         </svg>
                       </div>
-                      <span className="text-xs text-slate-400 group-hover:text-slate-300 transition-colors pt-0.5 leading-tight">
+                      <span className="text-xs text-slate-300 md:text-slate-400 group-hover:text-slate-100 md:group-hover:text-slate-300 transition-colors pt-0.5 leading-tight">
                         {COPY.hero.acceptTerms} <Link to="/terminos" target="_blank" className="text-brand-400 underline hover:text-brand-300">{COPY.hero.terms}</Link>
                       </span>
                     </label>

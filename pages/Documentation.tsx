@@ -70,7 +70,8 @@ const STEPS_ES = [
             { subtitle: "5.2 Mejores Prácticas Nougram", text: "Evita claves obvias, personaliza con IA y mantén tus costos actualizados para que tu BCR siempre sea exacto." }
         ],
         expected: "Monitoreo constante del embudo de ingresos y actualización del costo para futuras cotizaciones.",
-        image: "/docs/step5.png" }
+        image: "/docs/step5.png"
+    }
 ];
 
 const STEPS_EN = [
@@ -156,7 +157,7 @@ export const Documentation = () => {
             <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none"></div>
 
             <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6">
-                
+
                 {/* Header */}
                 <div className="text-center mb-16">
                     <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-900/40 border border-brand-500/30 text-brand-300 text-xs font-semibold tracking-wide backdrop-blur-md mb-6 hover:bg-brand-900/60 transition-colors cursor-default">
@@ -184,15 +185,14 @@ export const Documentation = () => {
                             return (
                                 <div key={step.phase} className="relative z-10">
                                     <div className="flex items-start gap-4 md:gap-6">
-                                        
+
                                         {/* Stepper Node (Icon) */}
                                         <button
                                             onClick={() => setActiveIndex(isOpen ? null : index)}
-                                            className={`flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center border transition-all duration-300 cursor-pointer ${
-                                                isOpen
+                                            className={`flex-shrink-0 w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center border transition-all duration-300 cursor-pointer ${isOpen
                                                     ? `bg-gradient-to-br ${step.color} border-white/20 text-white shadow-[0_0_20px_rgba(255,255,255,0.05)] scale-110`
                                                     : 'bg-dark-800 border-white/5 text-slate-500 hover:border-slate-600/50 hover:text-slate-300'
-                                            }`}
+                                                }`}
                                         >
                                             <Icon className={`w-5 h-5 md:w-6 md:h-6 transition-transform duration-300 ${isOpen ? 'rotate-12' : 'rotate-0'}`} />
                                         </button>
@@ -201,11 +201,10 @@ export const Documentation = () => {
                                         <div className="flex-1">
                                             <button
                                                 onClick={() => setActiveIndex(isOpen ? null : index)}
-                                                className={`w-full text-left p-5 md:p-6 rounded-2xl border transition-all duration-300 backdrop-blur-md ${
-                                                    isOpen
+                                                className={`w-full text-left p-5 md:p-6 rounded-2xl border transition-all duration-300 backdrop-blur-md ${isOpen
                                                         ? 'bg-white/[0.03] border-white/10 shadow-2xl shadow-black/30'
                                                         : 'bg-white/[0.01] border-white/5 hover:border-white/10'
-                                                }`}
+                                                    }`}
                                             >
                                                 <div className="flex items-center justify-between">
                                                     <div>
@@ -253,9 +252,9 @@ export const Documentation = () => {
                                                                 {step.image && (
                                                                     <div className="mt-4 relative rounded-xl overflow-hidden border border-white/5 bg-dark-800/50 aspect-video flex items-center justify-center p-1 group/img">
                                                                         <div className="absolute inset-0 bg-gradient-to-br from-white/[0.02] to-transparent pointer-events-none" />
-                                                                        <img 
-                                                                            src={step.image} 
-                                                                            alt={step.title} 
+                                                                        <img
+                                                                            src={step.image}
+                                                                            alt={step.title}
                                                                             className="w-full h-full object-cover rounded-lg group-hover/img:scale-[1.02] transition-transform duration-500"
                                                                             onError={(e) => {
                                                                                 e.currentTarget.src = "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80"; // fallback para visualización premium
