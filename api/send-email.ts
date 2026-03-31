@@ -167,34 +167,43 @@ export default async function handler(
                 const defaultSheetName = process.env.GOOGLE_SHEET_NAME || 'Hoja 1';
                 const testSheetName = process.env.GOOGLE_SHEET_TEST_NAME || 'test';
                 const targetSheetName = isFinancialTestLead ? testSheetName : defaultSheetName;
+                const rowValues = isFinancialTestLead
+                    ? [
+                        new Date().toISOString(), // Timestamp
+                        name,
+                        email,
+                        source,
+                        testScore,
+                        testDiagnosis,
+                        testWeakArea,
+                        testMarginProtection,
+                        testQuoteTimeRecovered,
+                        testAutomationPotential,
+                        serializedAnswers
+                    ]
+                    : [
+                        new Date().toISOString(), // Timestamp
+                        name,
+                        email,
+                        profession || '',
+                        phone || '',
+                        company || '',
+                        country || '',
+                        website || '',
+                        formatBooleanField(termsConsent),
+                        formatBooleanField(whatsappConsent),
+                        formatBooleanField(feedbackConsent),
+                        source
+                    ];
 
                 await sheets.spreadsheets.values.append({
                     spreadsheetId: process.env.GOOGLE_SHEET_ID,
-                    range: `${targetSheetName}!A:R`,
+                    range: `${targetSheetName}!A1`,
                     valueInputOption: 'USER_ENTERED',
+                    insertDataOption: 'INSERT_ROWS',
                     requestBody: {
                         values: [
-                            [
-                                new Date().toISOString(), // Timestamp
-                                name,
-                                email,
-                                isFinancialTestLead ? '' : (profession || ''),
-                                isFinancialTestLead ? '' : (phone || ''),
-                                isFinancialTestLead ? '' : (company || ''),
-                                isFinancialTestLead ? '' : (country || ''),
-                                isFinancialTestLead ? '' : (website || ''),
-                                isFinancialTestLead ? '' : formatBooleanField(termsConsent),
-                                isFinancialTestLead ? '' : formatBooleanField(whatsappConsent),
-                                isFinancialTestLead ? '' : formatBooleanField(feedbackConsent),
-                                source,
-                                testScore,
-                                testDiagnosis,
-                                testWeakArea,
-                                testMarginProtection,
-                                testQuoteTimeRecovered,
-                                testAutomationPotential,
-                                serializedAnswers
-                            ]
+                            rowValues
                         ],
                     },
                 });
