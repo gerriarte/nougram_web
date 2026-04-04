@@ -1,9 +1,13 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 import fs from 'fs';
 import path from 'path';
+import { BLOG_POSTS } from '../content/blog-posts';
 
-// This function serves as a SEO proxy for blog posts
-// It injects OG tags into index.html before serving it
+function escapeHtmlAttr(value: string): string {
+    return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+// Serves index.html with Open Graph / Twitter meta injected for link previews (crawlers do not run the SPA).
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { slug } = req.query;
 
@@ -12,61 +16,83 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        // Path to the index.html file in the project
         const indexPath = path.join(process.cwd(), 'index.html');
         let html = fs.readFileSync(indexPath, 'utf8');
 
-        // Note: In a real scenario, you'd fetch the blog post data from your content file or DB
-        // For this demo, we'll use a simplified version of the data
-        // Ideally, you'd export the BLOG_POSTS from content/blog-posts.ts and import it here
-        // But since this is a serverless function, we'll keep it simple for now
+        const post = BLOG_POSTS.find((p) => p.slug === slug);
 
-        // Let's try to find the post data by reading the file
-        const blogPostsPath = path.join(process.cwd(), 'content', 'blog-posts.ts');
-        const blogPostsContent = fs.readFileSync(blogPostsPath, 'utf8');
+        const postUrl = `https://nougram.co/blog/${slug}`;
+        let title = 'Nougram Blog';
+        let excerpt = 'Descubre cómo escalar tu negocio con IA.';
+        let image = 'https://nougram.co/og-image.jpg';
+        let ogType = 'website';
 
-        // Basic regex to find title and image from the file (simple but effective for this context)
-        const titleRegex = new RegExp(`title:\\s*['"]([^'"]+)['"]`, 'g');
-        const excerptRegex = new RegExp(`excerpt:\\s*['"]([^'"]+)['"]`, 'g');
-        const imageRegex = new RegExp(`image:\\s*['"]([^'"]+)['"]`, 'g');
-
-        // We'll search for the specific slug in the file
-        const postBlockRegex = new RegExp(`slug:\\s*['"]${slug}['"]([\\s\\S]+?)}`, 'g');
-        const postBlockMatch = postBlockRegex.exec(blogPostsContent);
-
-        let title = "Nougram Blog";
-        let excerpt = "Descubre cómo escalar tu negocio con IA.";
-        let image = "https://nougram.co/og-image.jpg";
-
-        if (postBlockMatch) {
-            const block = postBlockMatch[1];
-            const t = /title:\s*['"]([^'"]+)['"]/.exec(block);
-            const e = /excerpt:\s*['"]([^'"]+)['"]/.exec(block);
-            const i = /image:\s*['"]([^'"]+)['"]/.exec(block);
-            if (t) title = t[1];
-            if (e) excerpt = e[1];
-            if (i) image = i[1];
+        if (post) {
+            title = post.title;
+            excerpt = post.excerpt;
+            image = post.image.startsWith('http') ? post.image : `https://nougram.co${post.image}`;
+            ogType = 'article';
         }
 
-        // Replace meta tags in HTML
-        html = html.replace(/<title>.*?<\/title>/, `<title>${title} | Nougram</title>`);
-        html = html.replace(/<meta property="og:title" content=".*?"/, `<meta property="og:title" content="${title}"`);
-        html = html.replace(/<meta property="og:description" content=".*?"/, `<meta property="og:description" content="${excerpt}"`);
-        html = html.replace(/<meta property="og:image" content=".*?"/, `<meta property="og:image" content="${image}"`);
-        html = html.replace(/<meta property="twitter:title" content=".*?"/, `<meta property="twitter:title" content="${title}"`);
-        html = html.replace(/<meta property="twitter:description" content=".*?"/, `<meta property="twitter:description" content="${excerpt}"`);
-        html = html.replace(/<meta property="twitter:image" content=".*?"/, `<meta property="twitter:image" content="${image}"`);
+        const eTitle = escapeHtmlAttr(title);
+        const eExcerpt = escapeHtmlAttr(excerpt);
+        const eImage = escapeHtmlAttr(image);
+        const eUrl = escapeHtmlAttr(postUrl);
 
-        res.setHeader('Content-Type', 'text/html');
+        html = html.replace(/<title>.*?<\/title>/, `<title>${eTitle} | Nougram</title>`);
+        html = html.replace(
+            /<meta name="description" content="[^"]*"\s*\/?>/,
+            `<meta name="description" content="${eExcerpt}" />`
+        );
+
+        html = html.replace(
+            /<meta property="og:type" content="[^"]*">/,
+            `<meta property="og:type" content="${ogType}">`
+        );
+        html = html.replace(
+            /<meta property="og:url" content="[^"]*">/,
+            `<meta property="og:url" content="${eUrl}">`
+        );
+        html = html.replace(
+            /<meta property="og:title" content="[^"]*">/,
+            `<meta property="og:title" content="${eTitle}">`
+        );
+        // Matches single-line or split-line og:description in index.html
+        html = html.replace(
+            /<meta property="og:description"\s+content="[^"]*">/,
+            `<meta property="og:description" content="${eExcerpt}">`
+        );
+        html = html.replace(
+            /<meta property="og:image" content="[^"]*">/,
+            `<meta property="og:image" content="${eImage}">`
+        );
+
+        html = html.replace(
+            /<meta property="twitter:url" content="[^"]*">/,
+            `<meta property="twitter:url" content="${eUrl}">`
+        );
+        html = html.replace(
+            /<meta property="twitter:title" content="[^"]*">/,
+            `<meta property="twitter:title" content="${eTitle}">`
+        );
+        html = html.replace(
+            /<meta property="twitter:description" content="[^"]*">/,
+            `<meta property="twitter:description" content="${eExcerpt}">`
+        );
+        html = html.replace(
+            /<meta property="twitter:image" content="[^"]*">/,
+            `<meta property="twitter:image" content="${eImage}">`
+        );
+
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
         return res.status(200).send(html);
     } catch (error) {
         console.error('SEO Proxy Error:', error);
-        // Fallback to serving the regular index.html if something fails
         try {
             const indexPath = path.join(process.cwd(), 'index.html');
-            const html = fs.readFileSync(indexPath, 'utf8');
-            res.setHeader('Content-Type', 'text/html');
-            return res.status(200).send(html);
+            const fallback = fs.readFileSync(indexPath, 'utf8');
+            res.setHeader('Content-Type', 'text/html; charset=utf-8');
+            return res.status(200).send(fallback);
         } catch (e) {
             return res.status(500).send('Internal Server Error');
         }
