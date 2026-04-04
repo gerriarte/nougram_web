@@ -7,6 +7,16 @@ function escapeHtmlAttr(value: string): string {
     return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 }
 
+/** Production build output (Vercel) vs repo root template (local / vercel dev). */
+function resolveIndexHtmlPath(): string {
+    const cwd = process.cwd();
+    const distIndex = path.join(cwd, 'dist', 'index.html');
+    const rootIndex = path.join(cwd, 'index.html');
+    if (fs.existsSync(distIndex)) return distIndex;
+    if (fs.existsSync(rootIndex)) return rootIndex;
+    throw new Error(`index.html not found under ${cwd} (dist/index.html or index.html)`);
+}
+
 // Serves index.html with Open Graph / Twitter meta injected for link previews (crawlers do not run the SPA).
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { slug } = req.query;
@@ -16,8 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        const indexPath = path.join(process.cwd(), 'index.html');
-        let html = fs.readFileSync(indexPath, 'utf8');
+        let html = fs.readFileSync(resolveIndexHtmlPath(), 'utf8');
 
         const post = BLOG_POSTS.find((p) => p.slug === slug);
 
@@ -89,11 +98,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } catch (error) {
         console.error('SEO Proxy Error:', error);
         try {
-            const indexPath = path.join(process.cwd(), 'index.html');
-            const fallback = fs.readFileSync(indexPath, 'utf8');
+            const fallbackPath = resolveIndexHtmlPath();
+            const fallback = fs.readFileSync(fallbackPath, 'utf8');
             res.setHeader('Content-Type', 'text/html; charset=utf-8');
             return res.status(200).send(fallback);
-        } catch (e) {
+        } catch {
             return res.status(500).send('Internal Server Error');
         }
     }
