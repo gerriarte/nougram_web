@@ -13,11 +13,52 @@ import { FAQ } from '../components/FAQ';
 export const Home: React.FC = () => {
     const { t: COPY } = useTranslation();
 
+    const structuredData = {
+        "@context": "https://schema.org",
+        "@graph": [
+            {
+                "@type": "Organization",
+                "@id": "https://nougram.co/#organization",
+                "name": "Nougram",
+                "url": "https://nougram.co",
+                "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://nougram.co/logo-nougram.png"
+                }
+            },
+            {
+                "@type": "WebSite",
+                "@id": "https://nougram.co/#website",
+                "url": "https://nougram.co",
+                "name": "Nougram",
+                "publisher": { "@id": "https://nougram.co/#organization" },
+                "description": COPY.hero.subheadline
+            },
+            {
+                "@type": "SoftwareApplication",
+                "name": "Nougram AI Quoter",
+                "applicationCategory": "BusinessApplication",
+                "operatingSystem": "Web",
+                "description": COPY.hero.subheadline,
+                "url": "https://nougram.co",
+                "author": { "@id": "https://nougram.co/#organization" },
+                "offers": {
+                    "@type": "Offer",
+                    "price": "0",
+                    "priceCurrency": "USD"
+                }
+            }
+        ]
+    };
+
     return (
         <main>
             <Helmet>
                 <meta name="description" content={COPY.site.description} />
                 <meta name="keywords" content={COPY.site.keywords} />
+                <script type="application/ld+json">
+                    {JSON.stringify(structuredData)}
+                </script>
             </Helmet>
             <Hero />
             <TargetAudience />
