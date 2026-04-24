@@ -38,27 +38,18 @@ export const Header: React.FC = () => {
 
   return (
     <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-nougram-background/80 backdrop-blur-md shadow-sm border-b border-white/5 py-3' : 'bg-transparent py-5'
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'bg-nougram-background/80 backdrop-blur-md shadow-sm border-b border-white/5 py-2 md:py-3' : 'bg-transparent py-3 md:py-5'
         }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-        <div className="flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-row items-center justify-between gap-2 sm:gap-0">
+        <div className="flex items-center gap-4">
           <Link to="/" onClick={scrollToTop} className="flex items-center">
             <img src="/logo-nougram.png" alt="Nougram" className="h-5 sm:h-6 w-auto object-contain" />
           </Link>
-
-          {/* Language Toggle (prominent on mobile) */}
-          <button
-            onClick={toggleLanguage}
-            className="sm:hidden text-[10px] font-bold text-brand-300 bg-brand-500/10 border border-brand-500/20 px-2.5 py-1 rounded-full cursor-pointer hover:bg-brand-500/15 transition-colors tracking-widest"
-          >
-            {language === 'es' ? 'EN' : 'ES'}
-          </button>
         </div>
 
-        <nav className="flex items-center justify-between sm:justify-start gap-3 sm:gap-6 lg:gap-8">
-
-          {/* Social Links */}
+        <nav className="flex items-center gap-3 sm:gap-6 lg:gap-8">
+          {/* Desktop Social Links */}
           <div className="hidden md:flex items-center gap-4 border-r border-white/10 pr-6">
             <a href="https://linkedin.com/company/nougram" target="_blank" rel="noreferrer" className="text-slate-400 hover:text-brand-400 transition-colors">
               <Linkedin className="w-4 h-4" />
@@ -71,10 +62,10 @@ export const Header: React.FC = () => {
             </a>
           </div>
 
-          {/* Language Toggle */}
+          {/* Language Toggle (All screens) */}
           <button
             onClick={toggleLanguage}
-            className="hidden sm:inline-flex text-[10px] font-bold text-brand-400 bg-brand-500/5 border border-brand-500/10 px-2 py-0.5 rounded cursor-pointer hover:bg-brand-500/10 transition-colors tracking-widest"
+            className="text-[10px] font-bold text-brand-400 bg-brand-500/5 border border-brand-500/10 px-2 py-1 rounded cursor-pointer hover:bg-brand-500/10 transition-colors tracking-widest"
           >
             {language === 'es' ? 'EN' : 'ES'}
           </button>
@@ -88,7 +79,7 @@ export const Header: React.FC = () => {
           {isHome ? (
             <button
               onClick={() => document.getElementById('join-beta')?.scrollIntoView({ behavior: 'smooth' })}
-              className={`px-4 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-bold transition-all ${scrolled ? 'bg-brand-600 text-white shadow-lg shadow-brand-600/20 hover:bg-brand-500' : 'bg-white/10 text-white backdrop-blur-md border border-white/20 hover:bg-white/20'
+              className={`px-3 sm:px-5 py-2 rounded-full text-xs sm:text-sm font-bold transition-all ${scrolled ? 'bg-brand-600 text-white shadow-lg shadow-brand-600/20 hover:bg-brand-500' : 'bg-white/10 text-white backdrop-blur-md border border-white/20 hover:bg-white/20'
                 }`}
             >
               {t.nav.demo}
@@ -96,7 +87,7 @@ export const Header: React.FC = () => {
           ) : (
             <Link
               to="/"
-              className="px-4 sm:px-5 py-2 bg-brand-600 text-white rounded-full text-xs sm:text-sm font-bold shadow-lg shadow-brand-600/20 hover:bg-brand-500 transition-all"
+              className="px-3 sm:px-5 py-2 bg-brand-600 text-white rounded-full text-xs sm:text-sm font-bold shadow-lg shadow-brand-600/20 hover:bg-brand-500 transition-all"
             >
               {t.nav.demo}
             </Link>

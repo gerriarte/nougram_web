@@ -1,5 +1,9 @@
 export const es = {
   brand: "Nougram",
+  site: {
+    description: "Calcula tus costos reales, impuestos y margen de utilidad antes de enviar una propuesta comercial con el Cotizador Inteligente de Nougram.",
+    keywords: "cotizador, inteligencia artificial, rentabilidad, servicios creativos, costos reales, impuestos transfronterizos"
+  },
   nav: {
     pricing: "Precios",
     faq: "Preguntas",

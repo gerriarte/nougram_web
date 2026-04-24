@@ -1,5 +1,9 @@
 export const en = {
   brand: "Nougram",
+  site: {
+    description: "Calculate your real costs, taxes and net profit margin before sending a commercial proposal with Nougram's Intelligent Quoter.",
+    keywords: "quoter, artificial intelligence, profitability, creative services, real costs, cross-border taxes"
+  },
   nav: {
     pricing: "Pricing",
     faq: "FAQ",
