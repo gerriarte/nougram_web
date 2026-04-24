@@ -15,12 +15,13 @@ function parsePostMetaFromBlogSource(raw: string, slug: string): { title: string
     if (idx === -1) return null;
 
     const fromSlug = raw.slice(idx);
-    const contentMark = fromSlug.indexOf('content: `');
-    const header = contentMark === -1 ? fromSlug : fromSlug.slice(0, contentMark);
+    // Limitamos la búsqueda al bloque del post actual para evitar capturar campos de otros posts.
+    const nextPostIdx = fromSlug.indexOf('id:', 10); // Empezamos a buscar después del inicio
+    const block = nextPostIdx === -1 ? fromSlug : fromSlug.slice(0, nextPostIdx);
 
-    const titleM = /title:\s*['"]([^'"]+)['"]/.exec(header);
-    const excerptM = /excerpt:\s*(?:\n\s*)?['"]([^'"]+)['"]/m.exec(header);
-    const imageM = /image:\s*(?:\n\s*)?['"]([^'"]+)['"]/m.exec(header);
+    const titleM = /title:\s*['"]([^'"]+)['"]/.exec(block);
+    const excerptM = /excerpt:\s*(?:\n\s*)?['"]([^'"]+)['"]/m.exec(block);
+    const imageM = /image:\s*(?:\n\s*)?['"]([^'"]+)['"]/m.exec(block);
 
     if (!titleM || !excerptM || !imageM) return null;
     return { title: titleM[1], excerpt: excerptM[1], image: imageM[1] };
