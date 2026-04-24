@@ -16,7 +16,8 @@ export const Home: React.FC = () => {
     return (
         <main>
             <Helmet>
-                <meta name="description" content={COPY.hero.subheadline} />
+                <meta name="description" content={COPY.site.description} />
+                <meta name="keywords" content={COPY.site.keywords} />
             </Helmet>
             <Hero />
             <TargetAudience />
