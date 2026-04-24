@@ -1,0 +1,28 @@
+backend:
+  name: github
+  repo: gerriarte/nougram_web
+  branch: main
+  base_url: https://www.nougram.co # Opcional: para el widget de identidad
+
+media_folder: "public/blog"
+public_folder: "/blog"
+
+collections:
+  - name: "blog"
+    label: "Post del Blog"
+    folder: "content/posts"
+    create: true
+    slug: "{{slug}}"
+    extension: "json"
+    format: "json"
+    fields:
+      - { label: "ID", name: "id", widget: "string", hint: "Un número único (ej: 7)" }
+      - { label: "Slug", name: "slug", widget: "string", hint: "URL del post (ej: mi-nuevo-post)" }
+      - { label: "Título", name: "title", widget: "string" }
+      - { label: "Resumen (Excerpt)", name: "excerpt", widget: "text" }
+      - { label: "Contenido (HTML)", name: "content", widget: "markdown", hint: "El editor generará el contenido para el blog" }
+      - { label: "Fecha", name: "date", widget: "datetime", format: "YYYY-MM-DD" }
+      - { label: "Autor", name: "author", widget: "string", default: "Equipo Nougram" }
+      - { label: "Imagen de Portada", name: "image", widget: "image" }
+      - { label: "Categoría", name: "category", widget: "string" }
+      - { label: "Tiempo de Lectura", name: "readTime", widget: "string", hint: "Ej: 5 min" }

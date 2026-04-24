@@ -4,7 +4,7 @@
     "framework": "vite",
     "functions": {
         "api/blog-seo.ts": {
-            "includeFiles": "{dist/index.html,content/blog-posts.ts}"
+            "includeFiles": "dist/index.html,content/posts/*.json"
         }
     },
     "rewrites": [

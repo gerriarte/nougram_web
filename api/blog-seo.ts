@@ -6,34 +6,24 @@ function escapeHtmlAttr(value: string): string {
     return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 }
 
-/**
- * Lee metadata del post desde el .ts sin importar el módulo (evita fallos de bundle / MODULE_NOT_FOUND en Vercel).
- */
-function parsePostMetaFromBlogSource(raw: string, slug: string): { title: string; excerpt: string; image: string } | null {
-    let idx = raw.indexOf(`slug: '${slug}'`);
-    if (idx === -1) idx = raw.indexOf(`slug: "${slug}"`);
-    if (idx === -1) return null;
-
-    const fromSlug = raw.slice(idx);
-    // Limitamos la búsqueda al bloque del post actual para evitar capturar campos de otros posts.
-    const nextPostIdx = fromSlug.indexOf('id:', 10); // Empezamos a buscar después del inicio
-    const block = nextPostIdx === -1 ? fromSlug : fromSlug.slice(0, nextPostIdx);
-
-    const titleM = /title:\s*['"]([^'"]+)['"]/.exec(block);
-    const excerptM = /excerpt:\s*(?:\n\s*)?['"]([^'"]+)['"]/m.exec(block);
-    const imageM = /image:\s*(?:\n\s*)?['"]([^'"]+)['"]/m.exec(block);
-
-    if (!titleM || !excerptM || !imageM) return null;
-    return { title: titleM[1], excerpt: excerptM[1], image: imageM[1] };
-}
-
-function loadBlogSource(): string {
-    const p = path.join(process.cwd(), 'content', 'blog-posts.ts');
-    if (!fs.existsSync(p)) {
-        console.error('blog-seo: content/blog-posts.ts not found at', p);
-        return '';
+function loadPostMeta(slug: string): { title: string; excerpt: string; image: string } | null {
+    try {
+        const p = path.join(process.cwd(), 'content', 'posts', `${slug}.json`);
+        if (!fs.existsSync(p)) {
+            // Intento alternativo por si la ruta cambia en Vercel
+            const altPath = path.join(process.cwd(), '..', 'content', 'posts', `${slug}.json`);
+            if (fs.existsSync(altPath)) {
+                const post = JSON.parse(fs.readFileSync(altPath, 'utf8'));
+                return { title: post.title, excerpt: post.excerpt, image: post.image };
+            }
+            return null;
+        }
+        const post = JSON.parse(fs.readFileSync(p, 'utf8'));
+        return { title: post.title, excerpt: post.excerpt, image: post.image };
+    } catch (e) {
+        console.error('blog-seo: error loading post meta', e);
+        return null;
     }
-    return fs.readFileSync(p, 'utf8');
 }
 
 /** En Vercel el HTML estático vive en el CDN; el fetch evita depender de rutas dentro del bundle de la función. */
@@ -111,8 +101,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let image = 'https://nougram.co/og-image.jpg';
     let ogType = 'website';
 
-    const rawSource = loadBlogSource();
-    const meta = rawSource ? parsePostMetaFromBlogSource(rawSource, slug) : null;
+    const meta = loadPostMeta(slug);
     if (meta) {
         title = meta.title;
         excerpt = meta.excerpt;
