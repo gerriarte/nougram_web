@@ -9,6 +9,14 @@
     },
     "rewrites": [
         {
+            "source": "/auth",
+            "destination": "/api/auth"
+        },
+        {
+            "source": "/callback",
+            "destination": "/api/callback"
+        },
+        {
             "source": "/blog/:slug",
             "destination": "/api/blog-seo?slug=:slug"
         },
