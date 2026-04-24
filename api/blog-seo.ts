@@ -98,7 +98,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const postUrl = `https://nougram.co/blog/${slug}`;
     let title = 'Nougram Blog';
     let excerpt = 'Descubre cómo escalar tu negocio con IA.';
-    let image = 'https://nougram.co/og-image.jpg';
+    let image = 'https://nougram.co/og-main.png';
     let ogType = 'website';
 
     const meta = loadPostMeta(slug);

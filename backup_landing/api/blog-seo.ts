@@ -36,7 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         let title = "Nougram Blog";
         let excerpt = "Descubre cómo escalar tu negocio con IA.";
-        let image = "https://nougram.co/og-image.jpg";
+        let image = "https://nougram.co/og-main.png";
 
         if (postBlockMatch) {
             const block = postBlockMatch[1];
