@@ -1,12 +1,7 @@
 {
     "buildCommand": "npm run build",
-    "outputDirectory": "dist",
+    "outputDirectory": "build/client",
     "framework": "vite",
-    "functions": {
-        "api/blog-seo.ts": {
-            "includeFiles": "dist/index.html,content/posts/*.json"
-        }
-    },
     "rewrites": [
         {
             "source": "/auth",
@@ -17,12 +12,8 @@
             "destination": "/api/callback"
         },
         {
-            "source": "/blog/:slug",
-            "destination": "/api/blog-seo?slug=:slug"
-        },
-        {
-            "source": "/((?!api/).*)",
-            "destination": "/index.html"
+            "source": "/(.*)",
+            "destination": "/.react-router/server"
         }
     ]
 }

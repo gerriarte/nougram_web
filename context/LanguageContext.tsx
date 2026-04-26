@@ -15,8 +15,16 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | null>(null);
 
-export const LanguageProvider = ({ children }: { children: React.ReactNode }) => {
+export const LanguageProvider = ({ 
+    children, 
+    initialLanguage 
+}: { 
+    children: React.ReactNode, 
+    initialLanguage?: Language 
+}) => {
     const [lang, setLang] = useState<Language>(() => {
+        if (initialLanguage) return initialLanguage;
+        
         if (typeof window !== 'undefined') {
             const savedLang = localStorage.getItem('language') as Language;
             if (savedLang && (savedLang === 'es' || savedLang === 'en')) {
@@ -31,14 +39,20 @@ export const LanguageProvider = ({ children }: { children: React.ReactNode }) =>
     const toggleLanguage = () => {
         setLang((prev) => {
             const next = prev === 'es' ? 'en' : 'es';
-            localStorage.setItem('language', next);
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('language', next);
+                document.cookie = `language=${next}; path=/; max-age=31536000`;
+            }
             return next;
         });
     };
 
     const setLanguage = (l: Language) => {
         setLang(l);
-        localStorage.setItem('language', l);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('language', l);
+            document.cookie = `language=${l}; path=/; max-age=31536000`;
+        }
     };
     
     const t = translations[lang];
