@@ -10,10 +10,6 @@
         {
             "source": "/callback",
             "destination": "/api/callback"
-        },
-        {
-            "source": "/(.*)",
-            "destination": "/.react-router/server"
         }
     ]
 }
