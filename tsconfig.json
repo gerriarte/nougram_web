@@ -21,9 +21,22 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "~/*": [
+        "./app/*"
       ]
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.js",
+    "**/*.jsx",
+    ".react-router/types/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
