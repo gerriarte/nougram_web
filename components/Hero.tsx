@@ -112,7 +112,7 @@ export const Hero: React.FC = () => {
       const response = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, feedbackConsent }),
+        body: JSON.stringify({ ...formData, feedbackConsent, language }),
       });
 
       if (response.ok) {

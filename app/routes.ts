@@ -8,4 +8,5 @@ export default [
   route("terminos", "routes/terms.tsx"),
   route("test-salud-financiera", "routes/test-salud.tsx", { id: "test-salud-es" }),
   route("financial-health-test", "routes/test-salud.tsx", { id: "test-salud-en" }),
+  route("api/send-email", "routes/api.send-email.ts"),
 ] satisfies RouteConfig;

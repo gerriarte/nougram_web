@@ -428,7 +428,7 @@ export const FinancialHealthTest: React.FC = () => {
       await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(leadPayload),
+        body: JSON.stringify({ ...leadPayload, language }),
       });
     } catch (error) {
       // Non-blocking: even if endpoint fails, keep experience flowing.
