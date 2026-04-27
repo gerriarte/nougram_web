@@ -4,7 +4,6 @@ import { useTranslation } from '../context/LanguageContext';
 import { BLOG_POSTS } from '../content/blog-posts';
 import { ArrowLeft, Calendar, Clock, Twitter, Linkedin, Copy, Sparkles } from 'lucide-react';
 import { Reveal } from '../components/Reveal';
-import { Helmet } from 'react-helmet-async';
 
 export const BlogPost: React.FC = () => {
     const { t: COPY } = useTranslation();
@@ -47,27 +46,6 @@ export const BlogPost: React.FC = () => {
         <article className="bg-dark-900 min-h-screen pt-32 pb-24 relative overflow-hidden">
             {/* Background Grid */}
             <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none"></div>
-
-            <Helmet>
-                <title>{post.title} | Blog Nougram</title>
-                <meta name="description" content={post.excerpt} />
-
-                {/* Open Graph / Facebook */}
-                <meta property="og:type" content="article" />
-                <meta property="og:url" content={postUrl} />
-                <meta property="og:title" content={post.title} />
-                <meta property="og:description" content={post.excerpt} />
-                <meta property="og:image" content={postImage} />
-
-                {/* Twitter */}
-                <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:url" content={postUrl} />
-                <meta name="twitter:title" content={post.title} />
-                <meta name="twitter:description" content={post.excerpt} />
-                <meta name="twitter:image" content={postImage} />
-
-                <link rel="canonical" href={postUrl} />
-            </Helmet>
 
             {/* SEO Article Data */}
             <script type="application/ld+json">

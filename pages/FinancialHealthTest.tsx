@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Helmet } from 'react-helmet-async';
+
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronRight, Loader2, RotateCcw, Target } from 'lucide-react';
 import { useTranslation } from '../context/LanguageContext';
@@ -442,17 +442,7 @@ export const FinancialHealthTest: React.FC = () => {
 
   return (
     <main className="min-h-screen bg-dark-900 text-white pt-28 pb-16 px-4">
-      <Helmet>
-        <title>{isES ? 'Test de Salud Financiera | Nougram' : 'Financial Health Test | Nougram'}</title>
-        <meta
-          name="description"
-          content={
-            isES
-              ? 'Descubrí en 2 minutos el estado financiero de tu operación y obtené un diagnóstico accionable.'
-              : 'Discover your operation financial health in 2 minutes and get an actionable diagnosis.'
-          }
-        />
-      </Helmet>
+
 
       <div className="max-w-3xl mx-auto">
         {step === 'questions' && (

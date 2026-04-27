@@ -1,5 +1,4 @@
 import React from 'react';
-import { Helmet } from 'react-helmet-async';
 import { useTranslation } from '../context/LanguageContext';
 import { Hero } from '../components/Hero';
 import { TargetAudience } from '../components/TargetAudience';
@@ -53,13 +52,9 @@ export const Home: React.FC = () => {
 
     return (
         <main>
-            <Helmet>
-                <meta name="description" content={COPY.site.description} />
-                <meta name="keywords" content={COPY.site.keywords} />
-                <script type="application/ld+json">
-                    {JSON.stringify(structuredData)}
-                </script>
-            </Helmet>
+            <script type="application/ld+json">
+                {JSON.stringify(structuredData)}
+            </script>
             <Hero />
             <TargetAudience />
             <Problem />
