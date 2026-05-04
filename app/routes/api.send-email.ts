@@ -124,8 +124,8 @@ export async function action({ request }: ActionFunctionArgs) {
 
                 // Confirmación al Cliente
                 const confirmationSubject = isFinancialTestLead
-                    ? (userLanguage === 'en' ? 'Your Financial Health Results - Nougram' : 'Tus Resultados del Test de Salud Financiera - Nougram')
-                    : (userLanguage === 'en' ? 'Welcome to the Nougram Beta! 🚀' : '¡Bienvenido a la Beta de Nougram! 🚀');
+                    ? (userLanguage === 'en' ? 'Welcome to Nougram, Let\'s shield your profits!' : 'Bienvenido a Nougram, ¡Empecemos a blindar tus ganancias!')
+                    : (userLanguage === 'en' ? 'Welcome to Nougram, Let\'s shield your profits!' : 'Bienvenido a Nougram, ¡Empecemos a blindar tus ganancias!');
 
                 const { data: confirmData, error: confirmError } = await resend.emails.send({
                     from: `Nougram <business@nougram.co>`,
