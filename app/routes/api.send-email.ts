@@ -1,6 +1,7 @@
 import { type ActionFunctionArgs, data } from "react-router";
 import { Resend } from 'resend';
 import { google } from 'googleapis';
+import nodemailer from 'nodemailer';
 
 export async function action({ request }: ActionFunctionArgs) {
     if (request.method !== "POST") {
@@ -55,80 +56,98 @@ export async function action({ request }: ActionFunctionArgs) {
 
         const results = {
             resend: 'Skipped',
+            notification: 'Skipped',
             confirmation: 'Skipped',
             sheets: 'Skipped',
             mailerlite: 'Skipped'
         };
 
-        // 1. Send Email via Resend
-        if (process.env.RESEND_API_KEY) {
+        const recipientEmail = process.env.CONTACT_RECIPIENT_EMAIL || 'business@nougram.co';
+
+        // 1. Notificación al Admin vía SMTP Privado (Nodemailer)
+        // Usamos SMTP para la notificación interna porque los servidores privados suelen
+        // rechazar correos de "uno mismo" enviados por terceros como Resend.
+        if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
             try {
-                const resend = new Resend(process.env.RESEND_API_KEY);
-                const fromEmail = process.env.RESEND_FROM_EMAIL || process.env.CONTACT_FROM_EMAIL || 'business@nougram.co';
-                const recipientEmail = process.env.CONTACT_RECIPIENT_EMAIL || 'business@nougram.co';
-                
-                // Notificación al Admin
-                const { data: resendData, error: resendError } = await resend.emails.send({
-                    from: `Nougram Leads <business@nougram.co>`,
-                    to: [recipientEmail],
+                const transporter = nodemailer.createTransport({
+                    host: process.env.SMTP_HOST,
+                    port: Number(process.env.SMTP_PORT) || 587,
+                    secure: false, // true para 465, false para otros puertos
+                    auth: {
+                        user: process.env.SMTP_USER,
+                        pass: process.env.SMTP_PASS,
+                    },
+                    tls: {
+                        rejectUnauthorized: false // Ayuda con certificados de servidores privados
+                    }
+                });
+
+                const notificationHtml = `
+                    <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                        <div style="background-color: #020617; padding: 20px; text-align: center;">
+                            <h2 style="color: #ffffff; margin: 0;">Nuevo Lead Nougram</h2>
+                        </div>
+                        <div style="padding: 30px; color: #1e293b;">
+                            <p style="font-size: 18px; font-weight: bold; margin-top: 0;">${isFinancialTestLead ? 'Test de Salud Financiera' : 'Registro Beta'}</p>
+                            <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 20px 0;" />
+                            <p><strong>Nombre:</strong> ${name}</p>
+                            <p><strong>Email:</strong> ${email}</p>
+                            ${!isFinancialTestLead ? `
+                            <p><strong>Profesión:</strong> ${profession}</p>
+                            <p><strong>Teléfono:</strong> ${phone || 'No especificado'}</p>
+                            <p><strong>Empresa:</strong> ${company || 'No especificado'}</p>
+                            <p><strong>País:</strong> ${country || 'No especificado'}</p>
+                            <p><strong>Sitio Web:</strong> ${website || 'No especificado'}</p>
+                            <p><strong>Acepta WhatsApp:</strong> ${formatBooleanField(whatsappConsent)}</p>
+                            ` : ''}
+                            <p><strong>Origen:</strong> ${source}</p>
+                            ${isFinancialTestLead ? `
+                            <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin-top: 20px;">
+                                <h3 style="color: #6366f1; margin-top: 0;">Resumen del Test</h3>
+                                <p><strong>Puntaje:</strong> ${testScore}</p>
+                                <p><strong>Diagnóstico:</strong> ${testDiagnosis}</p>
+                                <p><strong>Área Crítica:</strong> ${testWeakArea}</p>
+                                <p><strong>Tiempo Recuperable:</strong> ${testQuoteTimeRecovered}</p>
+                            </div>
+                            ` : ''}
+                        </div>
+                        <div style="background-color: #f8fafc; padding: 15px; text-align: center; font-size: 11px; color: #94a3b8;">
+                            Correo enviado vía SMTP Privado &middot; ID: nougram-beta-welcome
+                        </div>
+                    </div>
+                `;
+
+                await transporter.sendMail({
+                    from: `"Leads Nougram" <${process.env.SMTP_USER}>`,
+                    to: recipientEmail,
                     replyTo: email,
                     subject: isFinancialTestLead
                         ? `Nuevo Lead Test Financiero: ${name}`
                         : `Nuevo Lead Beta: ${name}`,
-                    headers: {
-                        'X-Template-Id': 'nougram-beta-welcome' // Añadido según indicación
-                    },
-                    html: `
-                        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
-                            <div style="background-color: #020617; padding: 20px; text-align: center;">
-                                <h2 style="color: #ffffff; margin: 0;">Nuevo Lead Nougram</h2>
-                            </div>
-                            <div style="padding: 30px; color: #1e293b;">
-                                <p style="font-size: 18px; font-weight: bold; margin-top: 0;">${isFinancialTestLead ? 'Test de Salud Financiera' : 'Registro Beta'}</p>
-                                <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 20px 0;" />
-                                <p><strong>Nombre:</strong> ${name}</p>
-                                <p><strong>Email:</strong> ${email}</p>
-                                ${!isFinancialTestLead ? `
-                                <p><strong>Profesión:</strong> ${profession}</p>
-                                <p><strong>Teléfono:</strong> ${phone || 'No especificado'}</p>
-                                <p><strong>Empresa:</strong> ${company || 'No especificado'}</p>
-                                <p><strong>País:</strong> ${country || 'No especificado'}</p>
-                                <p><strong>Sitio Web:</strong> ${website || 'No especificado'}</p>
-                                <p><strong>Acepta WhatsApp:</strong> ${formatBooleanField(whatsappConsent)}</p>
-                                ` : ''}
-                                <p><strong>Origen:</strong> ${source}</p>
-                                ${isFinancialTestLead ? `
-                                <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin-top: 20px;">
-                                    <h3 style="color: #6366f1; margin-top: 0;">Resumen del Test</h3>
-                                    <p><strong>Puntaje:</strong> ${testScore}</p>
-                                    <p><strong>Diagnóstico:</strong> ${testDiagnosis}</p>
-                                    <p><strong>Área Crítica:</strong> ${testWeakArea}</p>
-                                    <p><strong>Tiempo Recuperable:</strong> ${testQuoteTimeRecovered}</p>
-                                </div>
-                                ` : ''}
-                            </div>
-                            <div style="background-color: #f8fafc; padding: 15px; text-align: center; font-size: 11px; color: #94a3b8;">
-                                Correo generado por el sistema Nougram &middot; ID: nougram-beta-welcome
-                            </div>
-                        </div>
-                    `,
+                    html: notificationHtml,
                 });
 
-                if (resendError) {
-                    console.error('RESEND_ERROR_NOTIFICATION:', resendError);
-                    results.resend = `Error: ${resendError.message}`;
-                } else {
-                    console.log('RESEND_SUCCESS_NOTIFICATION:', resendData?.id);
-                    results.resend = `Success (ID: ${resendData?.id})`;
-                }
+                results.notification = 'Success (SMTP)';
+                console.log('Notificación enviada con éxito vía SMTP');
+            } catch (smtpError: any) {
+                console.error('SMTP_ERROR_NOTIFICATION:', smtpError);
+                results.notification = `Error SMTP: ${smtpError.message}`;
+            }
+        }
 
-                // Confirmación al Cliente
+        // 2. Confirmación al Cliente vía Resend
+        // Resend es excelente para correos externos (hacia el cliente) porque tiene mejor entregabilidad en Gmail/Outlook.
+        if (process.env.RESEND_API_KEY) {
+            try {
+                const resend = new Resend(process.env.RESEND_API_KEY);
+                const fromEmail = process.env.RESEND_FROM_EMAIL || process.env.CONTACT_FROM_EMAIL || 'business@nougram.co';
+                
                 const confirmationSubject = isFinancialTestLead
                     ? (userLanguage === 'en' ? 'Welcome to Nougram, Let\'s shield your profits!' : 'Bienvenido a Nougram, ¡Empecemos a blindar tus ganancias!')
                     : (userLanguage === 'en' ? 'Welcome to Nougram, Let\'s shield your profits!' : 'Bienvenido a Nougram, ¡Empecemos a blindar tus ganancias!');
 
                 const { data: confirmData, error: confirmError } = await resend.emails.send({
-                    from: `Nougram <business@nougram.co>`,
+                    from: `Nougram <${fromEmail}>`,
                     to: [email],
                     subject: confirmationSubject,
                     headers: {
@@ -144,6 +163,11 @@ export async function action({ request }: ActionFunctionArgs) {
                     console.log('RESEND_SUCCESS_CONFIRMATION:', confirmData?.id);
                     results.confirmation = `Success (ID: ${confirmData?.id})`;
                 }
+            } catch (resendErr: any) {
+                console.error('RESEND_CATCH_CONFIRMATION:', resendErr);
+                results.confirmation = `Catch: ${resendErr.message}`;
+            }
+        }
 
             } catch (err: any) {
                 results.resend = `Catch: ${err.message}`;
