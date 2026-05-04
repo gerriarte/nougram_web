@@ -169,11 +169,6 @@ export async function action({ request }: ActionFunctionArgs) {
             }
         }
 
-            } catch (err: any) {
-                results.resend = `Catch: ${err.message}`;
-            }
-        }
-
         // 2. Google Sheets
         if (process.env.GOOGLE_SHEET_ID && process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) {
             try {
