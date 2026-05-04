@@ -67,76 +67,81 @@ export async function action({ request }: ActionFunctionArgs) {
                 const fromEmail = process.env.RESEND_FROM_EMAIL || process.env.CONTACT_FROM_EMAIL || 'business@nougram.co';
                 const recipientEmail = process.env.CONTACT_RECIPIENT_EMAIL || 'business@nougram.co';
                 
+                // Notificación al Admin
                 const { data: resendData, error: resendError } = await resend.emails.send({
-                    from: `Nougram Leads <${fromEmail}>`,
+                    from: `Nougram Leads <business@nougram.co>`,
                     to: [recipientEmail],
-                    replyTo: email, // Permite responder directamente al lead
+                    replyTo: email,
                     subject: isFinancialTestLead
                         ? `Nuevo Lead Test Financiero: ${name}`
                         : `Nuevo Lead Beta: ${name}`,
+                    headers: {
+                        'X-Template-Id': 'nougram-beta-welcome' // Añadido según indicación
+                    },
                     html: `
-                        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-                            <h2 style="color: #0ea5e9;">${isFinancialTestLead ? 'Nuevo registro del Test de Salud Financiera' : 'Nuevo registro para la Beta de Nougram'}</h2>
-                            <p><strong>Nombre:</strong> ${name}</p>
-                            <p><strong>Email:</strong> ${email}</p>
-                            ${!isFinancialTestLead ? `
-                            <p><strong>Profesión:</strong> ${profession}</p>
-                            <p><strong>Teléfono:</strong> ${phone || 'No especificado'}</p>
-                            <p><strong>Empresa:</strong> ${company || 'No especificado'}</p>
-                            <p><strong>País:</strong> ${country || 'No especificado'}</p>
-                            <p><strong>Sitio Web:</strong> ${website || 'No especificado'}</p>
-                            <p><strong>Acepta Términos:</strong> ${formatBooleanField(termsConsent)}</p>
-                            <p><strong>Acepta WhatsApp:</strong> ${formatBooleanField(whatsappConsent)}</p>
-                            <p><strong>Dará Feedback:</strong> ${formatBooleanField(feedbackConsent)}</p>
-                            ` : ''}
-                            <p><strong>Origen:</strong> ${source}</p>
-                            ${isFinancialTestLead ? `
-                            <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 20px 0;" />
-                            <h3 style="color: #6366f1;">Resumen Test de Salud Financiera</h3>
-                            <p><strong>Puntaje:</strong> ${testScore}</p>
-                            <p><strong>Diagnóstico:</strong> ${testDiagnosis}</p>
-                            <p><strong>Área Crítica:</strong> ${testWeakArea}</p>
-                            <p><strong>Margen Protegible:</strong> ${testMarginProtection}</p>
-                            <p><strong>Tiempo Recuperable:</strong> ${testQuoteTimeRecovered}</p>
-                            <p><strong>Potencial de Automatización:</strong> ${testAutomationPotential}</p>
-                            <p><strong>Respuestas:</strong> ${serializedAnswers || 'No especificadas'}</p>
-                            ` : ''}
-                            <div style="margin-top: 30px; padding: 20px; background-color: #f8fafc; border-radius: 8px; font-size: 12px; color: #64748b;">
-                                <p>Este es un correo automático enviado desde nougram.co</p>
+                        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                            <div style="background-color: #020617; padding: 20px; text-align: center;">
+                                <h2 style="color: #ffffff; margin: 0;">Nuevo Lead Nougram</h2>
+                            </div>
+                            <div style="padding: 30px; color: #1e293b;">
+                                <p style="font-size: 18px; font-weight: bold; margin-top: 0;">${isFinancialTestLead ? 'Test de Salud Financiera' : 'Registro Beta'}</p>
+                                <hr style="border: 0; border-top: 1px solid #f1f5f9; margin: 20px 0;" />
+                                <p><strong>Nombre:</strong> ${name}</p>
+                                <p><strong>Email:</strong> ${email}</p>
+                                ${!isFinancialTestLead ? `
+                                <p><strong>Profesión:</strong> ${profession}</p>
+                                <p><strong>Teléfono:</strong> ${phone || 'No especificado'}</p>
+                                <p><strong>Empresa:</strong> ${company || 'No especificado'}</p>
+                                <p><strong>País:</strong> ${country || 'No especificado'}</p>
+                                <p><strong>Sitio Web:</strong> ${website || 'No especificado'}</p>
+                                <p><strong>Acepta WhatsApp:</strong> ${formatBooleanField(whatsappConsent)}</p>
+                                ` : ''}
+                                <p><strong>Origen:</strong> ${source}</p>
+                                ${isFinancialTestLead ? `
+                                <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin-top: 20px;">
+                                    <h3 style="color: #6366f1; margin-top: 0;">Resumen del Test</h3>
+                                    <p><strong>Puntaje:</strong> ${testScore}</p>
+                                    <p><strong>Diagnóstico:</strong> ${testDiagnosis}</p>
+                                    <p><strong>Área Crítica:</strong> ${testWeakArea}</p>
+                                    <p><strong>Tiempo Recuperable:</strong> ${testQuoteTimeRecovered}</p>
+                                </div>
+                                ` : ''}
+                            </div>
+                            <div style="background-color: #f8fafc; padding: 15px; text-align: center; font-size: 11px; color: #94a3b8;">
+                                Correo generado por el sistema Nougram &middot; ID: nougram-beta-welcome
                             </div>
                         </div>
                     `,
                 });
 
                 if (resendError) {
-                    console.error('RESEND_ERROR_NOTIFICATION:', {
-                        error: resendError,
-                        to: recipientEmail,
-                        from: fromEmail
-                    });
+                    console.error('RESEND_ERROR_NOTIFICATION:', resendError);
                     results.resend = `Error: ${resendError.message}`;
                 } else {
                     console.log('RESEND_SUCCESS_NOTIFICATION:', resendData?.id);
                     results.resend = `Success (ID: ${resendData?.id})`;
                 }
 
-                // 1.1 Confirmation Email
+                // Confirmación al Cliente
                 const confirmationSubject = isFinancialTestLead
                     ? (userLanguage === 'en' ? 'Your Financial Health Results - Nougram' : 'Tus Resultados del Test de Salud Financiera - Nougram')
                     : (userLanguage === 'en' ? 'Welcome to the Nougram Beta! 🚀' : '¡Bienvenido a la Beta de Nougram! 🚀');
 
                 const { data: confirmData, error: confirmError } = await resend.emails.send({
-                    from: `Nougram <${fromEmail}>`,
+                    from: `Nougram <business@nougram.co>`,
                     to: [email],
                     subject: confirmationSubject,
+                    headers: {
+                        'X-Template-Id': 'nougram-beta-welcome'
+                    },
                     html: generateConfirmationHtml(name, userLanguage, isFinancialTestLead),
                 });
 
                 if (confirmError) {
-                    console.error('Error enviando confirmación al cliente:', confirmError);
+                    console.error('RESEND_ERROR_CONFIRMATION:', confirmError);
                     results.confirmation = `Error: ${confirmError.message}`;
                 } else {
-                    console.log('Confirmación enviada con éxito:', confirmData?.id);
+                    console.log('RESEND_SUCCESS_CONFIRMATION:', confirmData?.id);
                     results.confirmation = `Success (ID: ${confirmData?.id})`;
                 }
 
