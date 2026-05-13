@@ -26,3 +26,4 @@ collections:
       - { label: "Imagen de Portada", name: "image", widget: "image" }
       - { label: "Categoría", name: "category", widget: "string" }
       - { label: "Tiempo de Lectura", name: "readTime", widget: "string", hint: "Ej: 5 min" }
+      - { label: "Post Destacado", name: "featured", widget: "boolean", default: false, hint: "Si se marca, aparecerá como el post principal del blog" }
