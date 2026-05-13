@@ -4,6 +4,7 @@ import { useTranslation } from '../context/LanguageContext';
 import { BLOG_POSTS } from '../content/blog-posts';
 import { ArrowLeft, Calendar, Clock, Twitter, Linkedin, Copy, Sparkles } from 'lucide-react';
 import { Reveal } from '../components/Reveal';
+import { marked } from 'marked';
 
 export const BlogPost: React.FC = () => {
     const { t: COPY } = useTranslation();
@@ -11,11 +12,19 @@ export const BlogPost: React.FC = () => {
     const post = BLOG_POSTS.find(p => p.slug === slug);
     const [email, setEmail] = useState('');
     const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+    const [htmlContent, setHtmlContent] = useState<string>('');
 
     useEffect(() => {
         if (post) {
             // Scroll to top on mount
             window.scrollTo(0, 0);
+
+            // Parse markdown content if it exists
+            const parseContent = async () => {
+                const parsed = await marked.parse(post.content);
+                setHtmlContent(parsed);
+            };
+            parseContent();
         }
     }, [post]);
 
@@ -139,7 +148,7 @@ export const BlogPost: React.FC = () => {
                         prose-p:text-slate-300 prose-p:leading-relaxed prose-p:text-sm md:prose-p:text-base
                         prose-strong:text-brand-400 prose-blockquote:border-brand-500
                         prose-blockquote:bg-white/[0.02] prose-blockquote:py-2 prose-blockquote:rounded-r-xl prose-blockquote:not-italic prose-blockquote:text-slate-200"
-                        dangerouslySetInnerHTML={{ __html: post.content }}
+                        dangerouslySetInnerHTML={{ __html: htmlContent }}
                     />
                 </Reveal>
 

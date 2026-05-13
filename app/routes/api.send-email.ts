@@ -141,7 +141,7 @@ export async function action({ request }: ActionFunctionArgs) {
             try {
                 const resend = new Resend(process.env.RESEND_API_KEY);
                 const fromEmail = process.env.RESEND_FROM_EMAIL || process.env.CONTACT_FROM_EMAIL || 'business@nougram.co';
-                
+
                 const confirmationSubject = isFinancialTestLead
                     ? (userLanguage === 'en' ? 'Welcome to Nougram, Let\'s shield your profits!' : 'Bienvenido a Nougram, ¡Empecemos a blindar tus ganancias!')
                     : (userLanguage === 'en' ? 'Welcome to Nougram, Let\'s shield your profits!' : 'Bienvenido a Nougram, ¡Empecemos a blindar tus ganancias!');
@@ -183,7 +183,7 @@ export async function action({ request }: ActionFunctionArgs) {
                 const defaultSheetName = process.env.GOOGLE_SHEET_NAME || 'Hoja 1';
                 const testSheetName = process.env.GOOGLE_SHEET_TEST_NAME || 'test';
                 const targetSheetName = isFinancialTestLead ? testSheetName : defaultSheetName;
-                
+
                 const rowValues = isFinancialTestLead
                     ? [new Date().toISOString(), name, email, source, testScore, testDiagnosis, testWeakArea, testMarginProtection, testQuoteTimeRecovered, testAutomationPotential, serializedAnswers]
                     : [new Date().toISOString(), name, email, profession || '', phone || '', company || '', country || '', website || '', formatBooleanField(termsConsent), formatBooleanField(whatsappConsent), formatBooleanField(feedbackConsent), source];
@@ -237,11 +237,11 @@ function generateConfirmationHtml(name: string, lang: string, isTest: boolean) {
     const content = {
         title: isEn ? 'Welcome to Nougram' : 'Bienvenido a Nougram',
         greeting: isEn ? `Hi ${name}! 👋` : `¡Hola ${name}! 👋`,
-        intro: isTest 
+        intro: isTest
             ? (isEn ? 'Thank you for completing the Financial Health Test.' : 'Gracias por completar el Test de Salud Financiera.')
-            : (isEn ? 'Thank you for joining the Nougram Beta.' : 'Gracias por registrarte para la Beta de Nougram.'),
+            : (isEn ? 'Thank you for joining the Nougram.' : 'Gracias por registrarte en Nougram.'),
         body: isTest
-            ? (isEn 
+            ? (isEn
                 ? 'We have received your data and our team is analyzing the results to help you optimize your business margins and quoting process. We will contact you shortly with a personalized diagnosis.'
                 : 'Hemos recibido tus datos y nuestro equipo está analizando los resultados para ayudarte a optimizar tus márgenes y procesos de cotización. Nos pondremos en contacto contigo pronto con un diagnóstico personalizado.')
             : (isEn
